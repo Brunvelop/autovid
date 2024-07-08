@@ -1,0 +1,11 @@
+requests
+Pillow
+langchain
+moviepy
+python-dotenv
+edge-tts
+gTTS
+openai
+transformers
+accelerate
+safetensors
