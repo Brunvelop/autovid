@@ -9,3 +9,7 @@ openai
 transformers
 accelerate
 safetensors
+diffusers
+langchain-openai
+cv2
+opencv-python

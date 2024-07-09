@@ -119,7 +119,7 @@ vg.generate_video(
         # definitions.VideatorTasks.AUDIO,
         # definitions.VideatorTasks.IMAGES,
         # definitions.VideatorTasks.VIDEO,
-        # definitions.VideatorTasks.FULL
+        definitions.VideatorTasks.FULL
     ],
     video_theme=video_theme, 
     output_dir=f"./output/{video_num}.mp4"
