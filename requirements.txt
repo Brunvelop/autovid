@@ -11,5 +11,10 @@ accelerate
 safetensors
 diffusers
 langchain-openai
-cv2
 opencv-python
+
+sentencepiece
+langchain-community
+xformer
+accelerate
+bitsandbytes
