@@ -65,7 +65,7 @@ class TTS:
             text: str, 
             output_file: str,
             model: definitions.TTSModels,
-            voice: Optional[definitions.Voices] = None
+            voice: Optional[definitions.Voices] = None,
         ) -> str:
         if model == definitions.TTSModels.GOOGLE:
             voice = voice or definitions.Voices.Google.SPAIN

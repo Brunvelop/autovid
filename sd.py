@@ -51,34 +51,13 @@ class SD:
             )
         return pipe
 
-    def generate_image(self, 
-            prompt: str, 
-            output_path: str, 
-            height: int = 1280, 
-            width: int = 768, 
-            steps: int = 15,
-            guidance_scale: float = 0.0
-        ) -> Image.Image:
+    def generate_image(self, prompt: str, output_path: str, **kwargs) -> Image.Image:
         if self.model_id == SDModels.FAKE.value:
-            return self.generate_fake_image(prompt, output_path, height, width, steps, guidance_scale)
+            return self.generate_fake_image(prompt, output_path, **kwargs)
         elif self.model_id == SDModels.SDXL_TURBO.value:
-            return self.SDXL_TURBO_generate_image(
-                prompt=prompt,
-                output_path=output_path,
-                steps=steps,
-                height=height,
-                width=width,
-                guidance_scale=guidance_scale
-            )
+            return self.SDXL_TURBO_generate_image(prompt=prompt, output_path=output_path, **kwargs)
         elif self.model_id == SDModels.SD3.value:
-            return self.SD3_generate_image(
-                prompt=prompt,
-                output_path=output_path,
-                steps=steps,
-                height=height,
-                width=width,
-                guidance_scale=guidance_scale
-            )
+            return self.SD3_generate_image(prompt=prompt, output_path=output_path, **kwargs)
 
     def SDXL_TURBO_generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 5, guidance_scale: float = 0.0) -> Image.Image:
         image = self.pipe(

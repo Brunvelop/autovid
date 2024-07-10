@@ -113,11 +113,3 @@ class LLM():
         storyboard = output_parser.parse(output.content)
         storyboard = [Scene(text=scene['text'], image=scene['image']) for scene in storyboard]
         return storyboard
-
-
-llm = LLM(model_id=LLMModels.GPT4o)
-text = llm.generate_video_script("Una historia de amor", words_number=200)
-print(text)
-storyboard = llm.generate_storyboard(text)
-print(storyboard)
-storyboard

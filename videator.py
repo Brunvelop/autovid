@@ -1,98 +1,113 @@
-from tqdm import tqdm
 import os
 import json
+from tqdm import tqdm
+from typing import Union
 
 from sd import SD
-import gpt
+from LLM import LLM
 from tts import TTS
 import video_editor
-import definitions
+from definitions import LLMModels, TTSModels, SDModels, Voices, VideatorTasks
 
 class VideoGenerator:
     MAX_ATTEMPTS = 2
-    TASK_SCRIPT = "script"
-    TASK_AUDIO = "audio"
-    TASK_IMAGES = "images"
-    TASK_VIDEO = "video"
-    TASK_FULL = "full"
-
-    def __init__(self, assets_dir, style="old painting"):
+    def __init__(
+        self,
+        assets_dir: str,
+        llm_model: LLMModels = LLMModels.GPT4o,
+        sd_model: SDModels = SDModels.SDXL_TURBO,
+        tts_model: TTSModels = TTSModels.OPENAI_TTS_1,
+        tts_voice: Union[Voices.Google, Voices.Azure, Voices.OpenAI] = Voices.OpenAI.NOVA,
+        height: int = 1280, 
+        width: int = 768, 
+        style: str = None
+    ):
         self.assets_dir = assets_dir
         self.audio_dir = f"{self.assets_dir}/audios"
         self.image_dir = f"{self.assets_dir}/images"
         self.script_dir = f"{self.assets_dir}/scripts"
-        self.style = style
         os.makedirs(self.assets_dir, exist_ok=True)
         os.makedirs(self.audio_dir, exist_ok=True)
         os.makedirs(self.image_dir, exist_ok=True)
         os.makedirs(self.script_dir, exist_ok=True)
+        self.llm_model_id = llm_model
+        self.sd_model_id = sd_model
+        self.tts_model_id = tts_model
+        self.tts_voice_id = tts_voice
+        self.height = height
+        self.width = width
+        self.style = style
 
-    def save_script_and_images(self, script, script_and_images):
+    def save_script(self, script):
         with open(f"{self.script_dir}/script.txt", "w", encoding='utf-8') as f:
             f.write(script)
-        for i, item in enumerate(script_and_images):
-            with open(f"{self.script_dir}/script_and_images_{str(i).zfill(3)}.txt", "w", encoding='utf-8') as f:
-                json.dump(item, f, ensure_ascii=False)
 
-    def load_scripts(self):
-        scripts_and_images = []
-        i = 0
-        while True:
-            try:
-                with open(f"{self.script_dir}/script_and_images_{str(i).zfill(3)}.txt", "r", encoding='utf-8') as f:
-                    item = json.load(f)
-                    scripts_and_images.append(item)
-                i += 1
-            except FileNotFoundError:
-                break
-        return scripts_and_images
+    def save_storyboard(self, storyboard):
+        # Guardar la versión completa del storyboard
+        with open(f"{self.script_dir}/storyboard.json", "w", encoding='utf-8') as f:
+            json.dump(storyboard, f, ensure_ascii=False, indent=2)
+        
+        # Guardar los elementos individuales del storyboard
+        for i, item in enumerate(storyboard):
+            with open(f"{self.script_dir}/storyboard{str(i).zfill(3)}.txt", "w", encoding='utf-8') as f:
+                json.dump(item, f, ensure_ascii=False, indent=2)
 
-    def generate_script(self, video_theme):
-        print(f"Generating script for video {self.script_dir}...")
-        script = gpt.generate_video_script(video_theme)
-        print(script)
+    def load_storyboard(self):
+        try:
+            with open(f"{self.script_dir}/storyboard.json", "r", encoding='utf-8') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print("Error: storyboard.json not found.")
+            return []
 
-        print(f"Generating script and images for video {self.script_dir}...")
+    def generate_storyboard(self, video_theme, words_number=80):
+        print("Generating script for video...")
+        llm = LLM(model_id=self.llm_model_id)
+        script = llm.generate_video_script(video_theme, words_number)
+        self.save_script(script)
+
+        print("Generating storyboard for video...")
         for attempt in range(self.MAX_ATTEMPTS):
             try:
-                script_and_images = gpt.generate_images_description_and_split_text(script)
+                storyboard = llm.generate_storyboard(script)
                 break
             except Exception as e:
                 if attempt < self.MAX_ATTEMPTS - 1: 
                     continue
                 else:
                     raise e
+        self.save_storyboard(storyboard)
 
-        self.save_script_and_images(script, script_and_images)
+        return storyboard
 
     def generate_audio(self):
-        script_and_images = self.load_scripts()
+        storyboard = self.load_storyboard()
 
         print("Generating audios...")
-        for i, sentence in tqdm(enumerate(script_and_images), total=len(script_and_images), desc="Generating gtts"):
+        for i , scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating tts"):
             TTS.generate_tts(
-                model=definitions.TTSModels.GOOGLE,
-                text=sentence.get('text'),
-                output_file=f"{self.audio_dir}/{i}.mp3"
+                text=scene.get('text'),
+                output_file=f"{self.audio_dir}/{i}.mp3",
+                model=self.tts_model_id,
+                voice=self.tts_voice_id,
             )
 
     def generate_images(self):
-        script_and_images = self.load_scripts()
+        storyboard = self.load_storyboard()
 
-        sd = SD(model_id=definitions.SDModels.FAKE)
+        sd = SD(model_id=self.sd_model_id)
         print("Generating images...")
-        for i, sentence in tqdm(enumerate(script_and_images), total=len(script_and_images), desc="Generating images"):
+        for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating images"):
             image = sd.generate_image(
-                prompt=sentence.get('image') + " " + self.style,
+                prompt=scene.get('image') + " " + self.style,
                 output_path=f"{self.image_dir}/{i}.png",
-                height=1280,
-                width=720,
-                guidance_scale=0,
-                steps=0
+                height=self.height,
+                width=self.width,
             )
             image.save(f"{self.image_dir}/{i}.png")
 
-    def generate_final_video(self, output_dir):
+    def edit_video(self, output_dir):
+        print("Generatin video")
         video_editor.generate_video(
             images_path=self.image_dir,
             audios_path=self.audio_dir,
@@ -100,26 +115,45 @@ class VideoGenerator:
         )
 
     def generate_video(self, tasks, video_theme, output_dir):
-        if definitions.VideatorTasks.SCRIPT in tasks or definitions.VideatorTasks.FULL in tasks:
-            self.generate_script(video_theme)
-        if definitions.VideatorTasks.AUDIO in tasks or definitions.VideatorTasks.FULL in tasks:
+        print("\n" + "=" * 50)
+        print("     G E N E R A T I N G   V I D E O")
+        print("=" * 50)
+        print(f"Theme: {video_theme}")
+        print("Tasks:")
+        for task in tasks:
+            print(f"  - {task.name}")
+        print("=" * 50)
+
+        if VideatorTasks.SCRIPT in tasks or VideatorTasks.FULL in tasks:
+            self.generate_storyboard(video_theme)
+        if VideatorTasks.AUDIO in tasks or VideatorTasks.FULL in tasks:
             self.generate_audio()
-        if definitions.VideatorTasks.IMAGES in tasks or definitions.VideatorTasks.FULL in tasks:
+        if VideatorTasks.IMAGES in tasks or VideatorTasks.FULL in tasks:
             self.generate_images()
-        if definitions.VideatorTasks.VIDEO in tasks or definitions.VideatorTasks.FULL in tasks:
-            self.generate_final_video(output_dir)
+        if VideatorTasks.VIDEO in tasks or VideatorTasks.FULL in tasks:
+            self.edit_video(output_dir)
 
 
 video_num = 1
 video_theme = 'Reflexion sobre el amor'
-vg = VideoGenerator(assets_dir=f"./tmp/{video_num}", style="old painting")
+
+vg = VideoGenerator(
+    llm_model=LLMModels.GPT4o,
+    tts_model=TTSModels.GOOGLE,
+    tts_voice=Voices.Google.SPAIN,
+    sd_model=SDModels.SDXL_TURBO,
+    height=1344,
+    width=768,
+    assets_dir=f"./tmp/{video_num}",
+    style="old painting"
+)
 vg.generate_video(
     tasks=[
-        # definitions.VideatorTasks.SCRIPT,
-        # definitions.VideatorTasks.AUDIO,
-        # definitions.VideatorTasks.IMAGES,
-        # definitions.VideatorTasks.VIDEO,
-        definitions.VideatorTasks.FULL
+        # VideatorTasks.SCRIPT,
+        # VideatorTasks.AUDIO,
+        VideatorTasks.IMAGES,
+        # VideatorTasks.VIDEO,
+        # VideatorTasks.FULL
     ],
     video_theme=video_theme, 
     output_dir=f"./output/{video_num}.mp4"
