@@ -1,9 +1,8 @@
-from typing import Optional
-
-from diffusers import AutoPipelineForText2Image
-from PIL import Image, ImageDraw, ImageFont
 import random
 import torch
+from transformers import T5EncoderModel, BitsAndBytesConfig
+from diffusers import AutoPipelineForText2Image, StableDiffusion3Pipeline
+from PIL import Image, ImageDraw, ImageFont
 
 from definitions import SDModels
 
@@ -11,17 +10,77 @@ class SD:
     def __init__(self, model_id: SDModels = SDModels.FAKE, cache_dir: str = './models', low_vram: bool = True):
         self.model_id = model_id.value
         self.cache_dir = cache_dir
-        self.pipe = None
-        if self.model_id != SDModels.FAKE.value:
-            self.load_pipeline(low_vram)
+        self.pipe = self._load_pipeline(model_id, low_vram)
 
-    def generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 15, guidance_scale: float = 0.0) -> Image.Image:
+    def _load_pipeline(self, model_id: SDModels, low_vram: bool) -> None:
+        if model_id == SDModels.FAKE.value:
+            return None
+        elif model_id == SDModels.SDXL_TURBO:
+            return self._load_SDXL_TURBO_pipeline(low_vram)
+        elif model_id == SDModels.SD3:
+            return self._load_SD3_pipeline(low_vram)
+
+    def _load_SDXL_TURBO_pipeline(self, low_vram: bool) -> AutoPipelineForText2Image:
+        pipe = AutoPipelineForText2Image.from_pretrained(
+                self.model_id,
+                torch_dtype=torch.float16,
+                variant="fp16",
+                cache_dir=self.cache_dir
+            )
+        pipe.to("cuda")
+        if low_vram:
+            pipe.enable_attention_slicing()
+        return pipe
+    
+    def _load_SD3_pipeline(self, low_vram):
+        if low_vram:
+            pipe = StableDiffusion3Pipeline.from_pretrained(
+                self.model_id, 
+                torch_dtype=torch.float16,
+                cache_dir=self.cache_dir,
+                text_encoder_3=None,
+                tokenizer_3=None
+            )
+            pipe.to("cuda")
+
+        else:
+            pipe = StableDiffusion3Pipeline.from_pretrained(
+                self.model_id, 
+                torch_dtype=torch.float16,
+                cache_dir=self.cache_dir,
+            )
+        return pipe
+
+    def generate_image(self, 
+            prompt: str, 
+            output_path: str, 
+            height: int = 1280, 
+            width: int = 768, 
+            steps: int = 15,
+            guidance_scale: float = 0.0
+        ) -> Image.Image:
         if self.model_id == SDModels.FAKE.value:
             return self.generate_fake_image(prompt, output_path, height, width, steps, guidance_scale)
-        
-        if self.pipe is None:
-            raise ValueError("Pipeline not initialized. Call load_pipeline first.")
+        elif self.model_id == SDModels.SDXL_TURBO.value:
+            return self.SDXL_TURBO_generate_image(
+                prompt=prompt,
+                output_path=output_path,
+                steps=steps,
+                height=height,
+                width=width,
+                guidance_scale=guidance_scale
+            )
+        elif self.model_id == SDModels.SD3.value:
+            return self.SD3_generate_image(
+                prompt=prompt,
+                output_path=output_path,
+                steps=steps,
+                height=height,
+                width=width,
+                guidance_scale=guidance_scale
+            )
 
+    def SDXL_TURBO_generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 5, guidance_scale: float = 0.0) -> Image.Image:
         image = self.pipe(
             prompt=prompt,
             num_inference_steps=steps,
@@ -29,33 +88,18 @@ class SD:
             width=width,
             guidance_scale=guidance_scale
         ).images[0]
-        
         image.save(output_path)
         return image
-
-    def load_pipeline(self, low_vram: bool) -> None:
-        self.pipe = AutoPipelineForText2Image.from_pretrained(
-            self.model_id,
-            torch_dtype=torch.float16,
-            variant="fp16",
-            cache_dir=self.cache_dir
-        )
-        self.pipe.to("cuda")
-        if low_vram:
-            self.pipe.enable_attention_slicing()
-
-    def SDXL_TURBO_generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 15, guidance_scale: float = 0.0) -> Image.Image:
-        if self.pipe is None:
-            raise ValueError("Pipeline not initialized. Call load_pipeline first.")
-
+    
+    def SD3_generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 28, guidance_scale: float = 4.0) -> Image.Image:
         image = self.pipe(
             prompt=prompt,
+            negative_prompt='',
             num_inference_steps=steps,
             height=height,
             width=width,
             guidance_scale=guidance_scale
         ).images[0]
-        
         image.save(output_path)
         return image
     

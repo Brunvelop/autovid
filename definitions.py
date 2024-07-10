@@ -35,6 +35,7 @@ class TTSModels(Enum):
 class SDModels(Enum):
     FAKE = 'FAKE'
     SDXL_TURBO = 'stabilityai/sdxl-turbo'
+    SD3 = 'stabilityai/stable-diffusion-3-medium-diffusers'
     # SDXL_BASE = "stabilityai/stable-diffusion-xl-base-1.0"
     # SD_2_1 = "stabilityai/stable-diffusion-2-1"
     # SD_1_5 = "runwayml/stable-diffusion-v1-5"
