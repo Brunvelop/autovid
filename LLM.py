@@ -19,10 +19,6 @@ class ListOfDictsOutputParser:
     def parse(self, output):
         return json.loads(output)
 
-class ListOfStringsOutputParser:
-    def parse(self, output):
-        return ast.literal_eval(output)
-
 class LLM():
     def __init__(self, model_id: LLMModels = LLMModels.GPT4o, cache_dir: str = './models', low_vram: bool = False):
         load_dotenv()
@@ -42,7 +38,7 @@ class LLM():
             tokenizer = AutoTokenizer.from_pretrained(model_id.value, trust_remote_code=True, cache_dir=self.cache_dir)
             model = AutoModelForCausalLM.from_pretrained(
                 model_id.value,
-                # device_map="auto",
+                device_map="auto",
                 # device=0,  # -1 for CPU
                 trust_remote_code=True,
                 load_in_4bit=True,
@@ -117,54 +113,6 @@ class LLM():
         storyboard = output_parser.parse(output.content)
         storyboard = [Scene(text=scene['text'], image=scene['image']) for scene in storyboard]
         return storyboard
-
-    def generate_images_description_and_split_text(self, text: str) -> List[Dict[str, str]]:
-
-        template = ChatPromptTemplate.from_messages([
-            ("system", 
-                prompts.OutputFormats.ENG.GENERATE_STORYBOARD
-            ),
-            ("human", "Create a storyboard for this text: {text}. Return only an array [] of scenes."),
-        ])
-
-        output_format = prompts.generate_images_description_and_split_text_output_format
-        messages = template.format_messages(
-            text=text,
-            output_format=output_format
-        )
-
-
-        output_parser = ListOfDictsOutputParser()
-
-        output = self.chat_model(messages)
-        output_parsed = output_parser.parse(output.content)
-        return output_parsed
-
-
-def sort_scripts(array_scripts):
-    load_dotenv()
-
-    chat_model = ChatOpenAI(
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        temperature=1,
-        model_name='gpt-4' # type: ignore
-    )
-
-    template = ChatPromptTemplate.from_messages([
-        ("system", "{output_format}"),
-        ("human", "Ordena de mayor potencial viral a menor estos textos para videos {content}. {output_format}"),
-    ])
-
-    output_format = '''Recuerda devolver un array de la forma [2,1,4,0,3,...]'''
-    messages = template.format_messages(
-        output_format=output_format,
-        content=array_scripts
-    )
-
-    output = chat_model(messages)
-
-    return output.content
-
 
 
 llm = LLM(model_id=LLMModels.GPT4o)

@@ -1,29 +1,30 @@
 from enum import Enum, auto
 from typing import List, Dict, TypedDict
 
-class GTTSVoices(Enum):
-    MEXICO = {'lang': 'es', 'tld': 'com.mx'}
-    SPAIN = {'lang': 'es', 'tld': 'es'}
-    USA = {'lang': 'es', 'tld': 'us'}
+class Voices:
+    class Google(Enum):
+        MEXICO = {'lang': 'es', 'tld': 'com.mx'}
+        SPAIN = {'lang': 'es', 'tld': 'es'}
+        USA = {'lang': 'es', 'tld': 'us'}
 
-class AzureVoices(Enum):
-    ARGENTINA = 'es-AR-ElenaNeural'
-    BOLIVIA = 'es-BO-MarceloNeural'
-    CHILE = 'es-CL-LorenzoNeural'
-    COSTA_RICA = 'es-CR-JuanNeural'
-    DOMINICAN_REPUBLIC = 'es-DO-RamonaNeural'
-    GUATEMALA = 'es-GT-AndresNeural'
-    HONDURAS = 'es-HN-KarlaNeural'
-    PANAMA = 'es-PA-RobertoNeural'
-    PUERTO_RICO = 'es-PR-KarinaNeural'
+    class Azure(Enum):
+        ARGENTINA = 'es-AR-ElenaNeural'
+        BOLIVIA = 'es-BO-MarceloNeural'
+        CHILE = 'es-CL-LorenzoNeural'
+        COSTA_RICA = 'es-CR-JuanNeural'
+        DOMINICAN_REPUBLIC = 'es-DO-RamonaNeural'
+        GUATEMALA = 'es-GT-AndresNeural'
+        HONDURAS = 'es-HN-KarlaNeural'
+        PANAMA = 'es-PA-RobertoNeural'
+        PUERTO_RICO = 'es-PR-KarinaNeural'
 
-class OpenAIVoices(Enum):
-    ALLOY = 'alloy'
-    ECHO = 'echo'
-    FABLE = 'fable'
-    ONYX = 'onyx'
-    NOVA = 'nova'
-    SHIMMER = 'shimmer'
+    class OpenAI(Enum):
+        ALLOY = 'alloy'
+        ECHO = 'echo'
+        FABLE = 'fable'
+        ONYX = 'onyx'
+        NOVA = 'nova'
+        SHIMMER = 'shimmer'
 
 class TTSModels(Enum):
     GOOGLE = 'google'

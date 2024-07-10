@@ -2,24 +2,31 @@ import os
 import asyncio
 from pathlib import Path
 from typing import Optional
-
 from dotenv import load_dotenv
+
 import edge_tts
 from gtts import gTTS
 from openai import OpenAI
+
 import definitions
 
 class TTS:
     @staticmethod
-    def generate_gtts(text: str, output_file: str,
-                       voice: definitions.GTTSVoices = definitions.GTTSVoices.SPAIN) -> str:
+    def generate_gtts(
+            text: str,
+            output_file: str,
+            voice: definitions.Voices.Google = definitions.Voices.Google.SPAIN
+        ) -> str:
         tts = gTTS(text, lang=voice.value['lang'], tld=voice.value['tld'])
         tts.save(output_file)
         return output_file
 
     @staticmethod
-    def generate_edgetts(text: str, output_file: str,
-                        voice: definitions.AzureVoices = definitions.AzureVoices.BOLIVIA) -> str:
+    def generate_edgetts(
+            text: str,
+            output_file: str,
+            voice: definitions.Voices.Azure = definitions.Voices.Azure.BOLIVIA
+        ) -> str:
         async def amain() -> None:
             communicate = edge_tts.Communicate(text, voice.value)
             await communicate.save(output_file)
@@ -34,9 +41,12 @@ class TTS:
         return output_file
 
     @staticmethod
-    def generate_openai_tts(text: str, output_file: str,
-                            voice: definitions.OpenAIVoices = definitions.OpenAIVoices.ALLOY,
-                            model: definitions.TTSModels = definitions.TTSModels.OPENAI_TTS_1) -> str:
+    def generate_openai_tts(
+            text: str, 
+            output_file: str,
+            voice: definitions.Voices.OpenAI = definitions.Voices.OpenAI.ALLOY,
+            model: definitions.TTSModels = definitions.TTSModels.OPENAI_TTS_1
+        ) -> str:
         load_dotenv()
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -52,19 +62,19 @@ class TTS:
 
     @staticmethod
     def generate_tts(
-        text: str, 
-        output_file: str,
-        model: definitions.TTSModels,
-        voice: Optional[definitions.GTTSVoices or definitions.AzureVoices or definitions.OpenAIVoices] = None
-    ) -> str:
+            text: str, 
+            output_file: str,
+            model: definitions.TTSModels,
+            voice: Optional[definitions.Voices] = None
+        ) -> str:
         if model == definitions.TTSModels.GOOGLE:
-            voice = voice or definitions.GTTSVoices.SPAIN
+            voice = voice or definitions.Voices.Google.SPAIN
             return TTS.generate_gtts(text, output_file, voice)
         elif model == definitions.TTSModels.AZURE:
-            voice = voice or definitions.AzureVoices.BOLIVIA
+            voice = voice or definitions.Voices.Azure.BOLIVIA
             return TTS.generate_edgetts(text, output_file, voice)
         elif model == definitions.TTSModels.OPENAI_TTS_1 or definitions.TTSModels.OPENAI_TTS_1_HD:
-            voice = voice or definitions.OpenAIVoices.ALLOY
+            voice = voice or definitions.Voices.OpenAI.ALLOY
             return TTS.generate_openai_tts(text, output_file, voice, model)
         else:
             raise ValueError(f"Modelo TTS no soportado: {model}")
