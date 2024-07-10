@@ -36,11 +36,6 @@ class SDModels(Enum):
     FAKE = 'FAKE'
     SDXL_TURBO = 'stabilityai/sdxl-turbo'
     SD3 = 'stabilityai/stable-diffusion-3-medium-diffusers'
-    # SDXL_BASE = "stabilityai/stable-diffusion-xl-base-1.0"
-    # SD_2_1 = "stabilityai/stable-diffusion-2-1"
-    # SD_1_5 = "runwayml/stable-diffusion-v1-5"
-    # DREAMSHAPER_8 = "Lykon/dreamshaper-8"
-    # REALISTIC_VISION_5_1 = "SG161222/Realistic_Vision_V5.1_noVAE"
 
 class LLMModels(Enum):
     GPT4o = 'gpt-4o'
