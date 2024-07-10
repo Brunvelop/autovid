@@ -20,7 +20,8 @@ class VideoGenerator:
         tts_voice: Union[Voices.Google, Voices.Azure, Voices.OpenAI] = Voices.OpenAI.NOVA,
         height: int = 1280, 
         width: int = 768, 
-        style: str = None
+        style: str = None,
+        low_vram: bool = True
     ):
         self.assets_dir = assets_dir
         self.audio_dir = f"{self.assets_dir}/audios"
@@ -37,6 +38,7 @@ class VideoGenerator:
         self.height = height
         self.width = width
         self.style = style
+        self.low_vram = low_vram
 
     def save_script(self, script):
         with open(f"{self.script_dir}/script.txt", "w", encoding='utf-8') as f:
@@ -95,7 +97,7 @@ class VideoGenerator:
     def generate_images(self):
         storyboard = self.load_storyboard()
 
-        sd = SD(model_id=self.sd_model_id)
+        sd = SD(model_id=self.sd_model_id, low_vram=self.low_vram)
         print("Generating images...")
         for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating images"):
             image = sd.generate_image(
@@ -134,27 +136,36 @@ class VideoGenerator:
             self.edit_video(output_dir)
 
 
-video_num = 1
-video_theme = 'Reflexion sobre el amor'
+import time
+start_time = time.time()
+
+video_num = 5
+video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un gato que se convirtió en millonario'
 
 vg = VideoGenerator(
     llm_model=LLMModels.GPT4o,
-    tts_model=TTSModels.GOOGLE,
-    tts_voice=Voices.Google.SPAIN,
+    tts_model=TTSModels.OPENAI_TTS_1,
+    tts_voice=Voices.OpenAI.NOVA,
     sd_model=SDModels.SDXL_TURBO,
-    height=1344,
-    width=768,
+    height=912,
+    width=432,
     assets_dir=f"./tmp/{video_num}",
-    style="old painting"
+    style="3d animation digital art 4k detailed",
+    low_vram=False
 )
 vg.generate_video(
     tasks=[
         # VideatorTasks.SCRIPT,
         # VideatorTasks.AUDIO,
-        VideatorTasks.IMAGES,
+        # VideatorTasks.IMAGES,
         # VideatorTasks.VIDEO,
-        # VideatorTasks.FULL
+        VideatorTasks.FULL
     ],
     video_theme=video_theme, 
     output_dir=f"./output/{video_num}.mp4"
 )
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+print(f"\nGenerated in: {elapsed_time:.2f} s")
