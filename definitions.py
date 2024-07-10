@@ -25,14 +25,11 @@ class OpenAIVoices(Enum):
     NOVA = 'nova'
     SHIMMER = 'shimmer'
 
-class OpenAITTSModels(Enum):
-    TTS_1 = 'tts-1'
-    TTS_1_HD = 'tts-1-hd'
-
 class TTSModels(Enum):
-    GOOGLE = auto()
-    AZURE = auto()
-    OPENAI = auto()
+    GOOGLE = 'google'
+    AZURE = 'azure'
+    OPENAI_TTS_1 = 'tts-1'
+    OPENAI_TTS_1_HD = 'tts-1-hd'
 
 class SDModels(Enum):
     FAKE = 'FAKE'

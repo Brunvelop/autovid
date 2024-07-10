@@ -36,7 +36,7 @@ class TTS:
     @staticmethod
     def generate_openai_tts(text: str, output_file: str,
                             voice: definitions.OpenAIVoices = definitions.OpenAIVoices.ALLOY,
-                            model: definitions.OpenAITTSModels = definitions.OpenAITTSModels.TTS_1) -> str:
+                            model: definitions.TTSModels = definitions.TTSModels.OPENAI_TTS_1) -> str:
         load_dotenv()
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -52,10 +52,10 @@ class TTS:
 
     @staticmethod
     def generate_tts(
-        text: str, output_file: str,
+        text: str, 
+        output_file: str,
         model: definitions.TTSModels,
-        voice: Optional[definitions.GTTSVoices or definitions.AzureVoices or definitions.OpenAIVoices] = None,
-        tts_model: Optional[definitions.OpenAITTSModels] = None
+        voice: Optional[definitions.GTTSVoices or definitions.AzureVoices or definitions.OpenAIVoices] = None
     ) -> str:
         if model == definitions.TTSModels.GOOGLE:
             voice = voice or definitions.GTTSVoices.SPAIN
@@ -63,9 +63,8 @@ class TTS:
         elif model == definitions.TTSModels.AZURE:
             voice = voice or definitions.AzureVoices.BOLIVIA
             return TTS.generate_edgetts(text, output_file, voice)
-        elif model == definitions.TTSModels.OPENAI:
+        elif model == definitions.TTSModels.OPENAI_TTS_1 or definitions.TTSModels.OPENAI_TTS_1_HD:
             voice = voice or definitions.OpenAIVoices.ALLOY
-            tts_model = tts_model or definitions.OpenAITTSModels.TTS_1
-            return TTS.generate_openai_tts(text, output_file, voice, tts_model)
+            return TTS.generate_openai_tts(text, output_file, voice, model)
         else:
             raise ValueError(f"Modelo TTS no soportado: {model}")
