@@ -11,6 +11,26 @@ from openai import OpenAI
 import definitions
 
 class TTS:
+    @classmethod
+    def generate_tts(
+            cls,
+            text: str, 
+            output_file: str,
+            model: definitions.TTSModels,
+            voice: Optional[definitions.Voices] = None,
+        ) -> str:
+        if model == definitions.TTSModels.GOOGLE:
+            voice = voice or definitions.Voices.Google.SPAIN
+            return cls.generate_gtts(text, output_file, voice)
+        elif model == definitions.TTSModels.AZURE:
+            voice = voice or definitions.Voices.Azure.BOLIVIA
+            return cls.generate_edgetts(text, output_file, voice)
+        elif model == definitions.TTSModels.OPENAI_TTS_1 or definitions.TTSModels.OPENAI_TTS_1_HD:
+            voice = voice or definitions.Voices.OpenAI.ALLOY
+            return cls.generate_openai_tts(text, output_file, voice, model)
+        else:
+            raise ValueError(f"Modelo TTS no soportado: {model}")
+
     @staticmethod
     def generate_gtts(
             text: str,
@@ -59,22 +79,3 @@ class TTS:
 
         response.stream_to_file(speech_file_path)
         return str(speech_file_path)
-
-    @staticmethod
-    def generate_tts(
-            text: str, 
-            output_file: str,
-            model: definitions.TTSModels,
-            voice: Optional[definitions.Voices] = None,
-        ) -> str:
-        if model == definitions.TTSModels.GOOGLE:
-            voice = voice or definitions.Voices.Google.SPAIN
-            return TTS.generate_gtts(text, output_file, voice)
-        elif model == definitions.TTSModels.AZURE:
-            voice = voice or definitions.Voices.Azure.BOLIVIA
-            return TTS.generate_edgetts(text, output_file, voice)
-        elif model == definitions.TTSModels.OPENAI_TTS_1 or definitions.TTSModels.OPENAI_TTS_1_HD:
-            voice = voice or definitions.Voices.OpenAI.ALLOY
-            return TTS.generate_openai_tts(text, output_file, voice, model)
-        else:
-            raise ValueError(f"Modelo TTS no soportado: {model}")
