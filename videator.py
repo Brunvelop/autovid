@@ -1,13 +1,13 @@
 import os
 import json
 from tqdm import tqdm
-from typing import Union
+from typing import Union, List
 
 from sd import SD
 from LLM import LLM
 from tts import TTS
 import video_editor
-from definitions import LLMModels, TTSModels, SDModels, Voices, VideatorTasks
+from definitions import LLMModels, TTSModels, SDModels, Voices, VideatorTasks, Storyboard, Scene
 
 class VideoGenerator:
     MAX_ATTEMPTS = 2
@@ -40,21 +40,15 @@ class VideoGenerator:
         self.style = style
         self.low_vram = low_vram
 
-    def save_script(self, script):
+    def _save_script(self, script: str) -> None:
         with open(f"{self.script_dir}/script.txt", "w", encoding='utf-8') as f:
             f.write(script)
 
-    def save_storyboard(self, storyboard):
-        # Guardar la versión completa del storyboard
+    def _save_storyboard(self, storyboard: Storyboard) -> None:
         with open(f"{self.script_dir}/storyboard.json", "w", encoding='utf-8') as f:
             json.dump(storyboard, f, ensure_ascii=False, indent=2)
-        
-        # Guardar los elementos individuales del storyboard
-        for i, item in enumerate(storyboard):
-            with open(f"{self.script_dir}/storyboard{str(i).zfill(3)}.txt", "w", encoding='utf-8') as f:
-                json.dump(item, f, ensure_ascii=False, indent=2)
 
-    def load_storyboard(self):
+    def _load_storyboard(self) -> Storyboard:
         try:
             with open(f"{self.script_dir}/storyboard.json", "r", encoding='utf-8') as f:
                 return json.load(f)
@@ -62,11 +56,11 @@ class VideoGenerator:
             print("Error: storyboard.json not found.")
             return []
 
-    def generate_storyboard(self, video_theme, words_number=80):
+    def generate_storyboard(self, video_theme: str, words_number: int = 80) -> Storyboard:
         print("Generating script for video...")
         llm = LLM(model_id=self.llm_model_id)
         script = llm.generate_video_script(video_theme, words_number)
-        self.save_script(script)
+        self._save_script(script)
 
         print("Generating storyboard for video...")
         for attempt in range(self.MAX_ATTEMPTS):
@@ -78,12 +72,12 @@ class VideoGenerator:
                     continue
                 else:
                     raise e
-        self.save_storyboard(storyboard)
+        self._save_storyboard(storyboard)
 
         return storyboard
 
-    def generate_audio(self):
-        storyboard = self.load_storyboard()
+    def generate_audio(self) -> None:
+        storyboard = self._load_storyboard()
 
         print("Generating audios...")
         for i , scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating tts"):
@@ -94,8 +88,8 @@ class VideoGenerator:
                 voice=self.tts_voice_id,
             )
 
-    def generate_images(self):
-        storyboard = self.load_storyboard()
+    def generate_images(self) -> None:
+        storyboard = self._load_storyboard()
 
         sd = SD(model_id=self.sd_model_id, low_vram=self.low_vram)
         print("Generating images...")
@@ -108,7 +102,7 @@ class VideoGenerator:
             )
             image.save(f"{self.image_dir}/{i}.png")
 
-    def edit_video(self, output_dir):
+    def edit_video(self, output_dir: str) -> None:
         print("Generatin video")
         video_editor.generate_video(
             images_path=self.image_dir,
@@ -116,7 +110,7 @@ class VideoGenerator:
             output_path=output_dir
         )
 
-    def generate_video(self, tasks, video_theme, output_dir):
+    def videate(self, tasks: List[VideatorTasks], video_theme: str, output_dir: str) -> None:
         print("\n" + "=" * 50)
         print("     G E N E R A T I N G   V I D E O")
         print("=" * 50)
@@ -139,13 +133,13 @@ class VideoGenerator:
 import time
 start_time = time.time()
 
-video_num = 5
+video_num = 2
 video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un gato que se convirtió en millonario'
 
 vg = VideoGenerator(
     llm_model=LLMModels.GPT4o,
     tts_model=TTSModels.OPENAI_TTS_1,
-    tts_voice=Voices.OpenAI.NOVA,
+    tts_voice=Voices.OpenAI.ECHO,
     sd_model=SDModels.SDXL_TURBO,
     height=912,
     width=432,
@@ -153,7 +147,7 @@ vg = VideoGenerator(
     style="3d animation digital art 4k detailed",
     low_vram=False
 )
-vg.generate_video(
+vg.videate(
     tasks=[
         # VideatorTasks.SCRIPT,
         # VideatorTasks.AUDIO,

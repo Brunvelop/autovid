@@ -30,7 +30,7 @@ class LLM():
         if model_id == LLMModels.GPT4o:
             return ChatOpenAI(
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
-                temperature=1,
+                temperature=0.8,
                 model_name=model_id.value
             )
         elif model_id == LLMModels.INTERNLM7b4b or model_id ==LLMModels.INTERNLM:
