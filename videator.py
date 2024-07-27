@@ -133,13 +133,13 @@ class VideoGenerator:
 import time
 start_time = time.time()
 
-video_num = 2
+video_num = 5
 video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un gato que se convirtió en millonario'
 
 vg = VideoGenerator(
     llm_model=LLMModels.GPT4o,
-    tts_model=TTSModels.OPENAI_TTS_1,
-    tts_voice=Voices.OpenAI.ECHO,
+    tts_model=TTSModels.AZURE,
+    tts_voice=Voices.Azure.DOMINICAN_REPUBLIC,
     sd_model=SDModels.SDXL_TURBO,
     height=912,
     width=432,

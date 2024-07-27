@@ -1,7 +1,9 @@
 import os
 import random
 import tempfile
+from typing import Callable
 
+import numpy as np
 import moviepy.editor as mp
 import moviepy.video.fx.all as vfx
 import cv2
@@ -11,12 +13,12 @@ from PIL import Image
 
 import vid_transition
 
-
-def add_positional_noise(clip, noise_level=5, inertia=0.9):
+#VIDEO EFFECTS:
+def add_positional_noise(clip: mp.VideoClip, noise_level: int = 5, inertia: float = 0.9) -> mp.VideoClip:
     last_dx = 0
     last_dy = 0
 
-    def effect(get_frame, t):
+    def effect(get_frame: callable, t: float) -> np.ndarray:
         nonlocal last_dx, last_dy
         frame = get_frame(t)
         h, w = frame.shape[:2]
@@ -44,10 +46,10 @@ def add_positional_noise(clip, noise_level=5, inertia=0.9):
     return clip.fl(effect)
 
 
-def zoom_in_face_effect(clip, zoom_ratio=0.04, face_zoom=True):
+def zoom_in_face_effect(clip: mp.VideoClip, zoom_ratio: float = 0.04, face_zoom: bool = True) -> mp.VideoClip:
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-    def effect(get_frame, t):
+    def effect(get_frame: Callable[[float], np.ndarray], t: float) -> np.ndarray:
         frame = get_frame(t)
         img = Image.fromarray(frame)
         base_size = img.size
@@ -107,38 +109,18 @@ def zoom_in_face_effect(clip, zoom_ratio=0.04, face_zoom=True):
 
     return clip.fl(effect)
 
-def get_size(aspect_ratio):
-    if aspect_ratio == '9:16':
-        return (720, 1280)
-    elif aspect_ratio == '16:9':
-        return (1920, 1080)
+def _create_or_clear_transitions_folder(transitions_folder='./tmp/transitions') -> None:
+    os.makedirs(transitions_folder, exist_ok=True)
+    for file in os.listdir(transitions_folder):
+        os.remove(os.path.join(transitions_folder, file))
 
-def clear_transitions_folder():
-    os.makedirs('./tmp/transitions', exist_ok=True)
-    for file in os.listdir('./tmp/transitions'):
-        os.remove(os.path.join('./tmp/transitions', file))
-
-def get_audio_and_duration(n, audios_path):
+def get_audio_and_duration(n: int, audios_path: str) -> tuple[mp.AudioFileClip, float]:
     audio = mp.AudioFileClip(os.path.join(audios_path, str(n) + ".mp3"))
     audio = audio.set_duration(audio.duration - 0.2)
     duration = audio.duration + 0.2
     return audio, duration
 
-def get_clip(pre_clip, aspect_ratio, size):
-    if aspect_ratio == '9:16':
-        return vfx.crop(
-            pre_clip,
-            width=int(pre_clip.size[1]*9/16), height=int(pre_clip.size[1]),
-            x_center=int(pre_clip.size[0]/2), y_center=int(pre_clip.size[1]/2)
-        ).resize(size)
-    elif aspect_ratio == '16:9':
-        return vfx.crop(
-            pre_clip,
-            width=int(pre_clip.size[0]), height=int(pre_clip.size[0]*16/9),
-            x_center=int(pre_clip.size[0]/2), y_center=int(pre_clip.size[1]/2)
-        ).resize(size)
-
-def generate_transition(slide1, slide2, num_frames):
+def generate_transition(slide1: mp.VideoClip, slide2: mp.VideoClip, num_frames: int) -> tuple[mp.VideoFileClip, mp.VideoFileClip]:
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir='./tmp/transitions') as temp1, \
         tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir='./tmp/transitions') as temp2, \
         tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir='./tmp/transitions') as temp_transition:
@@ -168,14 +150,21 @@ def generate_transition(slide1, slide2, num_frames):
         print(f"Transition clips: {transition_clip_1, transition_clip_2}")
 
         return transition_clip_1, transition_clip_2
-
-def adjust_video_duration(video):
+    
+def adjust_video_duration(video: mp.VideoClip) -> mp.VideoClip:
     if video.duration >= 59:
         return video.fx(vfx.speedx, video.duration/59).set_fps(30)
     return video
 
-def generate_video(fps=30, transition_n_frames=6, images_path='tmp/images', audios_path='tmp/audios', output_path='output/video.mp4'):
-    clear_transitions_folder()
+def generate_video(
+    fps: int = 30,
+    transition_n_frames: int = 6,
+    images_path: str = 'tmp/images',
+    audios_path: str = 'tmp/audios',
+    transitions_path: str = 'tmp/transitions',
+    output_path: str = 'output/video.mp4'
+) -> None:
+    _create_or_clear_transitions_folder(transitions_path)
 
     images = os.listdir(images_path)
     timeline = []
