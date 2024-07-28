@@ -4,6 +4,7 @@ from tqdm import tqdm
 from typing import Union, List
 
 from sd import SD
+from writer import Writer
 from LLM import LLM
 from tts import TTS
 import video_editor
@@ -58,14 +59,14 @@ class VideoGenerator:
 
     def generate_storyboard(self, video_theme: str, words_number: int = 80) -> Storyboard:
         print("Generating script for video...")
-        llm = LLM(model_id=self.llm_model_id)
-        script = llm.generate_video_script(video_theme, words_number)
+        writer = Writer(LLM(model_id=self.llm_model_id))
+        script = writer.generate_video_script(video_theme, words_number)
         self._save_script(script)
 
         print("Generating storyboard for video...")
         for attempt in range(self.MAX_ATTEMPTS):
             try:
-                storyboard = llm.generate_storyboard(script)
+                storyboard = writer.generate_storyboard(script)
                 break
             except Exception as e:
                 if attempt < self.MAX_ATTEMPTS - 1: 
@@ -130,36 +131,37 @@ class VideoGenerator:
             self.edit_video(output_dir)
 
 
-import time
-start_time = time.time()
+if __name__ == "__main__":
+    import time
+    start_time = time.time()
 
-video_num = 5
-video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un gato que se convirtió en millonario'
+    video_num = 9
+    video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
 
-vg = VideoGenerator(
-    llm_model=LLMModels.GPT4o,
-    tts_model=TTSModels.AZURE,
-    tts_voice=Voices.Azure.DOMINICAN_REPUBLIC,
-    sd_model=SDModels.SDXL_TURBO,
-    height=912,
-    width=432,
-    assets_dir=f"./tmp/{video_num}",
-    style="3d animation digital art 4k detailed",
-    low_vram=False
-)
-vg.videate(
-    tasks=[
-        # VideatorTasks.SCRIPT,
-        # VideatorTasks.AUDIO,
-        # VideatorTasks.IMAGES,
-        # VideatorTasks.VIDEO,
-        VideatorTasks.FULL
-    ],
-    video_theme=video_theme, 
-    output_dir=f"./output/{video_num}.mp4"
-)
+    vg = VideoGenerator(
+        llm_model=LLMModels.GPT4o,
+        tts_model=TTSModels.GOOGLE,
+        tts_voice=Voices.Google.SPAIN,
+        sd_model=SDModels.SDXL_TURBO,
+        height=912,
+        width=432,
+        assets_dir=f"./tmp/{video_num}",
+        style="3d animation digital art 4k detailed",
+        low_vram=False
+    )
+    vg.videate(
+        tasks=[
+            # VideatorTasks.SCRIPT,
+            # VideatorTasks.AUDIO,
+            # VideatorTasks.IMAGES,
+            # VideatorTasks.VIDEO,
+            VideatorTasks.FULL
+        ],
+        video_theme=video_theme, 
+        output_dir=f"./output/{video_num}.mp4"
+    )
 
-end_time = time.time()
-elapsed_time = end_time - start_time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
 
-print(f"\nGenerated in: {elapsed_time:.2f} s")
+    print(f"\nGenerated in: {elapsed_time:.2f} s")

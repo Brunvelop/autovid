@@ -1,37 +1,42 @@
 
 import os
-import ast
-import json
-from typing import List, Dict, Union
+from typing import Union
 
 import torch
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, logging
 logging.set_verbosity_info()
 
-import prompts
 from definitions import LLMModels, Scene, Storyboard
 
-class ListOfDictsOutputParser:
-    def parse(self, output):
-        return json.loads(output)
-
 class LLM():
-    def __init__(self, model_id: LLMModels = LLMModels.GPT4o, cache_dir: str = './models', low_vram: bool = False):
+    def __init__(
+        self, 
+        model_id: LLMModels = LLMModels.GPT4o,
+        cache_dir: str = './models', 
+        low_vram: bool = False, 
+        llm_config: dict = {}
+    ):
         load_dotenv()
         self.model_id = model_id.value
         self.cache_dir = cache_dir
-        self.chat_model = self._load_chat_model(model_id, low_vram)
+        self.chat_model = self._load_chat_model(model_id, low_vram, llm_config)
 
-    def _load_chat_model(self, model_id: LLMModels, low_vram: bool) -> Union[ChatOpenAI, HuggingFacePipeline]:
-        if model_id == LLMModels.GPT4o:
+    def _load_chat_model(
+            self,
+            model_id: LLMModels,
+            low_vram: bool,
+            llm_config: dict,
+        ) -> Union[ChatOpenAI, HuggingFacePipeline]:
+        if model_id == LLMModels.GPT4o or model_id == LLMModels.GPT4oMini:
             return ChatOpenAI(
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
-                temperature=0.8,
-                model_name=model_id.value
+                model_name=model_id.value,
+                temperature=llm_config.get('temperature', 0.8),
             )
         elif model_id == LLMModels.INTERNLM7b4b or model_id ==LLMModels.INTERNLM:
             print("Tring to load LLM:", model_id.value)
@@ -61,55 +66,40 @@ class LLM():
             print("Loaded!:", model_id.value)
             return HuggingFacePipeline(pipeline=pipe)
     
-
-    def generate_video_script(self, content: str, words_number: int = 100) -> str:
-        template = ChatPromptTemplate.from_messages([
-            ("system", prompts.Prompts.ESP.GUION_VIDEO_VIRAL),
-            ("human", "Escribe el script para un video sobre {content}. {output_format}"),
-        ])
-
-        output_format = prompts.OutputFormats.ESP.NUMERO_PALABRAS + prompts.OutputFormats.ESP.SIN_SALTOS_DE_LINEA
-        output_format = output_format.format(words_number=words_number)
-
-        messages = template.format_messages(
-            output_format=output_format,
-            content=content,
-        )
-
+    def generate_text(
+            self, 
+            system_memory: str = '',
+            system_prompt: str = '',
+            system_examples: str = '', 
+            human_prompt: str = '',
+            output_format: str = ''
+        ) -> str:
+        system_str = '\n'.join(filter(bool, [system_memory, system_prompt, system_examples]))
+        human_str = '\n'.join(filter(bool, [human_prompt, output_format]))
+        messages = [
+            SystemMessage(system_str),
+            HumanMessage(human_str)
+        ]
         output = self.chat_model(messages)
-
         return output.content
     
-    def split_text(self, text: str) -> List[str]:
-        template = ChatPromptTemplate.from_messages([
-            ("system", 
-                prompts.OutputFormats.ENG.SPLIT_TEXT_SCENES 
-            ),
-            ("human", "Transform this text: {text}. Return only an array [] do not whirte any aditional text."),
-        ])
 
-        messages = template.format_messages(text=text)
-
-        output_parser = ListOfDictsOutputParser()
-        output = self.chat_model(messages)
-        text_splited = output_parser.parse(output.content)
-        return text_splited
-    
-    def generate_storyboard(self, text: str) -> List[Scene]:
-        template = ChatPromptTemplate.from_messages([
-            ("system", 
-                prompts.OutputFormats.ENG.GENERATE_STORYBOARD
-            ),
-            ("human", "Create a storyboard for this text: {text}. {output_format}"),
-        ])
-
-        messages = template.format_messages(
-            text=text,
-            output_format=prompts.OutputFormats.ENG.GENERATE_STORYBOARD_OUTPUT_FORMAT
+if __name__ == "__main__":
+    llm = LLM(
+        model_id=LLMModels.GPT4oMini,
+        low_vram=False,
+        llm_config={'temperature': 0.8}
+    )
+    memory = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x']
+    for _ in range(5):
+        text = llm.generate_text(
+                system_memory= 'memoria = '+ str(memory),
+                system_prompt= 'Eres un sistema que genera letras aleatorias en minuscula que no esten en memoria',
+                system_examples= 'Debes devolver algo asi: z o w o b o x pero que no este en memoria', 
+                human_prompt= 'dame una letra',
+                output_format = 'devuelve solo una letra en minuscula, fijate en memoria = [] para ver las que no puedes devolver, no repitas ninguna de memoria. Si no quedan letras dispobiles devuelve solo "None", no añadas mas texto'
         )
-
-        output_parser = ListOfDictsOutputParser()
-        output = self.chat_model(messages)
-        storyboard = output_parser.parse(output.content)
-        storyboard = [Scene(text=scene['text'], image=scene['image']) for scene in storyboard]
-        return storyboard
+        print("Letra:", text)
+        if text == 'None':
+            print(text)
+        memory.append(text)
