@@ -10,6 +10,7 @@ import cv2
 import math
 import numpy
 from PIL import Image
+from pathlib import Path
 
 import vid_transition
 
@@ -109,44 +110,47 @@ def zoom_in_face_effect(clip: mp.VideoClip, zoom_ratio: float = 0.04, face_zoom:
 
     return clip.fl(effect)
 
-def _create_or_clear_transitions_folder(transitions_folder='./tmp/transitions') -> None:
-    os.makedirs(transitions_folder, exist_ok=True)
-    for file in os.listdir(transitions_folder):
-        os.remove(os.path.join(transitions_folder, file))
+def _create_or_clear_transitions_folder(transitions_folder: Path = Path('./tmp/transitions')) -> None:
+    transitions_folder.mkdir(parents=True, exist_ok=True)
+    for file in transitions_folder.iterdir():
+        file.unlink()
 
-def get_audio_and_duration(n: int, audios_path: str) -> tuple[mp.AudioFileClip, float]:
-    audio = mp.AudioFileClip(os.path.join(audios_path, str(n) + ".mp3"))
+def get_audio_and_duration(n: int, audios_path: Path) -> tuple[mp.AudioFileClip, float]:
+    audio_file = audios_path / f"{n}.mp3"
+    audio = mp.AudioFileClip(str(audio_file))
     audio = audio.set_duration(audio.duration - 0.2)
     duration = audio.duration + 0.2
     return audio, duration
 
 def generate_transition(slide1: mp.VideoClip, slide2: mp.VideoClip, num_frames: int) -> tuple[mp.VideoFileClip, mp.VideoFileClip]:
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir='./tmp/transitions') as temp1, \
-        tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir='./tmp/transitions') as temp2, \
-        tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir='./tmp/transitions') as temp_transition:
+    transitions_dir = Path('./tmp/transitions')
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir=transitions_dir) as temp1, \
+         tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir=transitions_dir) as temp2, \
+         tempfile.NamedTemporaryFile(suffix=".mp4", delete=False, dir=transitions_dir) as temp_transition:
 
-        slide1.write_videofile(temp1.name)
-        slide2.write_videofile(temp2.name)
+        slide1.write_videofile(str(temp1.name))
+        slide2.write_videofile(str(temp2.name))
 
         animations = ["rotation", "rotation_inv", "zoom_in", "zoom_out", "translation", "translation_inv"]
         vid_transition.main(
-            input_videos=[temp1.name, temp2.name],
-            num_frames=num_frames,  # Número de frames para la transición
-            output=temp_transition.name,  # Ruta de salida para el video de transición
-            animation=random.choice(animations),  # Tipo de animación
-            max_rotation=45,  # Máxima rotación para la animación de rotación
-            max_distortion=0.7,  # Máxima distorsión para la animación
-            max_blur=0.2,  # Máximo desenfoque para la animación
-            max_brightness=1.0,  # Máximo brillo para la animación
-            max_zoom=2.0,  # Máximo zoom para la animación
-            debug=False,  # Modo de depuración
-            art=False,  # Mostrar arte ASCII
-            remove=False,  # Eliminar videos originales después de la transición
-            merge=False  # Fusionar fases de video en un solo archivo
+            input_videos=[str(temp1.name), str(temp2.name)],
+            num_frames=num_frames,
+            output=str(temp_transition.name),
+            animation=random.choice(animations),
+            max_rotation=45,
+            max_distortion=0.7,
+            max_blur=0.2,
+            max_brightness=1.0,
+            max_zoom=2.0,
+            debug=False,
+            art=False,
+            remove=False,
+            merge=False
         )
 
-        transition_clip_1 = mp.VideoFileClip(temp_transition.name.rsplit('.', 1)[0] + "_phase1.mp4")
-        transition_clip_2 = mp.VideoFileClip(temp_transition.name.rsplit('.', 1)[0] + "_phase2.mp4")
+        temp_transition_path = Path(temp_transition.name)
+        transition_clip_1 = mp.VideoFileClip(str(temp_transition_path.with_name(f"{temp_transition_path.stem}_phase1.mp4")))
+        transition_clip_2 = mp.VideoFileClip(str(temp_transition_path.with_name(f"{temp_transition_path.stem}_phase2.mp4")))
         print(f"Transition clips: {transition_clip_1, transition_clip_2}")
 
         return transition_clip_1, transition_clip_2
@@ -159,23 +163,23 @@ def adjust_video_duration(video: mp.VideoClip) -> mp.VideoClip:
 def generate_video(
     fps: int = 30,
     transition_n_frames: int = 6,
-    images_path: str = 'tmp/images',
-    audios_path: str = 'tmp/audios',
-    transitions_path: str = 'tmp/transitions',
-    output_path: str = 'output/video.mp4'
+    images_path: Path = Path('tmp/images'),
+    audios_path: Path = Path('tmp/audios'),
+    transitions_path: Path = Path('tmp/transitions'),
+    output_path: Path = Path('output/video.mp4')
 ) -> None:
     _create_or_clear_transitions_folder(transitions_path)
 
-    images = os.listdir(images_path)
+    images = list(images_path.iterdir())
     timeline = []
     for n, image in enumerate(images[:-1]):  # Excluimos la última imagen porque no tiene una imagen siguiente para la transición
 
-        image_clip_1 = mp.ImageClip(os.path.join(images_path, image)).set_fps(30)
+        image_clip_1 = mp.ImageClip(str(image)).set_fps(30)
         audio_1, duration_1 = get_audio_and_duration(n, audios_path)
         image_clip_1 = image_clip_1.set_duration(duration_1 -  transition_n_frames / fps / 2)
         image_clip_1 = zoom_in_face_effect(image_clip_1)
 
-        image_clip_2 = mp.ImageClip(os.path.join(images_path, images[n+1])).set_fps(30)
+        image_clip_2 = mp.ImageClip(str(images[n+1])).set_fps(30)
         audio_2, duration_2 = get_audio_and_duration(n+1, audios_path)
         image_clip_2 = image_clip_2.set_duration(duration_2 -  transition_n_frames / fps / 2)
 
@@ -184,7 +188,7 @@ def generate_video(
         
         timeline.append(full_video_1)
 
-    image_clip_last = mp.ImageClip(os.path.join(images_path, images[n+1])).set_fps(30)
+    image_clip_last = mp.ImageClip(str(images[n+1])).set_fps(30)
     audio_last, duration_last = get_audio_and_duration(n+1, audios_path)
     image_clip_last = image_clip_2.set_duration(duration_last -  transition_n_frames / fps / 2)
     image_clip_last = zoom_in_face_effect(image_clip_last)
@@ -199,4 +203,4 @@ def generate_video(
     video = add_positional_noise(video, noise_level=10, inertia=0.7)
 
     # Escribir archivo de video
-    video.write_videofile(output_path)
+    video.write_videofile(str(output_path))

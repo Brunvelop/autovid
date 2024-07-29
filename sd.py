@@ -1,13 +1,28 @@
 import random
+import warnings
+
 import torch
-from transformers import T5EncoderModel, BitsAndBytesConfig
-from diffusers import AutoPipelineForText2Image, StableDiffusion3Pipeline
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
+from diffusers import AutoPipelineForText2Image, StableDiffusion3Pipeline
 
 from definitions import SDModels
 
 class SD:
-    def __init__(self, model_id: SDModels = SDModels.FAKE, cache_dir: str = './models', low_vram: bool = True):
+    def __init__(
+            self,
+            model_id: SDModels = SDModels.FAKE,
+            cache_dir: Path = Path('./models'),
+            low_vram: bool = True,
+            verbose: bool = False,
+
+    ):
+        if verbose:
+            warnings.resetwarnings()
+            warnings.simplefilter("default")
+        else:
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)
         self.model_id = model_id.value
         self.cache_dir = cache_dir
         self.pipe = self._load_pipeline(model_id, low_vram)
@@ -51,7 +66,7 @@ class SD:
             )
         return pipe
 
-    def generate_image(self, prompt: str, output_path: str, **kwargs) -> Image.Image:
+    def generate_image(self, prompt: str, output_path: Path, **kwargs) -> Image.Image:
         if self.model_id == SDModels.FAKE.value:
             return self.generate_fake_image(prompt, output_path, **kwargs)
         elif self.model_id == SDModels.SDXL_TURBO.value:
@@ -59,7 +74,7 @@ class SD:
         elif self.model_id == SDModels.SD3.value:
             return self.SD3_generate_image(prompt=prompt, output_path=output_path, **kwargs)
 
-    def SDXL_TURBO_generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 5, guidance_scale: float = 0.0) -> Image.Image:
+    def SDXL_TURBO_generate_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768, steps: int = 5, guidance_scale: float = 0.0) -> Image.Image:
         image = self.pipe(
             prompt=prompt,
             num_inference_steps=steps,
@@ -70,7 +85,7 @@ class SD:
         image.save(output_path)
         return image
     
-    def SD3_generate_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 28, guidance_scale: float = 4.0) -> Image.Image:
+    def SD3_generate_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768, steps: int = 28, guidance_scale: float = 4.0) -> Image.Image:
         image = self.pipe(
             prompt=prompt,
             negative_prompt='',
@@ -82,7 +97,7 @@ class SD:
         image.save(output_path)
         return image
     
-    def generate_fake_image(self, prompt: str, output_path: str, height: int = 1280, width: int = 768, steps: int = 15, guidance_scale: float = 0.0) -> Image.Image:
+    def generate_fake_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768, steps: int = 15, guidance_scale: float = 0.0) -> Image.Image:
         # Crear una imagen con fondo aleatorio
         background_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         image = Image.new('RGB', (width, height), color=background_color)
@@ -120,3 +135,25 @@ class SD:
         # Guardar y retornar la imagen
         image.save(output_path)
         return image
+    
+if __name__ == "__main__":
+    sd = SD(
+        model_id=SDModels.SDXL_TURBO,
+        cache_dir=Path('./models'),
+        low_vram=True,
+        verbose=False,
+    )
+    
+    prompt = "Un gato astronauta flotando en el espacio"
+    output_path = Path("./gato_astronauta.png")
+    
+    generated_image = sd.generate_image(
+        prompt=prompt,
+        output_path=output_path,
+        height=512,
+        width=512,
+        steps=5,
+        guidance_scale=0.5
+    )
+    
+    print(f"Imagen generada y guardada en: {output_path}")

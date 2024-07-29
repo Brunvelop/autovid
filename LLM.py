@@ -1,23 +1,21 @@
-
 import os
 from typing import Union
-
-import torch
+from pathlib import Path
 from dotenv import load_dotenv
-from langchain.prompts import ChatPromptTemplate
+
 from langchain_community.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, logging
 logging.set_verbosity_info()
 
-from definitions import LLMModels, Scene, Storyboard
+from definitions import LLMModels
 
 class LLM():
     def __init__(
         self, 
         model_id: LLMModels = LLMModels.GPT4o,
-        cache_dir: str = './models', 
+        cache_dir: Path = Path('./models'), 
         low_vram: bool = False, 
         llm_config: dict = {}
     ):

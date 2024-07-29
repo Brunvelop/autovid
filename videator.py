@@ -1,6 +1,7 @@
 import os
 import json
 from tqdm import tqdm
+from pathlib import Path
 from typing import Union, List
 
 from sd import SD
@@ -14,7 +15,7 @@ class VideoGenerator:
     MAX_ATTEMPTS = 2
     def __init__(
         self,
-        assets_dir: str,
+        assets_dir: Path,
         llm_model: LLMModels = LLMModels.GPT4o,
         sd_model: SDModels = SDModels.SDXL_TURBO,
         tts_model: TTSModels = TTSModels.OPENAI_TTS_1,
@@ -25,9 +26,9 @@ class VideoGenerator:
         low_vram: bool = True
     ):
         self.assets_dir = assets_dir
-        self.audio_dir = f"{self.assets_dir}/audios"
-        self.image_dir = f"{self.assets_dir}/images"
-        self.script_dir = f"{self.assets_dir}/scripts"
+        self.audio_dir = self.assets_dir / "audios"
+        self.image_dir = self.assets_dir / "images"
+        self.script_dir = self.assets_dir / "scripts"
         os.makedirs(self.assets_dir, exist_ok=True)
         os.makedirs(self.audio_dir, exist_ok=True)
         os.makedirs(self.image_dir, exist_ok=True)
@@ -42,17 +43,16 @@ class VideoGenerator:
         self.low_vram = low_vram
 
     def _save_script(self, script: str) -> None:
-        with open(f"{self.script_dir}/script.txt", "w", encoding='utf-8') as f:
-            f.write(script)
+        (self.script_dir / "script.txt").write_text(script, encoding='utf-8')
+
 
     def _save_storyboard(self, storyboard: Storyboard) -> None:
-        with open(f"{self.script_dir}/storyboard.json", "w", encoding='utf-8') as f:
-            json.dump(storyboard, f, ensure_ascii=False, indent=2)
+        (self.script_dir / "storyboard.json").write_text(json.dumps(storyboard, ensure_ascii=False, indent=2), encoding='utf-8')
+
 
     def _load_storyboard(self) -> Storyboard:
         try:
-            with open(f"{self.script_dir}/storyboard.json", "r", encoding='utf-8') as f:
-                return json.load(f)
+            return json.loads((self.script_dir / "storyboard.json").read_text(encoding='utf-8'))
         except FileNotFoundError:
             print("Error: storyboard.json not found.")
             return []
@@ -81,10 +81,10 @@ class VideoGenerator:
         storyboard = self._load_storyboard()
 
         print("Generating audios...")
-        for i , scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating tts"):
+        for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating tts"):
             TTS.generate_tts(
                 text=scene.get('text'),
-                output_file=f"{self.audio_dir}/{i}.mp3",
+                output_file=self.audio_dir / f"{i}.mp3",
                 model=self.tts_model_id,
                 voice=self.tts_voice_id,
             )
@@ -97,18 +97,18 @@ class VideoGenerator:
         for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating images"):
             image = sd.generate_image(
                 prompt=scene.get('image') + " " + self.style,
-                output_path=f"{self.image_dir}/{i}.png",
+                output_path=self.image_dir / f"{i}.png",
                 height=self.height,
                 width=self.width,
             )
-            image.save(f"{self.image_dir}/{i}.png")
+            image.save(self.image_dir / f"{i}.png")
 
-    def edit_video(self, output_dir: str) -> None:
-        print("Generatin video")
+    def edit_video(self, output_dir: Union[str, Path]) -> None:
+        print("Generating video")
         video_editor.generate_video(
             images_path=self.image_dir,
             audios_path=self.audio_dir,
-            output_path=output_dir
+            output_path=Path(output_dir)
         )
 
     def videate(self, tasks: List[VideatorTasks], video_theme: str, output_dir: str) -> None:
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
 
-    video_num = 9
+    video_num = 11
     video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
 
     vg = VideoGenerator(
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         sd_model=SDModels.SDXL_TURBO,
         height=912,
         width=432,
-        assets_dir=f"./tmp/{video_num}",
+        assets_dir=Path(f"./tmp/{video_num}"),
         style="3d animation digital art 4k detailed",
         low_vram=False
     )
@@ -158,7 +158,7 @@ if __name__ == "__main__":
             VideatorTasks.FULL
         ],
         video_theme=video_theme, 
-        output_dir=f"./output/{video_num}.mp4"
+        output_dir=Path(f"./output/{video_num}.mp4")
     )
 
     end_time = time.time()

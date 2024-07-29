@@ -44,12 +44,14 @@ class Writer():
 
 if __name__ == "__main__":
     from definitions import LLMModels
-    llm = LLM(
-        model_id=LLMModels.GPT4o,
-        low_vram=False,
-        llm_config={'temperature': 0.8}
+    
+    writer = Writer(
+        llm=LLM(
+            model_id=LLMModels.GPT4o,
+            low_vram=False,
+            llm_config={'temperature': 0.8}
+        )
     )
-    writer = Writer(llm=llm)
     text = writer.generate_video_script(content='Una historia de amor', words_number=100)
     print(text)
     splited_text = writer.generate_storyboard(text)
