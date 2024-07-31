@@ -45,7 +45,7 @@ class LLMModels(Enum):
     GEMMA2B = 'google/gemma-2b'
 
 class VideatorTasks(Enum):
-    SCRIPT = auto()
+    WRITE = auto()
     AUDIO = auto()
     IMAGES = auto()
     VIDEO = auto()

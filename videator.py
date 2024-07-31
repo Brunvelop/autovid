@@ -45,10 +45,8 @@ class VideoGenerator:
     def _save_script(self, script: str) -> None:
         (self.script_dir / "script.txt").write_text(script, encoding='utf-8')
 
-
     def _save_storyboard(self, storyboard: Storyboard) -> None:
         (self.script_dir / "storyboard.json").write_text(json.dumps(storyboard, ensure_ascii=False, indent=2), encoding='utf-8')
-
 
     def _load_storyboard(self) -> Storyboard:
         try:
@@ -57,13 +55,12 @@ class VideoGenerator:
             print("Error: storyboard.json not found.")
             return []
 
-    def generate_storyboard(self, video_theme: str, words_number: int = 80) -> Storyboard:
-        print("Generating script for video...")
-        writer = Writer(LLM(model_id=self.llm_model_id))
+    def generate_script(self, writer: Writer, video_theme: str, words_number: int = 80) -> str:
         script = writer.generate_video_script(video_theme, words_number)
         self._save_script(script)
+        return script
 
-        print("Generating storyboard for video...")
+    def generate_storyboard(self, writer: Writer, script: str) -> Storyboard:
         for attempt in range(self.MAX_ATTEMPTS):
             try:
                 storyboard = writer.generate_storyboard(script)
@@ -74,13 +71,12 @@ class VideoGenerator:
                 else:
                     raise e
         self._save_storyboard(storyboard)
-
         return storyboard
 
-    def generate_audio(self) -> None:
-        storyboard = self._load_storyboard()
+    def generate_audio(self, storyboard: Storyboard = None) -> None:
+        if storyboard is None:
+            storyboard = self._load_storyboard()
 
-        print("Generating audios...")
         for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating tts"):
             TTS.generate_tts(
                 text=scene.get('text'),
@@ -89,11 +85,11 @@ class VideoGenerator:
                 voice=self.tts_voice_id,
             )
 
-    def generate_images(self) -> None:
-        storyboard = self._load_storyboard()
+    def generate_images(self, storyboard: Storyboard = None) -> None:
+        if storyboard is None:
+            storyboard = self._load_storyboard()
 
         sd = SD(model_id=self.sd_model_id, low_vram=self.low_vram)
-        print("Generating images...")
         for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating images"):
             image = sd.generate_image(
                 prompt=scene.get('image') + " " + self.style,
@@ -104,7 +100,6 @@ class VideoGenerator:
             image.save(self.image_dir / f"{i}.png")
 
     def edit_video(self, output_dir: Union[str, Path]) -> None:
-        print("Generating video")
         video_editor.generate_video(
             images_path=self.image_dir,
             audios_path=self.audio_dir,
@@ -121,13 +116,21 @@ class VideoGenerator:
             print(f"  - {task.name}")
         print("=" * 50)
 
-        if VideatorTasks.SCRIPT in tasks or VideatorTasks.FULL in tasks:
-            self.generate_storyboard(video_theme)
+        storyboard: Storyboard = None
+        if VideatorTasks.WRITE in tasks or VideatorTasks.FULL in tasks:
+            writer = Writer(LLM(model_id=self.llm_model_id))
+            print("Generating script for video...")
+            script = self.generate_script(writer, video_theme)
+            print("Generating storyboard for video...")
+            storyboard = self.generate_storyboard(writer, script)
         if VideatorTasks.AUDIO in tasks or VideatorTasks.FULL in tasks:
-            self.generate_audio()
+            print("Generating audios...")
+            self.generate_audio(storyboard)
         if VideatorTasks.IMAGES in tasks or VideatorTasks.FULL in tasks:
-            self.generate_images()
+            print("Generating images...")
+            self.generate_images(storyboard)
         if VideatorTasks.VIDEO in tasks or VideatorTasks.FULL in tasks:
+            print("Generating video...")
             self.edit_video(output_dir)
 
 
@@ -135,7 +138,7 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
 
-    video_num = 11
+    video_num = 12
     video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
 
     vg = VideoGenerator(
@@ -151,7 +154,7 @@ if __name__ == "__main__":
     )
     vg.videate(
         tasks=[
-            # VideatorTasks.SCRIPT,
+            # VideatorTasks.WRITE,
             # VideatorTasks.AUDIO,
             # VideatorTasks.IMAGES,
             # VideatorTasks.VIDEO,

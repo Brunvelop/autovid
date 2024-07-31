@@ -15,7 +15,6 @@ class SD:
             cache_dir: Path = Path('./models'),
             low_vram: bool = True,
             verbose: bool = False,
-
     ):
         if verbose:
             warnings.resetwarnings()

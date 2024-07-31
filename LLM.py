@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 from langchain_community.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.llms import HuggingFacePipeline
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, logging
-logging.set_verbosity_info()
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 from definitions import LLMModels
 
@@ -74,21 +73,18 @@ class LLM():
         ) -> str:
         system_str = '\n'.join(filter(bool, [system_memory, system_prompt, system_examples]))
         human_str = '\n'.join(filter(bool, [human_prompt, output_format]))
-        messages = [
-            SystemMessage(system_str),
-            HumanMessage(human_str)
-        ]
+        messages = [SystemMessage(system_str), HumanMessage(human_str)]
         output = self.chat_model(messages)
         return output.content
     
 
 if __name__ == "__main__":
     llm = LLM(
-        model_id=LLMModels.GPT4oMini,
+        model_id=LLMModels.GPT4o,
         low_vram=False,
-        llm_config={'temperature': 0.8}
+        llm_config={'temperature': 0}
     )
-    memory = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x']
+    memory = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x']
     for _ in range(5):
         text = llm.generate_text(
                 system_memory= 'memoria = '+ str(memory),
