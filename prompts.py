@@ -1,8 +1,13 @@
+import textwrap
 from enum import Enum
 
 class ValueEnum(Enum):
     def __get__(self, obj, objtype):
-        return self.value
+        value = self.value
+        if isinstance(value, str):
+            value = textwrap.dedent(value).strip()
+            return value[1:] if value.startswith('\n') else value
+        return value
 
 class Prompts():
     class ESP(ValueEnum):
