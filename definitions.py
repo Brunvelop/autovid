@@ -36,6 +36,7 @@ class SDModels(Enum):
     FAKE = 'FAKE'
     SDXL_TURBO = 'stabilityai/sdxl-turbo'
     SD3 = 'stabilityai/stable-diffusion-3-medium-diffusers'
+    FLUX1_SCHNELL = 'black-forest-labs/FLUX.1-schnell'
 
 class LLMModels(Enum):
     GPT4o = 'gpt-4o'

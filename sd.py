@@ -4,7 +4,7 @@ import warnings
 import torch
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-from diffusers import AutoPipelineForText2Image, StableDiffusion3Pipeline
+from diffusers import AutoPipelineForText2Image, StableDiffusion3Pipeline, FluxPipeline
 
 from definitions import SDModels
 
@@ -24,17 +24,21 @@ class SD:
             warnings.filterwarnings("ignore", category=UserWarning)
         self.model_id = model_id.value
         self.cache_dir = cache_dir
-        self.pipe = self._load_pipeline(model_id, low_vram)
+        self.verbose = verbose
+        self.low_vram = low_vram
+        self.pipe = self._load_pipeline()
 
-    def _load_pipeline(self, model_id: SDModels, low_vram: bool) -> None:
-        if model_id == SDModels.FAKE.value:
+    def _load_pipeline(self) -> None:
+        if self.model_id == SDModels.FAKE.value:
             return None
-        elif model_id == SDModels.SDXL_TURBO:
-            return self._load_SDXL_TURBO_pipeline(low_vram)
-        elif model_id == SDModels.SD3:
-            return self._load_SD3_pipeline(low_vram)
+        elif self.model_id == SDModels.SDXL_TURBO.value:
+            return self._load_SDXL_TURBO_pipeline()
+        elif self.model_id == SDModels.SD3.value:
+            return self._load_SD3_pipeline()
+        elif self.model_id == SDModels.FLUX1_SCHNELL.value:
+            return self._load_FLUX_pipeline()
 
-    def _load_SDXL_TURBO_pipeline(self, low_vram: bool) -> AutoPipelineForText2Image:
+    def _load_SDXL_TURBO_pipeline(self) -> AutoPipelineForText2Image:
         pipe = AutoPipelineForText2Image.from_pretrained(
                 self.model_id,
                 torch_dtype=torch.float16,
@@ -42,12 +46,12 @@ class SD:
                 cache_dir=self.cache_dir
             )
         pipe.to("cuda")
-        if low_vram:
+        if self.low_vram:
             pipe.enable_attention_slicing()
         return pipe
     
-    def _load_SD3_pipeline(self, low_vram):
-        if low_vram:
+    def _load_SD3_pipeline(self):
+        if self.low_vram:
             pipe = StableDiffusion3Pipeline.from_pretrained(
                 self.model_id, 
                 torch_dtype=torch.float16,
@@ -65,38 +69,54 @@ class SD:
             )
         return pipe
 
+    def _load_FLUX_pipeline(self):
+        pipe = FluxPipeline.from_pretrained(
+            self.model_id, 
+            torch_dtype=torch.bfloat16,
+            cache_dir=self.cache_dir,
+        )
+        if self.low_vram:
+            pipe.vae.enable_tiling()
+            pipe.vae.enable_slicing()
+            pipe.enable_sequential_cpu_offload()
+        
+        return pipe
+    
+    def _get_generation_config(self, **generation_config):
+        default_config = { 'height': 1280, 'width': 768 }
+        
+        model_specific_config = {
+            SDModels.SD3.value: {
+                'negative_prompt': '',
+                'num_inference_steps': 28,
+                'guidance_scale': 4.0
+            },
+            SDModels.SDXL_TURBO.value: {
+                'num_inference_steps': 5,
+                'guidance_scale': 0.0
+            },
+            SDModels.FLUX1_SCHNELL.value: {
+                'num_inference_steps': 4,
+                'guidance_scale': 0.0
+            }
+        }
+        
+        default_config.update(model_specific_config.get(self.model_id, {}))
+        default_config.update(generation_config)
+        return default_config
+
     def generate_image(self, prompt: str, output_path: Path, **kwargs) -> Image.Image:
         if self.model_id == SDModels.FAKE.value:
             return self.generate_fake_image(prompt, output_path, **kwargs)
-        elif self.model_id == SDModels.SDXL_TURBO.value:
-            return self.SDXL_TURBO_generate_image(prompt=prompt, output_path=output_path, **kwargs)
-        elif self.model_id == SDModels.SD3.value:
-            return self.SD3_generate_image(prompt=prompt, output_path=output_path, **kwargs)
-
-    def SDXL_TURBO_generate_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768, steps: int = 5, guidance_scale: float = 0.0) -> Image.Image:
-        image = self.pipe(
-            prompt=prompt,
-            num_inference_steps=steps,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale
-        ).images[0]
-        image.save(output_path)
-        return image
+        else:
+            generation_config = self._get_generation_config(**kwargs)
+            image = self.pipe(prompt=prompt, **generation_config).images[0]
+            image.save(output_path)
+            if self.verbose:
+                print('Max mem allocated (GB) while denoising:', torch.cuda.max_memory_allocated() / (1024 ** 3))
+            return image
     
-    def SD3_generate_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768, steps: int = 28, guidance_scale: float = 4.0) -> Image.Image:
-        image = self.pipe(
-            prompt=prompt,
-            negative_prompt='',
-            num_inference_steps=steps,
-            height=height,
-            width=width,
-            guidance_scale=guidance_scale
-        ).images[0]
-        image.save(output_path)
-        return image
-    
-    def generate_fake_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768, steps: int = 15, guidance_scale: float = 0.0) -> Image.Image:
+    def generate_fake_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768) -> Image.Image:
         # Crear una imagen con fondo aleatorio
         background_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         image = Image.new('RGB', (width, height), color=background_color)
@@ -137,13 +157,16 @@ class SD:
     
 if __name__ == "__main__":
     sd = SD(
-        model_id=SDModels.SDXL_TURBO,
+        model_id=SDModels.FLUX1_SCHNELL,
         cache_dir=Path('./models'),
         low_vram=True,
-        verbose=False,
+        verbose=True,
     )
     
-    prompt = "Un gato astronauta flotando en el espacio"
+    prompt = [
+        "Un gato astronauta flotando en el espacio",
+        "Un gato astronauta flotando en el espacio",
+    ]
     output_path = Path("./gato_astronauta.png")
     
     generated_image = sd.generate_image(
@@ -151,8 +174,8 @@ if __name__ == "__main__":
         output_path=output_path,
         height=512,
         width=512,
-        steps=5,
-        guidance_scale=0.5
+        num_inference_steps=4,
+        guidance_scale=0
     )
     
     print(f"Imagen generada y guardada en: {output_path}")
