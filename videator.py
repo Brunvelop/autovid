@@ -93,7 +93,6 @@ class VideoGenerator:
         for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating images"):
             image = sd.generate_image(
                 prompt=scene.get('image') + " " + self.style,
-                output_path=self.image_dir / f"{i}.png",
                 height=self.height,
                 width=self.width,
             )
@@ -138,7 +137,7 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
 
-    video_num = 12
+    video_num = 16
     video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
 
     vg = VideoGenerator(
@@ -150,7 +149,7 @@ if __name__ == "__main__":
         width=432,
         assets_dir=Path(f"./tmp/{video_num}"),
         style="3d animation digital art 4k detailed",
-        low_vram=False
+        low_vram=True
     )
     vg.videate(
         tasks=[

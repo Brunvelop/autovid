@@ -96,7 +96,7 @@ class SD:
                 'guidance_scale': 0.0
             },
             SDModels.FLUX1_SCHNELL.value: {
-                'num_inference_steps': 4,
+                'num_inference_steps': 1,
                 'guidance_scale': 0.0
             }
         }
@@ -105,18 +105,17 @@ class SD:
         default_config.update(generation_config)
         return default_config
 
-    def generate_image(self, prompt: str, output_path: Path, **kwargs) -> Image.Image:
+    def generate_image(self, prompt: str, **kwargs) -> Image.Image:
         if self.model_id == SDModels.FAKE.value:
             return self.generate_fake_image(prompt, output_path, **kwargs)
         else:
             generation_config = self._get_generation_config(**kwargs)
             image = self.pipe(prompt=prompt, **generation_config).images[0]
-            image.save(output_path)
             if self.verbose:
                 print('Max mem allocated (GB) while denoising:', torch.cuda.max_memory_allocated() / (1024 ** 3))
             return image
     
-    def generate_fake_image(self, prompt: str, output_path: Path, height: int = 1280, width: int = 768) -> Image.Image:
+    def generate_fake_image(self, prompt: str, height: int = 1280, width: int = 768) -> Image.Image:
         # Crear una imagen con fondo aleatorio
         background_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         image = Image.new('RGB', (width, height), color=background_color)
@@ -151,13 +150,11 @@ class SD:
             draw.text((x_text, y_text), line, font=font, fill=text_color)
             y_text += font_size + 5
 
-        # Guardar y retornar la imagen
-        image.save(output_path)
         return image
     
 if __name__ == "__main__":
     sd = SD(
-        model_id=SDModels.FLUX1_SCHNELL,
+        model_id=SDModels.SDXL_TURBO,
         cache_dir=Path('./models'),
         low_vram=True,
         verbose=True,
@@ -171,11 +168,10 @@ if __name__ == "__main__":
     
     generated_image = sd.generate_image(
         prompt=prompt,
-        output_path=output_path,
         height=512,
         width=512,
         num_inference_steps=4,
         guidance_scale=0
     )
-    
+    generated_image.save(output_path)
     print(f"Imagen generada y guardada en: {output_path}")
