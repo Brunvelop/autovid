@@ -1,5 +1,6 @@
 import random
 import warnings
+from typing import Union, List
 
 import torch
 from pathlib import Path
@@ -14,7 +15,7 @@ class SD:
             model_id: SDModels = SDModels.FAKE,
             cache_dir: Path = Path('./models'),
             low_vram: bool = True,
-            verbose: bool = False,
+            verbose: bool = True,
     ):
         if verbose:
             warnings.resetwarnings()
@@ -105,15 +106,32 @@ class SD:
         default_config.update(generation_config)
         return default_config
 
-    def generate_image(self, prompt: str, **kwargs) -> Image.Image:
+    def _calculate_batch_size(self):
+        batch_size = 100
+        if self.model_id == SDModels.SDXL_TURBO.value or self.model_id == SDModels.SD3.value:
+            vram_gb = torch.cuda.get_device_properties(0).total_memory / (1024 ** 3)
+            batch_size = int(vram_gb/2 + 1) 
+        return batch_size
+
+    def generate_images(self, prompt: Union[str, List[str]], **kwargs) -> List[Image.Image]:
         if self.model_id == SDModels.FAKE.value:
-            return self.generate_fake_image(prompt, output_path, **kwargs)
+            return self.generate_fake_image(prompt, **kwargs)
         else:
             generation_config = self._get_generation_config(**kwargs)
-            image = self.pipe(prompt=prompt, **generation_config).images[0]
+            if isinstance(prompt, list):
+                images = []
+                batch_size = self._calculate_batch_size()
+                for i in range(0, len(prompt), batch_size):
+                    batch_prompts = prompt[i:i + batch_size]
+                    batch_images = self.pipe(prompt=batch_prompts, **generation_config).images
+                    images.extend(batch_images)
+            else:
+                images = self.pipe(prompt=prompt, **generation_config).images
             if self.verbose:
                 print('Max mem allocated (GB) while denoising:', torch.cuda.max_memory_allocated() / (1024 ** 3))
-            return image
+            return images
+
+
     
     def generate_fake_image(self, prompt: str, height: int = 1280, width: int = 768) -> Image.Image:
         # Crear una imagen con fondo aleatorio
@@ -162,16 +180,23 @@ if __name__ == "__main__":
     
     prompt = [
         "Un gato astronauta flotando en el espacio",
-        "Un gato astronauta flotando en el espacio",
+        "Un perro astronauta flotando en el espacio",
+        "Un uron astronauta flotando en el espacio",
+        "Un araña astronauta flotando en el espacio",
+        "Un dragon astronauta flotando en el espacio",
+        "Un mosca astronauta flotando en el espacio",
+        "Un girafa astronauta flotando en el espacio",
+        "Un caballo astronauta flotando en el espacio",
     ]
-    output_path = Path("./gato_astronauta.png")
+    output_path = Path("./")
     
-    generated_image = sd.generate_image(
+    images = sd.generate_images(
         prompt=prompt,
         height=512,
         width=512,
         num_inference_steps=4,
         guidance_scale=0
     )
-    generated_image.save(output_path)
-    print(f"Imagen generada y guardada en: {output_path}")
+    for i, image in enumerate(images):
+        image.save(output_path / f"{i}.png")
+        print(f"Imagen generada y guardada en: {output_path}")

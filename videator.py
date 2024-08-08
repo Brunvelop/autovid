@@ -90,12 +90,14 @@ class VideoGenerator:
             storyboard = self._load_storyboard()
 
         sd = SD(model_id=self.sd_model_id, low_vram=self.low_vram)
-        for i, scene in tqdm(enumerate(storyboard), total=len(storyboard), desc="Generating images"):
-            image = sd.generate_image(
-                prompt=scene.get('image') + " " + self.style,
-                height=self.height,
-                width=self.width,
-            )
+        
+        prompts = [scene["image"] + " " + self.style for scene in storyboard]
+        images = sd.generate_images(
+            prompt=prompts,
+            height=self.height,
+            width=self.width,
+        )
+        for i, image in enumerate(images):
             image.save(self.image_dir / f"{i}.png")
 
     def edit_video(self, output_dir: Union[str, Path]) -> None:
@@ -137,14 +139,14 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
 
-    video_num = 16
+    video_num = 18
     video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
 
     vg = VideoGenerator(
         llm_model=LLMModels.GPT4o,
         tts_model=TTSModels.GOOGLE,
         tts_voice=Voices.Google.SPAIN,
-        sd_model=SDModels.SDXL_TURBO,
+        sd_model=SDModels.FLUX1_SCHNELL,
         height=912,
         width=432,
         assets_dir=Path(f"./tmp/{video_num}"),
