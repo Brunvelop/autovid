@@ -41,9 +41,7 @@ class SDModels(Enum):
 class LLMModels(Enum):
     GPT4o = 'gpt-4o'
     GPT4oMini ='gpt-4o-mini'
-    INTERNLM7b4b = 'internlm/internlm2_5-7b-chat-4bit'
-    INTERNLM = 'internlm/internlm2_5-7b-chat'
-    GEMMA2B = 'google/gemma-2b'
+    LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
 
 class VideatorTasks(Enum):
     WRITE = auto()
