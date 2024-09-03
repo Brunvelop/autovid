@@ -1,5 +1,8 @@
 import json
 from typing import List
+from pathlib import Path
+
+from tqdm import tqdm
 
 import prompts
 from LLM import LLM
@@ -40,19 +43,40 @@ class Writer():
         storyboard_parsed = json.loads(output)
         storyboard = [Scene(text=scene['text'], image=scene['image']) for scene in storyboard_parsed]
         return storyboard
+    
+    def save_storyboard(self, storyboard: List[Scene], filename: Path):
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(storyboard, f, ensure_ascii=False, indent=2)
+
+
+class BookWriter(Writer):
+    def __init__(self, llm: LLM) -> None:
+        super().__init__(llm)
+
+    def generate_storyboard_from_chapter(self, filename: Path, batch_size: int = 10) -> List[Scene]:
+        storyboard = []
+        
+        for chunk in tqdm(list(self._chunk_file(filename, batch_size)), desc="Generating storyboard"):
+            chunk_storyboard = self.generate_storyboard(chunk)
+            storyboard.extend(chunk_storyboard)
+
+        return storyboard
+
+    def _chunk_file(self, file_path: Path, chunk_size: int):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            for i in range(0, len(lines), chunk_size):
+                yield ''.join(lines[i:i+chunk_size])
 
 
 if __name__ == "__main__":
-    from definitions import LLMModels
+    from LLM import GPT4o
     
-    writer = Writer(
-        llm=LLM(
-            model_id=LLMModels.GPT4o,
+    writer = BookWriter(
+        llm=GPT4o(
             low_vram=False,
             llm_config={'temperature': 0.8}
         )
     )
-    text = writer.generate_video_script(content='Una historia de amor', words_number=100)
-    print(text)
-    splited_text = writer.generate_storyboard(text)
-    print(splited_text)
+    storyboard = writer.generate_storyboard_from_chapter(Path('data\HOMERO\LA_ILIADA\CAPITULO_001\CAPITULO_001.txt'))
+    writer.save_storyboard(storyboard, Path('data\HOMERO\LA_ILIADA\CAPITULO_001\CAPITULO_001_STORYBOARD.json'))
