@@ -32,11 +32,23 @@ class TTSModels(Enum):
     OPENAI_TTS_1 = 'tts-1'
     OPENAI_TTS_1_HD = 'tts-1-hd'
 
-class SDModels(Enum):
+class ImageGenerators(Enum):
     FAKE = 'FAKE'
     SDXL_TURBO = 'stabilityai/sdxl-turbo'
     SD3 = 'stabilityai/stable-diffusion-3-medium-diffusers'
     FLUX1_SCHNELL = 'black-forest-labs/FLUX.1-schnell'
+
+class ImageGeneratorConfig(Enum):
+    FLUX1_SCHNELL = {
+        'height': 1280,
+        'width': 768,
+        'num_inference_steps': 1,
+        'guidance_scale': 0.0
+    }
+    SDXL_TURBO = {
+        'num_inference_steps': 5,
+        'guidance_scale': 0.0
+    }
 
 class LLMModels(Enum):
     GPT4o = 'gpt-4o'
