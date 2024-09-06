@@ -23,38 +23,93 @@ class Prompts():
 
             Evita clichés, sé original y asegúrate de que el contenido sea apropiado para plataformas de redes sociales.
             """
-        GUION_MITICO_MODERNO = """
-            Crea un guión que teja una narrativa fascinante, fusionando mitología, historia y elementos sobrenaturales con un enfoque moderno y cautivador.
-            - Temática: Explora historias mitológicas y religiosas, resaltando figuras y eventos poco conocidos o interpretaciones únicas.
-            - Estilo Narrativo: Combina descripciones vívidas y diálogos intensos para dar vida a personajes míticos y escenarios históricos.
-            - Enfoque Creativo: Introduce giros inesperados o conexiones con temas contemporáneos para mantener la relevancia y el interés.
-            - Profundidad Emocional: Desarrolla personajes complejos y emocionalmente ricos que reflejen tanto virtudes divinas como dilemas humanos.
-            - Impacto Visual: Imagina escenas que sean visualmente impresionantes y memorables, aptas para ser adaptadas en formatos visuales como películas o series.
+        GUION_SHORT_VIRAL = """
+            Quiero que generes un guión para un vídeo corto de TikTok enfocado en captar la atención del espectador desde los primeros segundos y mantener su interés hasta el final, utilizando técnicas efectivas que aumenten la retención del usuario y fomenten la interacción emocional. Este guión debe estructurarse en dos partes principales: el enganche inicial y la retención emocional.
 
-            Con estos elementos, escribe un guión que no solo entretenga, sino que también provoque reflexión y asombro.
+            Parte 1: Enganche Inicial
+            El vídeo debe comenzar con un fuerte gancho que capte la atención de inmediato. Este gancho puede incluir una o varias de las siguientes técnicas:
+            Declaraciones Impactantes: Utiliza una afirmación sorprendente o un dato curioso que haga que el espectador se detenga y quiera saber más. Por ejemplo, "El noventa por ciento de las personas ignoran este simple truco..." o "En solo cinco segundos, cambiaré tu forma de ver...".
+            Uso de Emociones Fuertes: Inicia con una emoción intensa como la risa, la sorpresa o incluso la tristeza. Por ejemplo, "Recuerdo el día más feliz/triste de mi vida..." o mostrar una reacción emocional poderosa que pueda resonar con el espectador.
+            Citas o Frases Poderosas: Usa citas inspiradoras o frases de personajes famosos que sean relevantes para el tema del vídeo, y que puedan resonar con el espectador, haciéndolo sentir inspirado o motivado a seguir viendo.
 
-            Guioniza sobre: {output_format}
+            Parte 2: Retención Emocional
+            Una vez captada la atención, el guión debe centrarse en mantener el interés del espectador generando una conexión emocional. Aquí algunas técnicas para lograrlo:
+            Narrativas Personales y Relatables: Cuenta una breve historia o anécdota personal que sea fácilmente identificable por el espectador. La historia debe tocar temas universales como el amor, la amistad, la lucha personal, o la superación. Por ejemplo, "Una vez hice esto y cambió mi vida por completo...".
+            Humor y Sorpresa: Introduce elementos de humor o giros inesperados en la narrativa para mantener la atención. Esto puede ser un chiste relacionado con el tema, una situación cómica, o un cambio de tono que sorprenda al espectador.
+            Citas Emocionales y Reflexivas: Utiliza citas o pensamientos que inviten a la reflexión y conecten con las emociones más profundas del espectador. Frases como "A veces, la vida nos pone pruebas..." o "La verdadera felicidad se encuentra en...".
+
+            Parte 3: Cierre
+            El cierre debe accionar los impulsos del espectador para llevar alguna accion. Comentar, compartir, dar like. Debe llamar a sus sentimientos mas profundos. Esta llamada debe estar completamente integrada en la historia con un cierre poderoso. No utilizes llamadas directas a la accion del espectador
+            No utilices cliches como Reflexiona:, Deja tu comentario, dale like, etc
+
+            Instrucciones extra:
+            Usa un lenguaje claro y sencillo.
+            Evita llamadas a la acción explícitas; en lugar de eso, fomenta la interacción a través de la narrativa y las preguntas reflexivas.
+            Escribe solo el texto, no añadas apuntes extra.
             """
-        GUION_INSPIRADOR_MUJERES_50PLUS = """
-            Crea un guión que teja una narrativa fascinante,con un enfoque moderno y cautivador.
-            Audiencia Objetivo: Mujeres mayores de 50 años que buscan inspiración, empoderamiento, y conexión emocional.
+        REGLAS_STORYTELLING = """
+            Técnicas Específicas a Nivel de Frase y Sintaxis
+            1. Comenzar con una Frase de Impacto
+            Uso de declaraciones fuertes: Abre con una frase que sorprenda o capte la atención de inmediato. Ejemplo: "Ese fue el día en que todo cambió." o "Nunca pensé que el silencio pudiera ser tan ensordecedor."
+            Frases cortas y contundentes: Una frase breve y precisa puede ser más efectiva que una larga. Ejemplo: "Todo estaba perdido." o "Nada volvería a ser igual."
+            Uso de preguntas retóricas: Iniciar con una pregunta invita a la reflexión y al engagement inmediato. Ejemplo: "¿Alguna vez has sentido que el tiempo se detiene?" o "¿Qué harías si no tuvieras nada que perder?"
 
-            Objetivo del Video: Inspirar a la audiencia, ofreciendo reflexiones profundas y mensajes de empoderamiento que resuenen con sus experiencias de vida, aspiraciones, y desafíos personales.
+            2. Construcción de Frases para Crear Tensión
+            Frases incompletas o elípticas: Deja a la audiencia esperando más, creando una pausa dramática. Ejemplo: "Y entonces, justo cuando pensaba que todo estaba bien..."
+            Uso de oraciones yuxtapuestas: Colocar dos frases contradictorias o en contraste inmediato puede crear tensión. Ejemplo: "Todo estaba en calma. Luego, un grito rompió la noche."
+            Repetición con variación: Repetir una palabra o frase clave para aumentar la intensidad, con una ligera variación para desarrollar la trama. Ejemplo: "Corría y corría, pero la sombra seguía ahí, siempre detrás, siempre más cerca."
 
-            Elementos Clave a Incluir:
+            3. Ritmo y Cadencia en las Frases
+            Ritmo rápido en escenas de acción: Usa frases cortas y directas para transmitir urgencia. Ejemplo: "Corrió. Tropezó. Cayó. Se levantó y siguió corriendo."
+            Ritmo lento en momentos de reflexión o emoción: Emplea frases más largas y descriptivas para ralentizar la narrativa y permitir que la emoción se asiente. Ejemplo: "La lluvia caía lentamente, cada gota resbalando por el cristal, como lágrimas en una cara cansada."
+            Pausas efectivas: Usa comas, puntos y otros signos de puntuación para controlar el ritmo. Ejemplo: "Miró hacia atrás, su corazón latía rápido. No había nadie. O eso creía."
 
-            Apertura Impactante: Comenzar con una pregunta retórica, una cita inspiradora, o una afirmación poderosa que capte la atención inmediatamente.
-            Contenido Emocional: Desarrollar el tema a través de reflexiones que inviten a la introspección, historias cortas, o analogías que despierten emociones y provoquen una conexión personal.
-            Mensajes de Empoderamiento: Incluir afirmaciones positivas y mensajes de fortaleza, resiliencia, y esperanza que motiven y alienten a la audiencia a ver su vida desde una perspectiva más positiva y enriquecedora.
-            Llamado a la Acción Sutil: Concluir con una invitación a la reflexión personal, a tomar una acción específica, o a cambiar una perspectiva, fomentando el crecimiento personal y el bienestar emocional.
-            Estilo y Tono: Cálido, empático, y alentador, con un lenguaje que sea accesible, poético y evocador, sin ser condescendiente ni excesivamente simplista.
+            4. Construcción de Frases para Evocar Emociones
+            Detalles sensoriales: Usa frases que describan lo que se ve, se oye, se siente, se huele o se saborea. Ejemplo: "El aroma a café recién hecho llenaba la habitación, mezclándose con el dulce olor de los libros viejos."
+            Metáforas y símiles: Comparaciones que añaden profundidad y significado. Ejemplo: "Su risa era como un río en verano, refrescante y libre." o "El miedo se arrastraba por su espalda como una serpiente fría."
+            Adjetivos y adverbios poderosos: Elige palabras que carguen con connotaciones emocionales fuertes. Ejemplo: "Una luz tenue y triste se filtraba por la ventana, haciendo que todo pareciera desvanecerse."
 
-            Escribe solo el texto no meta contenido como (introduccion, cierre, etc). No utilizes un comenzamos con o similares
+            5. Uso de Diálogo para Crear Inmediatez
+            Interrumpir con diálogos cortos: Los diálogos cortos y entrecortados pueden aumentar la tensión y el dinamismo. Ejemplo: "- No lo hagas. - ¿Por qué no? - Porque te amo, y no puedo perderte."
+            Silencio implícito: A veces, lo que no se dice es más poderoso que lo que se dice. Usa pausas y reacciones no verbales. Ejemplo: "Ella lo miró, sus labios temblando. No dijo nada, pero sus ojos lo gritaban todo."
+            Frases colgadas: Dejar frases incompletas para sugerir duda o suspenso. Ejemplo: "Sabía que debía decirle la verdad, pero... no podía."
 
-            Guioniza sobre: {output_format}
+            6. Construcción de Imágenes Poderosas
+            Imágenes vívidas: Usa descripciones que sean visuales y concretas. Ejemplo: "Las hojas crujían bajo sus pies, como si el bosque entero murmurara en su contra."
+            Uso del contraste: Colocar imágenes opuestas para crear un efecto dramático. Ejemplo: "En el silencio de la noche, el sonido de su risa era un grito de luz."
+            Personificación: Dar cualidades humanas a objetos inanimados para añadir profundidad emocional. Ejemplo: "La casa lo observaba, cada crujido del suelo un susurro de secretos antiguos."
+
+            7. Frases que Conecten con la Experiencia Humana
+            Reflexiones universales: Usa frases que toquen temas universales como el amor, la pérdida, el miedo o la esperanza. Ejemplo: "En ese momento, se dio cuenta de que el amor no era algo que se encontraba, sino algo que se construía."
+            Uso de máximas y proverbios: Frases que suenan como sabiduría antigua pueden resonar fuertemente. Ejemplo: "Sabía lo que decían: 'La esperanza es lo último que se pierde'. Pero en ese momento, la esperanza también se había ido."
+            Conexión emocional directa: Dirígete directamente a los sentimientos del lector con frases que inviten a la introspección. Ejemplo: "Todos tenemos cicatrices, pero es cómo las llevamos lo que nos define."
+
+            8. Frases de Transición que Mantienen el Flujo
+            Frases puente: Usa frases que conecten ideas o escenas, asegurando que la narrativa fluya sin problemas. Ejemplo: "Pero ese no era el final, sino el principio de algo mucho más grande."
+            Cambio de perspectiva: Introduce cambios de escena o punto de vista con frases claras pero fluidas. Ejemplo: "Mientras tanto, al otro lado de la ciudad..."
+            Uso de leitmotivs: Repetir una frase o idea clave en diferentes puntos de la historia puede unificar la narrativa. Ejemplo: "Y siempre volvía a ese pensamiento: '¿Qué habría pasado si...?'."
+
+            Ejemplos de Frases Utilizando Estas Técnicas
+            Impacto Inmediato: "Nunca olvidaré el sonido de la puerta cerrándose; fue como si todo el aire hubiese salido de la habitación de un solo golpe."
+            Tensión Creciente: "Cada paso lo acercaba más al borde. El suelo crujía, amenazando con romperse bajo su peso. Sabía que no podía dar marcha atrás."
+            Reflexión Emocional: "La verdad es que todos buscamos algo, aunque no sepamos qué es exactamente. Y a veces, lo encontramos en los lugares más inesperados."
+            Al aplicar estas técnicas a nivel de frase y sintaxis, puedes dar vida a tus historias, mantener a la audiencia comprometida y asegurar que cada palabra trabaje para reforzar el impacto emocional y narrativo de tu storytelling.
             """
-        
-
+        PRESENTACION_PERSONAJES = """
+        Debes introducir cada personaje si es la primera vez que aparece en la historia:
+            1. Asume que el lector desconoce la historia y los personajes.
+            2. Al introducir un nuevo personaje, añade una breve descripción (máximo 5-7 palabras) que incluya:
+            - Su nombre
+            - Su rol principal o característica más relevante
+            - Su relación con otros personajes clave (si es relevante)
+            3. Integra estas descripciones sutilmente en la narración.
+            4. Prioriza la información esencial para entender la trama.
+            Ejemplos:
+            - "Zeus, rey de los dioses olímpicos"
+            - "Aquiles, hijo de Peleo y la diosa Tetis"
+            - "Atenea, diosa de la sabiduría y estrategia militar"
+            - "Patroclo, amigo íntimo y compañero de Aquiles"
+        """
 class OutputFormats():
     class ESP(ValueEnum):
         NUMERO_PALABRAS = "No uses mas de: {words_number} palabras "
@@ -103,57 +158,3 @@ class samples():
     'text': 'Imagínate a Un héroe olvidado en la Iliada de Homero: Patroclo, el amigo íntimo de Aquiles.', 'image': "An old Greek hero sad."
     'text': 'Enamorado de Aquiles, le suplica ir a batalla con su armadura para infundir miedo en los troyanos.', 'image': 'An old Greek hero with and golden armor.'
     """
-
-
-
-
-generate_video_script_system_prompt2 = """Eres un programa experto en generar guiones para videos cortos.
-Creas textos para videos virales, se muy directo, entretenido, curioso y divertido.
-Se muy descriptivo en la historia. Busca maximizar la retencion del usuario.
-Utiliza un gancho para llamar la atencion en la primera frase.
-Evita utilizar una introduccion, ve directo a la historia.
-No hagas una despedida solo escribe la historia. 
-Intenta responder a estas preguntas para mejorar el guión:
-¿Tiene la información completa?
-¿Utiliza metodos para maximizar la retencion del usuario?
-¿Tiene un buen gancho en la primera frase?
-¿Es breve y conciso?
-¿Es entretenido?
-
-Haz el guión para un video sobre: {output_format}"""
-
-generate_video_script_system_prompt2 = """Actua como el mejor maestro de historia mezclado con un guionista novelista mezclado con un rapero y con un toque sutil de comediante de humor de la generacion z.
-Quiero que crees textos breves, se muy directo, entretenido, curioso y divertido.
-Se muy descriptivo en la historia. Busca maximizar la retencion del alumno.
-Evita utilizar una introduccion, ve directo a la historia.
-Utiliza un gancho para llamar la atencion en la primera frase.
-Intenta responder a estas preguntas para mejorar el texto:
-¿Tiene la información completa?
-¿Utiliza metodos para maximizar la retencion del alumno?
-¿Tiene un buen gancho en la primera frase?
-¿Es breve y conciso?
-¿Es entretenido?
-
-Haz el guión para un video sobre: {output_format}"""
-
-
-sort_scripts_system_prompt="""Eres un programa encargado de evaluar el potencial viral de scripts de videos.
-Obtienes una lista de textos y devuelves el orden de mejor a mayor con el numero,
-es decir si son 5 textos devuelves [2,1,4,0,3] de mayor a menor potencial viral.
-Para ordenar estos textos reflexionas sobre estas preguntas para cada uno:
-¿Tiene la información completa?
-¿Utiliza metodos para maximizar la retencion del usuario?
-¿Tiene un buen gancho en la primera frase?
-¿Es breve y conciso?
-¿Es entretenido?
-¿Es divertido?
-No devuelvas nada mas que el array """
-
-generate_images_description_and_split_text_system="""You are a program than splits any language text in an array of sentences with a image description. 
-Return only an array [] do not whirte any thing else. {output_format}"""
-
-generate_images_description_and_split_text_output_format = """Write the content in the form of an array of Python dictionaries
-where the first element is the text in the original lenguage and the second
-is the description of the image in english. 
-It should have this form: [{"text":"", "image":""},{...},...]. 
-Only return the array, no extra text, only the array, begins with [ and no more text"""
