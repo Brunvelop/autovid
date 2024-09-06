@@ -30,6 +30,7 @@ class GoogleTTS(TTS):
         model: TTSModels,
         voice: Voices.Google = Voices.Google.SPAIN
     ) -> Path:
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         tts = gTTS(text, lang=voice.value['lang'], tld=voice.value['tld'])
         tts.save(output_file)
         return output_file
@@ -39,9 +40,11 @@ class EdgeTTS(TTS):
     def generate_speech(
         text: str,
         output_file: Path,
-        model: TTSModels,
+        model: TTSModels = None,
         voice: Voices.Azure = Voices.Azure.BOLIVIA
     ) -> Path:
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
         async def amain() -> None:
             communicate = edge_tts.Communicate(text, voice.value)
             await communicate.save(output_file)
@@ -66,6 +69,7 @@ class OpenaiTTS(TTS):
         load_dotenv()
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         speech_file_path = Path(output_file)
         response = client.audio.speech.create(
             model=model.value,
@@ -78,7 +82,15 @@ class OpenaiTTS(TTS):
     
 
 if __name__ == "__main__":
-    OpenaiTTS.generate_speech(
-        text="hola mundo",
-        output_file=Path("hola_mundo.mp3")
-    )
+    import json
+
+    SHORT_N = 2
+    SHORTS_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001/SHORTS')
+    with open(SHORTS_FOLDER / f'{SHORT_N}/text/storyboard.json', 'r', encoding='utf-8') as f:
+        storyboard = json.load(f)
+
+    for i, scene in enumerate(storyboard):
+        print(EdgeTTS.generate_speech(
+            text=scene.get('text'),
+            output_file= SHORTS_FOLDER / f'{SHORT_N}/audios/{i}.mp3',
+        ))
