@@ -174,39 +174,28 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
 
+    SHORT_N = 1
+    IMAGE_STYLE = " 3d animation digital art 4k detailed"
+    SHORTS_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001/SHORTS')
 
-    prompts = [
-        "Un gato astronauta flotando en el espacio",
-        "Un perro astronauta flotando en el espacio",
-        "Un uron astronauta flotando en el espacio",
-        "Un araña astronauta flotando en el espacio",
-        "Un dragon astronauta flotando en el espacio",
-        "Un mosca astronauta flotando en el espacio",
-        "Un girafa astronauta flotando en el espacio",
-        "Un caballo astronauta flotando en el espacio",
-        "Un gato astronauta flotando en el espacio",
-        "Un perro astronauta flotando en el espacio",
-        "Un uron astronauta flotando en el espacio",
-        "Un araña astronauta flotando en el espacio",
-        "Un dragon astronauta flotando en el espacio",
-        "Un mosca astronauta flotando en el espacio",
-        "Un girafa astronauta flotando en el espacio",
-        "Un girafa astronauta flotando en el espacio",
-        "Un caballo astronauta flotando en el espacio",
-    ]
+
+    import json
+    with open(SHORTS_FOLDER / f"{SHORT_N}/text/storyboard.json", 'r', encoding='utf-8') as f:
+        storyboard = json.load(f)
+    prompts = [scene["image"] + IMAGE_STYLE for scene in storyboard]
     
     image_generator = FluxSchell(
         cache_dir=Path('./models'),
         low_vram=True,
         verbose=True,
     )
-    output_path = Path("./output_images")
+    output_path = SHORTS_FOLDER / f"{SHORT_N}/images"
     image_generator.generate_images(
         prompts=prompts,
         output_dir=output_path,
-        height=512,
-        width=512,
-        num_inference_steps=1,
+        height=1920,
+        width=1080,
+        num_inference_steps=2,
         guidance_scale=0
     )
 
