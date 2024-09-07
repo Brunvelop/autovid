@@ -25,12 +25,20 @@ class Voices:
         ONYX = 'onyx'
         NOVA = 'nova'
         SHIMMER = 'shimmer'
+    
+    class ElevenLabs(Enum):
+        RACHEL = "Rachel"
+        DOMI = "Domi"
+        BELLA = "Bella"
+        HERNAN_CORTES = "W5JElH3dK1UYYAiHH7uh"
 
 class TTSModels(Enum):
     GOOGLE = 'google'
     AZURE = 'azure'
     OPENAI_TTS_1 = 'tts-1'
     OPENAI_TTS_1_HD = 'tts-1-hd'
+    ELEVENLABS_MULTILINGUAL_V2 = "eleven_multilingual_v2"
+
 
 class ImageGenerators(Enum):
     FAKE = 'FAKE'

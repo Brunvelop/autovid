@@ -1,5 +1,6 @@
 import os
 import asyncio
+import requests
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
@@ -80,17 +81,57 @@ class OpenaiTTS(TTS):
         response.stream_to_file(speech_file_path)
         return str(speech_file_path)
     
+class ElevenLabsTTS(TTS):
+    @staticmethod
+    def generate_speech(
+        text: str,
+        output_file: Path,
+        model: TTSModels = TTSModels.ELEVENLABS_MULTILINGUAL_V2,
+        voice: Voices.ElevenLabs = Voices.ElevenLabs.HERNAN_CORTES
+    ) -> Path:
+        load_dotenv()
+        XI_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice.value}/stream"
+        
+        headers = {
+            "Accept": "application/json",
+            "xi-api-key": XI_API_KEY,
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "text": text,
+            "model_id": model.value,
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.8
+            }
+        }
+        
+        response = requests.post(url, json=data, headers=headers, stream=True)
+        
+        if response.status_code == 200:
+            with open(output_file, "wb") as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+            return output_file
+        else:
+            raise Exception(f"Error: {response.status_code}, {response.text}")
 
 if __name__ == "__main__":
     import json
 
-    SHORT_N = 2
+    SHORT_N = 1
     SHORTS_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001/SHORTS')
     with open(SHORTS_FOLDER / f'{SHORT_N}/text/storyboard.json', 'r', encoding='utf-8') as f:
         storyboard = json.load(f)
 
     for i, scene in enumerate(storyboard):
-        print(EdgeTTS.generate_speech(
+        print(ElevenLabsTTS.generate_speech(
             text=scene.get('text'),
             output_file= SHORTS_FOLDER / f'{SHORT_N}/audios/{i}.mp3',
         ))
