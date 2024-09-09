@@ -144,6 +144,7 @@ class OutputFormats():
             8. Treat each image description as if it were the first and only image being generated. Do not use phrases like "the same couple" or "as before".
             9. Maintain consistency in character descriptions by using the same key physical attributes each time a character appears, but describe them fully each time as if it were the first mention.
             10. Avoid using pronouns or references that depend on previous context. Each description should be completely self-contained.
+            11. Ensure that the sequence of images, when viewed together, tells a complete and coherent story that aligns with the original text.
             """
         GENERATE_STORYBOARD_OUTPUT_FORMAT = """
             Return only the array of dictionaries, with no additional text or explanation. The array should be in the format: 

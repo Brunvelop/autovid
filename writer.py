@@ -94,16 +94,16 @@ class BookWriter(Writer):
                 yield ''.join(lines[i:i+chunk_size])
 
 if __name__ == "__main__":
-    from LLM import GPT4o
+    from LLM import GPT4o, Claude35Sonnet
     
     writer = BookWriter(
-        llm=GPT4o(
+        llm=Claude35Sonnet(
             low_vram=False,
             llm_config={'temperature': 0.5}
         )
     )
 
-    SHORT_N = 2
+    SHORT_N = 4
     THEME = "La ira de Aquiles como tema central del poema."
 
     CAPITULO1_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001')
@@ -120,5 +120,6 @@ if __name__ == "__main__":
     print(f'{text} \n ->{text_improved} \n')
 
     storyboard = writer.generate_storyboard(text_improved)
+    print(storyboard)
     writer.save_storyboard(text_improved, (SHORTS_FOLDER / f'{SHORT_N}/text/script.txt'))
     writer.save_storyboard(storyboard, (SHORTS_FOLDER / f'{SHORT_N}/text/storyboard.json'))

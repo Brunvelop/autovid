@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 
 import torch
 from langchain_community.chat_models import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.llms import HuggingFacePipeline
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, BitsAndBytesConfig
@@ -66,11 +67,38 @@ class GPT4o(OpenAILLM):
 class GPT4oMini(OpenAILLM):
     model_name = LLMModels.GPT4oMini.value
 
+class Claude35Sonnet(LLM):
+    def generate_text(
+            self, 
+            system_memory: str = '',
+            system_prompt: str = '',
+            system_examples: str = '', 
+            human_prompt: str = '',
+            output_format: str = ''
+        ) -> str:
+        system_str = '\n'.join(filter(bool, [system_memory, system_prompt, system_examples]))
+        human_str = '\n'.join(filter(bool, [human_prompt, output_format]))
+        messages = [
+            ("system", system_str),
+            ("human", human_str)
+        ]
+        output = self.chat_model.invoke(messages)
+        return output.content
+
+    def _load_chat_model(self, low_vram: bool, llm_config: dict) -> ChatAnthropic:
+        return ChatAnthropic(
+            model="claude-3-5-sonnet-20240620",
+            temperature=llm_config.get('temperature', 0.8),
+            max_tokens=llm_config.get('max_tokens', 8192),
+            anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
+        )
+
 class LLAMA31_8B(LLM):
     pass
 
+
 if __name__ == "__main__":
-    llm = GPT4o(
+    llm = Claude35Sonnet(
         low_vram=False,
         llm_config={'temperature': 0}
     )

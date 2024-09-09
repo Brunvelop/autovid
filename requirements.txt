@@ -11,6 +11,7 @@ accelerate
 safetensors
 diffusers
 langchain-openai
+langchain-anthropic
 opencv-python
 
 sentencepiece
