@@ -24,9 +24,9 @@ class Writer():
         )
         return text
     
-    def generate_storyboard(self, text: str) -> List[Scene]:
+    def generate_storyboard(self, text: str, style: str = None) -> List[Scene]:
         output = self.llm.generate_text(
-            system_prompt=prompts.OutputFormats.ENG.GENERATE_STORYBOARD,
+            system_prompt=prompts.OutputFormats.ENG.GENERATE_STORYBOARD + style,
             system_examples='',
             human_prompt="Create a storyboard for this text: {text}".format(text=text),
             output_format=prompts.OutputFormats.ENG.GENERATE_STORYBOARD_OUTPUT_FORMAT
@@ -48,11 +48,11 @@ class BookWriter(Writer):
     def __init__(self, llm: LLM) -> None:
         super().__init__(llm)
 
-    def generate_storyboard_from_chapter(self, full_chapter_path: Path, batch_size: int = 10) -> List[Scene]:
+    def generate_storyboard_from_long_text(self, text: str, style: str = None, batch_size: int = 10) -> List[Scene]:
         storyboard = []
         
-        for chunk in tqdm(list(self._chunk_file(full_chapter_path, batch_size)), desc="Generating storyboard"):
-            chunk_storyboard = self.generate_storyboard(chunk)
+        for chunk in tqdm(list(self._chunk_text(text, batch_size)), desc="Generating storyboard"):
+            chunk_storyboard = self.generate_storyboard(text=chunk, style=style)
             storyboard.extend(chunk_storyboard)
 
         return storyboard
@@ -87,11 +87,10 @@ class BookWriter(Writer):
         )
         return text_improved
 
-    def _chunk_file(self, file_path: Path, chunk_size: int):
-        with open(file_path, 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-            for i in range(0, len(lines), chunk_size):
-                yield ''.join(lines[i:i+chunk_size])
+    def _chunk_text(self, text: str, chunk_size: int):
+        lines = text.splitlines()
+        for i in range(0, len(lines), chunk_size):
+            yield '\n'.join(lines[i:i+chunk_size])
 
 if __name__ == "__main__":
     from LLM import GPT4o, Claude35Sonnet
@@ -103,23 +102,10 @@ if __name__ == "__main__":
         )
     )
 
-    SHORT_N = 4
-    THEME = "La ira de Aquiles como tema central del poema."
-
-    CAPITULO1_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001')
-    SHORTS_FOLDER = (CAPITULO1_FOLDER / 'SHORTS')
-    CAPITULO1 = (CAPITULO1_FOLDER / 'CAPITULO_001.txt').read_text(encoding='utf-8')
-    
-    text = writer.generate_short_script_from_content(
-        chapter_content=CAPITULO1,
-        theme=THEME,
-        words_number=100
+    N = 3
+    LONG_TEXT = Path('data\TERROR\LaGallinaDegollada.txt').read_text(encoding='utf-8')
+    storyboard = writer.generate_storyboard_from_long_text(
+        text=LONG_TEXT, 
+        style=prompts.Styles.Flux.DARK_ATMOSPHERE
     )
-    text_improved = writer.improve_text_storytelling(text, words_number=100)
-
-    print(f'{text} \n ->{text_improved} \n')
-
-    storyboard = writer.generate_storyboard(text_improved)
-    print(storyboard)
-    writer.save_storyboard(text_improved, (SHORTS_FOLDER / f'{SHORT_N}/text/script.txt'))
-    writer.save_storyboard(storyboard, (SHORTS_FOLDER / f'{SHORT_N}/text/storyboard.json'))
+    writer.save_storyboard(storyboard, (Path('data\TERROR') / f'{N}/text/storyboard.json'))

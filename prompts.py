@@ -159,3 +159,25 @@ class samples():
     'text': 'Imagínate a Un héroe olvidado en la Iliada de Homero: Patroclo, el amigo íntimo de Aquiles.', 'image': "An old Greek hero sad."
     'text': 'Enamorado de Aquiles, le suplica ir a batalla con su armadura para infundir miedo en los troyanos.', 'image': 'An old Greek hero with and golden armor.'
     """
+
+class Styles():
+    class Flux():
+        DARK_ATMOSPHERE = """
+        When creating the image description, add a horrific style inspired by the following elements:
+
+        - Lovecraftian cosmic horror: vast, unknowable entities, tentacles, non-Euclidean geometry
+        - Giger-esque biomechanical nightmares: fusion of flesh and machine, intricate details
+        - Beksiński's hellish landscapes: surreal, decaying structures, muted color palettes
+        - Junji Ito's body horror: grotesque transformations, spiral motifs, unsettling close-ups
+        - Gothic horror ambiance: fog-shrouded castles, gargoyles, candlelit corridors
+        - Clive Barker's hellraiser aesthetics: chains, hooks, leather, intricate puzzle boxes
+        - Silent Hill's rust and decay: abandoned, corroded environments, ash-like particles
+        - Dario Argento's vivid color schemes: stark reds and blues in shadowy scenes
+        - Francis Bacon's distorted figures: warped, screaming faces, isolated in void-like spaces
+        - Dark surrealism: melting realities, impossible creatures, dreamlike terror
+
+        Atmosphere keywords: oppressive, claustrophobic, uncanny, dread-inducing, nightmarish
+        Visual elements: deep shadows, harsh contrasts, unsettling symmetry, eerie lighting
+        Textures: visceral, slimy, decaying, chitinous, veiny, pulsating
+        Color palettes: muted with vivid accents, deep crimsons, sickly greens, void-like blacks
+        """
