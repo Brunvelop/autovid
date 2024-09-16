@@ -174,27 +174,26 @@ if __name__ == "__main__":
     import time
     start_time = time.time()
 
-    SHORT_N = 1
-    IMAGE_STYLE = " 3d animation digital art 4k detailed"
-    SHORTS_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001/SHORTS')
-
+    N = 1
+    OUPUT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/images')
+    STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
 
     import json
-    with open(SHORTS_FOLDER / f"{SHORT_N}/text/storyboard.json", 'r', encoding='utf-8') as f:
+    with open(STORYBOARD, 'r', encoding='utf-8') as f:
         storyboard = json.load(f)
-    prompts = [scene["image"] + IMAGE_STYLE for scene in storyboard]
+    prompts = [scene["image"] for scene in storyboard]
     
     image_generator = FluxSchell(
         cache_dir=Path('./models'),
         low_vram=True,
         verbose=True,
     )
-    output_path = SHORTS_FOLDER / f"{SHORT_N}/images"
+
     image_generator.generate_images(
         prompts=prompts,
-        output_dir=output_path,
-        height=1920,
-        width=1080,
+        output_dir=OUPUT_PATH,
+        height=1344,
+        width=768,
         num_inference_steps=2,
         guidance_scale=0
     )
