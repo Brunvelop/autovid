@@ -31,6 +31,8 @@ class Voices:
         DOMI = "Domi"
         BELLA = "Bella"
         HERNAN_CORTES = "W5JElH3dK1UYYAiHH7uh"
+        SARA_MARTIN_2 = "Ir1QNHvhaJXbAGhT50w3"
+        Martin_Osborne_6 = "LlZr3QuzbW4WrPjgATHG"
 
 class TTSModels(Enum):
     GOOGLE = 'google'
