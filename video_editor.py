@@ -170,7 +170,8 @@ def generate_video(
 ) -> None:
     _create_or_clear_transitions_folder(transitions_path)
 
-    images = list(images_path.iterdir())
+    images = sorted(images_path.iterdir(), key=lambda x: int(x.stem))
+
     timeline = []
     for n, image in enumerate(images[:-1]):  # Excluimos la última imagen porque no tiene una imagen siguiente para la transición
 
@@ -200,7 +201,17 @@ def generate_video(
     video = adjust_video_duration(video)
 
     # Aplicar efecto de ruido como postprocesado
-    video = add_positional_noise(video, noise_level=10, inertia=0.7)
+    video = add_positional_noise(video, noise_level=100, inertia=0.995)
 
     # Escribir archivo de video
     video.write_videofile(str(output_path))
+
+
+if __name__ == "__main__":
+    N = 1
+    ASSETS_FOLDER = Path('data/MITO_TV/SHORTS/MITOS_GRIEGOS/')
+    generate_video(
+        images_path=ASSETS_FOLDER / f'{N}/images',
+        audios_path=ASSETS_FOLDER / f'{N}/audios',
+        output_path=ASSETS_FOLDER / f"{N}/{N}.mp4"
+    )
