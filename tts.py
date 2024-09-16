@@ -125,13 +125,16 @@ class ElevenLabsTTS(TTS):
 if __name__ == "__main__":
     import json
 
-    SHORT_N = 1
-    SHORTS_FOLDER = Path('data/HOMERO/LA_ILIADA/CAPITULO_001/SHORTS')
-    with open(SHORTS_FOLDER / f'{SHORT_N}/text/storyboard.json', 'r', encoding='utf-8') as f:
+    N = 1
+    STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
+
+    with open(STORYBOARD, 'r', encoding='utf-8') as f:
         storyboard = json.load(f)
 
     for i, scene in enumerate(storyboard):
-        print(ElevenLabsTTS.generate_speech(
+        print(EdgeTTS.generate_speech(
             text=scene.get('text'),
-            output_file= SHORTS_FOLDER / f'{SHORT_N}/audios/{i}.mp3',
+            output_file=Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/audios/{i}.mp3'),
         ))
+
+    
