@@ -41,7 +41,7 @@ class FluxSchell(ImageGenerator):
         if isinstance(prompts, str):
             prompts = [prompts]
         
-        BATCH_SIZE = 10
+        BATCH_SIZE = 20
         for i in tqdm(range(0, len(prompts), BATCH_SIZE), desc=f"Generating {len(prompts)} images"):
             batch_prompts = prompts[i:i + BATCH_SIZE]
             batch_images = self.pipe(prompt=batch_prompts, **generation_config).images
@@ -172,33 +172,38 @@ class FakeImageGenerator(ImageGenerator):
 
 if __name__ == "__main__":
     import time
+    import json
     start_time = time.time()
 
-    N = 1
-    OUPUT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/images')
-    STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
-
-    import json
-    with open(STORYBOARD, 'r', encoding='utf-8') as f:
-        storyboard = json.load(f)
-    prompts = [scene["image"] for scene in storyboard]
-    
+    # Crear el generador de imágenes una sola vez
     image_generator = FluxSchell(
         cache_dir=Path('./models'),
         low_vram=True,
         verbose=True,
     )
 
-    image_generator.generate_images(
-        prompts=prompts,
-        output_dir=OUPUT_PATH,
-        height=1344,
-        width=768,
-        num_inference_steps=2,
-        guidance_scale=0
-    )
+    for N in range(11, 101):
+        OUTPUT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/images')
+        STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
 
+        try:
+            with open(STORYBOARD, 'r', encoding='utf-8') as f:
+                storyboard = json.load(f)
+            prompts = [scene["image"] for scene in storyboard]
+            
+            image_generator.generate_images(
+                prompts=prompts,
+                output_dir=OUTPUT_PATH,
+                height=1344,
+                width=768,
+                num_inference_steps=2,
+                guidance_scale=0
+            )
+
+            print(f"Generated images for MITOS_GRIEGOS/{N}")
+        except Exception as e:
+            print(f"Error processing MITOS_GRIEGOS/{N}: {str(e)}")
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"\nGenerated in: {elapsed_time:.2f} s")
+    print(f"\nTotal generation time: {elapsed_time:.2f} s")
