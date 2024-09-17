@@ -21,6 +21,7 @@ class Writer():
                 OutputFormats.ESP.NUMERO_PALABRAS.format(words_number=words_number) +
                 WriterPrompts.SALTO_DE_LINEA_SIMPLE
         )
+        text = text.replace('"', "'")
         return text
     
     def save_text(self, text: str, save_path: Path) -> None:
