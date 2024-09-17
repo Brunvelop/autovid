@@ -196,8 +196,44 @@ class OutputFormats():
             10. Avoid using pronouns or references that depend on previous context. Each description should be completely self-contained.
             11. Ensure that the sequence of images, when viewed together, tells a complete and coherent story that aligns with the original text.
             """
+        GENERATE_TUMBNAIL = """
+            Generate a detailed description for an artistic image that visually represents the given text. The image should creatively incorporate the original text within the scene. Follow these guidelines:
+
+            1. Choose an appropriate artistic style for the theme (e.g., modern, classical, surrealist, etc.).
+            2. Describe the main scene that captures the essence of the text.
+            3. Include details about characters, their expressions, and actions.
+            4. Describe the environment and atmosphere surrounding the scene.
+            5. Specify how the original text is integrated into the image (e.g., formed by clouds, carved in stone, etc.).
+            6. Use descriptive and vivid language to clearly convey the image.
+            7. Keep the description concise yet detailed, ideally in a single paragraph.
+            8. Do not include the original text in your response, only the image description.
+
+            EXAMPLES:
+            TEXT: '1. El Nacimiento de Afrodita'
+            RESULT: A vibrant, modern art style painting of Aphrodite emerging from the ocean at sunrise, with the bold text '1. El Nacimiento de Afrodita' placed in the sky, formed by soft clouds, contrasting against the warm pink and orange tones of the horizon.
+
+            TEXT: '2. El Sacrificio de Ifigenia.'
+            RESULT: A dramatic, classical art style painting of the scene '2. El Sacrificio de Ifigenia.' In the foreground, Iphigenia stands gracefully before an altar, her expression calm yet somber. The altar is surrounded by priests in dark robes, while her father, Agamemnon, watches with a heavy heart. In the background, the sky is dark with swirling clouds, casting an ominous atmosphere over the scene. The bold text '2. El Sacrificio de Ifigenia' is written in the sky, formed by dark storm clouds, contrasting against the pale light breaking through in the distance.
+            
+            TEXT: '3. El Castigo de Tántalo.'
+            RESULT: A haunting, surreal art style painting depicting the scene '3. El Castigo de Tántalo.' In the center, Tantalus stands waist-deep in a pool of water, reaching up toward a lush fruit tree that dangles its branches just out of his grasp. His expression is one of desperation and torment. The water below him recedes as he tries to drink, while the sky above is stormy and turbulent. The bold text '3. El Castigo de Tántalo' is formed by ghostly wisps of smoke rising from the ground, contrasting against the dark, ominous clouds rolling in the background.
+
+            TEXT: '4. La Venganza de Medea.'
+            RESULT: A dark, intense art style painting illustrating the scene '4. La Venganza de Medea.' In the foreground, Medea stands with a fierce, determined expression, holding a bloodied dagger. Behind her, the shadowy figures of her slain children lie on the ground, while flames rise in the distance, consuming the palace of Jason. Her flowing robes whip in the wind, blending with the smoke and fire. The bold text '4. La Venganza de Medea' is emblazoned in the sky, formed by fiery embers and smoke, contrasting against the night sky filled with swirling dark clouds.
+
+            TEXT: '5. El Destino de Acteón.'
+            RESULT: A dynamic, mythological art style painting depicting the scene '5. El Destino de Acteón.' In the foreground, Actaeon is caught mid-transformation, his body shifting into that of a stag, his face frozen in shock and fear. Surrounding him are a pack of fierce hunting dogs, leaping toward him with snarling jaws. The forest behind is dense and shadowy, with beams of light breaking through the trees. The bold text '5. El Destino de Acteón' is formed by twisting branches and vines, curling upward into the sky, contrasting against the muted greens and golds of the forest landscape at twilight.
+
+            TEXT: '6. El Suplicio de Prometeo.'
+            RESULT: A powerful, dramatic art style painting portraying '6. El Suplicio de Prometeo.' Prometheus is chained to a jagged mountain peak, his body contorted in agony. Above him, a massive eagle descends with its wings outstretched, ready to feast on his liver. The sky is stormy, with bolts of lightning illuminating the harsh, barren landscape around him. The bold text '6. El Suplicio de Prometeo' is carved into the dark, craggy rocks of the mountain, standing out against the glowing cracks of lava seeping from the ground.
+
+            TEXT: '7. La Maldición de Casandra.'
+            RESULT: A melancholic, ethereal art style painting illustrating the scene '7. La Maldición de Casandra.' In the center, Cassandra stands on the steps of a grand palace, her face twisted in despair as she gazes into the distance, her eyes wide with the knowledge of impending doom. Behind her, the people of Troy ignore her warnings, continuing their daily lives, oblivious to the coming destruction. The sky is a muted twilight, with dark clouds slowly rolling in. The bold text '7. La Maldición de Casandra' is formed by delicate wisps of mist rising from the ground, contrasting against the fading golden glow of the city in the background.
+            
+            Return only the image description, without any additional text or explanation.
+            """
         GENERATE_STORYBOARD_OUTPUT_FORMAT = """
-            Return only the array of dictionaries, with no additional text or explanation. The array should be in the format: 
+            Return only the array of dictionaries, with no additional text or explanation. The array should be in the format. When describing the image do not use more than 50 words: 
             [
                 {"text": "Scene 1 text in original language", "image": "Detailed image description for scene 1 in English"},
                 {"text": "Scene 2 text in original language", "image": "Detailed image description for scene 2 in English"},
