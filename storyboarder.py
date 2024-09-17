@@ -33,6 +33,14 @@ class Storyboarder():
         storyboard = [Scene(text=scene['text'], image=scene['image']) for scene in storyboard_parsed]
         return storyboard
     
+    def generate_tumbnail(self, text: str) -> str:
+        output = self.llm.generate_text(
+            system_prompt=OutputFormats.ENG.GENERATE_TUMBNAIL,
+            human_prompt="Generate the description for text: '{text}'".format(text=text),
+            output_format="Return only the description in english without any extra text."
+        )
+        return output
+    
     def save_storyboard(self, storyboard: List[Scene], filename: Path) -> None:
         filename.parent.mkdir(parents=True, exist_ok=True)
         with open(filename, 'w', encoding='utf-8') as f:
@@ -45,22 +53,41 @@ class Storyboarder():
 
 if __name__ == "__main__":
     from LLM import GPT4o, Claude35Sonnet
+    from data.MITO_TV.SHORTS.mitos import mitos_griegos
+
+    def extract_myth_text(mitos_griegos, N):
+        for line in mitos_griegos.split('\n'):
+            if line.startswith(f"{N}. "):
+                return line.split(': ')[0].split('. ', 1)[1]
+        return None
     
     writer = Storyboarder(
-        llm=Claude35Sonnet(
+        llm=GPT4o(
             low_vram=False,
-            llm_config={'temperature': 0.5}
+            llm_config={'temperature': 0}
         )
     )
+    
 
-    N = 1
-    TEXT = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/text.txt').read_text(encoding='utf-8')
-    storyboard = writer.generate_storyboard(
-        text=TEXT, 
-        style=Styles.Flux.MITO_TV
-    )
-    writer.save_storyboard(storyboard, (Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')))
-    for scene in storyboard:
-        print(f"Scene Text: {scene.get('text')}")
-        print(f"Image Description: {scene.get('image')}")
-        print("-" * 40)
+    for N in tqdm(range(11, 101), desc="Processing myths"):
+        TEXT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/text.txt')
+        TEXT = TEXT_PATH.read_text(encoding='utf-8')
+        
+        # Extract the myth title
+        myth_title = extract_myth_text(mitos_griegos, N)
+        
+        # Generate the storyboard
+        storyboard = writer.generate_storyboard_from_long_text(
+            text=TEXT, 
+            style=Styles.Flux.MITO_TV
+        )
+        
+        # Generate thumbnail
+        thumbnail = writer.generate_tumbnail(myth_title)
+        
+        # Add the title scene at the beginning
+        title_scene = Scene(text=myth_title, image=thumbnail)
+        storyboard.insert(0, title_scene)
+        
+        # Save the modified storyboard
+        writer.save_storyboard(storyboard, Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json'))
