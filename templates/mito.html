@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mito {{ mito_num }}</title>
+    <style>
+        .image-container {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+        .image-container img {
+            margin: 5px;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Imágenes del Mito {{ mito_num }}</h1>
+    <a href="{{ url_for('index') }}">Volver a la lista de mitos</a>
+    <div class="image-container">
+        {% for imagen in images %}
+            <img src="/data/MITO_TV/{{ imagen }}" alt="Imagen del mito {{ mito_num }}">
+        {% endfor %}
+    </div>
+</body>
+</html>

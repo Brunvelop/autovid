@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>AI VIDEO GENERATOR</title>
+</head>
+<body>
+    <h1>VIDEO PRODUCTION</h1>
+    {% for categoria, mitos in mitos_por_categoria.items() %}
+        <h2>{{ categoria }}</h2>
+        <ul>
+            {% for mito in mitos %}
+                <li>
+                    <a href="{{ url_for('show_video', short_category=categoria, short_num=mito) }}">Mito {{ mito }}</a>
+                    {% if estado_mitos.get(mito, False) %}
+                        ✔️
+                    {% else %}
+                        ❌
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</body>
+</html>
