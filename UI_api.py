@@ -64,16 +64,37 @@ async def index(request: Request):
 @app.get("/video/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_video(request: Request, short_category: str, short_num: str):
     images_path = BASE_SHORTS_PATH / short_category / short_num / "images"
+    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
+    
     if not images_path.exists():
         raise HTTPException(status_code=404, detail=f"No se encontró el mito {short_category}/{short_num}")
 
-    images_urls = [str(image.relative_to(BASE_SHORTS_PATH.parent)) for image in sorted(images_path.iterdir())]
+    # Cargar los textos de narración y descripción si están disponibles
+    if text_path.exists():
+        with text_path.open('r') as file:
+            storyboard_texts = json.load(file)
+    else:
+        storyboard_texts = [{} for _ in range(len(list(images_path.iterdir())))]
+
+    scenes = []
+    for idx, image in enumerate(sorted(images_path.iterdir())):
+        image_url = f"/data/MITO_TV/SHORTS/{short_category}/{short_num}/images/{image.name}"
+        narration_text = storyboard_texts[idx].get('text', '') if idx < len(storyboard_texts) else ''
+        description_text = storyboard_texts[idx].get('image', '') if idx < len(storyboard_texts) else ''
+        
+        scene = {
+            'image_url': image_url,
+            'narration_text': narration_text,
+            'description_text': description_text
+        }
+        scenes.append(scene)
+
     return templates.TemplateResponse(
         "video.html",
         {
             "request": request,
             "tipo_mito": short_category,
             "mito_num": short_num,
-            "images": images_urls
+            "scenes": scenes
         }
     )
