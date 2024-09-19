@@ -89,7 +89,7 @@ async def show_video(request: Request, short_category: str, short_num: str):
         }
         scenes.append(scene)
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "video.html",
         {
             "request": request,
@@ -98,3 +98,9 @@ async def show_video(request: Request, short_category: str, short_num: str):
             "scenes": scenes
         }
     )
+    
+    # Añadir encabezados para prevenir la caché del navegador
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
