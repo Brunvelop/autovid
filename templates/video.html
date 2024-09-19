@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mito {{ mito_num }}</title>
+    <title>Video {{ mito_num }}</title>
     <style>
         .image-container {
             display: flex;
@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <h1>Imágenes del Mito {{ mito_num }}</h1>
+    <h1>VIDEO {{tipo_mito}} {{ mito_num }}</h1>
     <a href="{{ url_for('index') }}">Volver a la lista de mitos</a>
     <div class="image-container">
         {% for imagen in images %}

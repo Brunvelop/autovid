@@ -69,7 +69,7 @@ async def show_video(request: Request, short_category: str, short_num: str):
 
     images_urls = [str(image.relative_to(BASE_SHORTS_PATH.parent)) for image in sorted(images_path.iterdir())]
     return templates.TemplateResponse(
-        "mito.html",
+        "video.html",
         {
             "request": request,
             "tipo_mito": short_category,
