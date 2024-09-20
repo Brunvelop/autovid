@@ -1,10 +1,13 @@
+import os
 import random
+from dotenv import load_dotenv
 from typing import Union, List
 from abc import ABC, abstractmethod
 
 import torch
 from tqdm import tqdm
 from pathlib import Path
+from gradio_client import Client
 from PIL import Image, ImageDraw, ImageFont
 from diffusers import AutoPipelineForText2Image, FluxPipeline
 
@@ -113,6 +116,53 @@ class SDXLTURBO(ImageGenerator):
             pipe.enable_attention_slicing()
         return pipe
 
+class HuggingFaceGradioFluxDev(ImageGenerator):
+    def __init__(self, verbose: bool = True):
+        load_dotenv()
+        self.client = Client(
+            src="brunvelop/FLUX.1-dev",
+            hf_token=os.getenv('HUGGINGFACE_API_KEY'),
+        )
+        self.verbose = verbose
+
+    def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
+        generation_config = ImageGeneratorConfig.FLUX1_SCHNELL.value.copy()
+        generation_config.update(**kwargs)
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        if isinstance(prompts, str):
+            prompts = [prompts]
+        
+        for i, prompt in enumerate(tqdm(prompts, desc=f"Generating {len(prompts)} images")):
+            result = self._query(prompt, **generation_config)
+            image_path_gradio_tmp = result[0]
+            # Copy the generated image to the output directory
+            image_path = output_dir / f"{i}.png"
+            Image.open(image_path_gradio_tmp).save(image_path)
+
+            if self.verbose:
+                print(f"Image saved: {image_path}")
+        
+        if self.verbose:
+            print(f"All images generated and saved in: {output_dir}")
+
+    def _query(self, prompt: str, **kwargs):
+        result = self.client.predict(
+            prompt=prompt,
+            seed=kwargs.get('seed', 0),
+            randomize_seed=kwargs.get('randomize_seed', True),
+            width=kwargs.get('width', 1024),
+            height=kwargs.get('height', 1024),
+            guidance_scale=kwargs.get('guidance_scale', 3.5),
+            num_inference_steps=kwargs.get('num_inference_steps', 28),
+            api_name="/infer"
+        )
+        return result
+
+    def _load_pipeline(self) -> None:
+        pass
+
 class FakeImageGenerator(ImageGenerator):
     def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -171,39 +221,54 @@ class FakeImageGenerator(ImageGenerator):
         pass
 
 if __name__ == "__main__":
-    import time
-    import json
-    start_time = time.time()
+    # import time
+    # import json
+    # start_time = time.time()
 
-    # Crear el generador de imágenes una sola vez
-    image_generator = FluxSchell(
-        cache_dir=Path('./models'),
-        low_vram=True,
-        verbose=True,
-    )
+    # # Crear el generador de imágenes una sola vez
+    # image_generator = FluxSchell(
+    #     cache_dir=Path('./models'),
+    #     low_vram=True,
+    #     verbose=True,
+    # )
 
-    for N in range(11, 101):
-        OUTPUT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/images')
-        STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
+    # for N in range(11, 101):
+    #     OUTPUT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/images')
+    #     STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
 
-        try:
-            with open(STORYBOARD, 'r', encoding='utf-8') as f:
-                storyboard = json.load(f)
-            prompts = [scene["image"] for scene in storyboard]
+    #     try:
+    #         with open(STORYBOARD, 'r', encoding='utf-8') as f:
+    #             storyboard = json.load(f)
+    #         prompts = [scene["image"] for scene in storyboard]
             
-            image_generator.generate_images(
-                prompts=prompts,
-                output_dir=OUTPUT_PATH,
-                height=1344,
-                width=768,
-                num_inference_steps=2,
-                guidance_scale=0
-            )
+    #         image_generator.generate_images(
+    #             prompts=prompts,
+    #             output_dir=OUTPUT_PATH,
+    #             height=1344,
+    #             width=768,
+    #             num_inference_steps=2,
+    #             guidance_scale=0
+    #         )
 
-            print(f"Generated images for MITOS_GRIEGOS/{N}")
-        except Exception as e:
-            print(f"Error processing MITOS_GRIEGOS/{N}: {str(e)}")
+    #         print(f"Generated images for MITOS_GRIEGOS/{N}")
+    #     except Exception as e:
+    #         print(f"Error processing MITOS_GRIEGOS/{N}: {str(e)}")
 
+    # end_time = time.time()
+    # elapsed_time = end_time - start_time
+    # print(f"\nTotal generation time: {elapsed_time:.2f} s")
+
+    import time
+
+    start_time = time.time()
+    image_generator = HuggingFaceGradioFluxDev(verbose=True)
+    image_generator.generate_images(
+        prompts=["a dog", "a cat", "a snake", "a horse", "a spider"],
+        output_dir=Path('./test'),
+        width=768,
+        height=1344,
+        guidance_scale=3.5,
+        num_inference_steps=28
+    )
     end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"\nTotal generation time: {elapsed_time:.2f} s")
+    print(f"Execution time: {end_time - start_time:.2f} seconds")
