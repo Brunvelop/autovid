@@ -4,17 +4,21 @@
     <meta charset="UTF-8">
     <title>Video {{ short_num }}</title>
     <style>
-        /* Estilos CSS para un diseño de tarjetas compacto */
+        .scene-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .scene-container {
             display: flex;
             flex-wrap: wrap;
             justify-content: flex-start;
         }
         .scene {
-            flex: 0 1 180px; /* Disminuye el ancho base de cada tarjeta */
-            margin: 2px;      /* Reduce el margen entre tarjetas */
+            flex: 0 1 300px;
+            margin: 2px;
             border: 1px solid #ccc;
-            padding: 5px;     /* Reduce el padding dentro de las tarjetas */
+            padding: 5px;
             box-sizing: border-box;
         }
         .scene img {
@@ -32,11 +36,12 @@
         }
         .texts textarea {
             width: 100%;
-            min-height: 35px; /* Reduce la altura mínima de las áreas de texto */
+            min-height: 100px;
+            max-height: 300px; /* Ajusta este valor según tus necesidades */
             resize: vertical;
-            padding: 4px;     /* Reduce el padding dentro de las áreas de texto */
+            padding: 4px;
             box-sizing: border-box;
-            font-size: 0.85em; /* Reduce el tamaño de fuente */
+            font-size: 0.85em;
         }
         .scene button {
             margin-right: 3px;  /* Reduce el espacio entre botones */
@@ -44,21 +49,6 @@
             padding: 4px 8px;   /* Reduce el padding dentro de los botones */
             font-size: 0.85em;  /* Reduce el tamaño de fuente */
             cursor: pointer;
-        }
-        @media (max-width: 600px) {
-            .scene {
-                flex: 0 1 30%; /* Ajusta el ancho de las tarjetas para pantallas más pequeñas */
-            }
-        }
-        @media (max-width: 400px) {
-            .scene {
-                flex: 0 1 45%; /* Más ajustes para pantallas muy pequeñas */
-            }
-        }
-        @media (max-width: 300px) {
-            .scene {
-                flex: 0 1 100%; /* Ancho completo en pantallas muy estrechas */
-            }
         }
     </style>
 </head>
@@ -70,32 +60,28 @@
     <div class="scene-container">
         {% for scene in scenes %}
         <div class="scene">
-            <h2>{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
-            <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='false') }}'">❌</button>
-            <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='true') }}'">✔️</button>
+            <div class="scene-status">
+                <h2>{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
+                <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='false') }}'">❌</button>
+                <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='true') }}'">✔️</button>
+            </div>
             <img src="{{ scene.image_url }}">
+            <audio controls>
+                <source src="{{ scene.audio_url }}" type="audio/mpeg">
+                Tu navegador no soporta el elemento de audio.
+            </audio>
             <div class="texts">
                 <label for="text{{ loop.index }}">Narración:</label>
                 <textarea id="text{{ loop.index }}" name="text{{ loop.index }}">{{ scene.text }}</textarea>
+                <button type="button" onclick="remakeScene({{ loop.index0 }})">💾</button>
                 <label for="image_prompt{{ loop.index }}">Prompt imagen:</label>
                 <textarea id="image_prompt{{ loop.index }}" name="image_prompt{{ loop.index }}">{{ scene.image_prompt }}</textarea>
+                <button type="button" onclick="remakeScene({{ loop.index0 }})">💾</button>
+                <button type="button" onclick="remakeScene({{ loop.index0 }})">✍️</button>
+                <button type="button" onclick="remakeImage({{ loop.index0 }})">🖌️</button>        
             </div>
-            <button type="button" onclick="remakeScene({{ loop.index0 }})">Remake</button>
-            <button type="button" onclick="remakeImage({{ loop.index0 }})">Remake Image</button>        </div>
+        </div>
         {% endfor %}
     </div>
-
-    <!-- Funciones JavaScript opcionales para los botones -->
-    <script>
-        function remakeScene(index) {
-            alert('Remake scene ' + index);
-            // Implementa aquí la lógica para rehacer la escena
-        }
-
-        function remakeImage(index) {
-            alert('Remake image for scene ' + index);
-            // Implementa aquí la lógica para rehacer la imagen
-        }
-    </script>
 </body>
 </html>
