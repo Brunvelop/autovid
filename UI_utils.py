@@ -38,6 +38,21 @@ class ProductionStatusManager:
         return status
     
     @staticmethod
+    def update_video_status(status_path: Path, image_index: int = None, is_completed: bool = False) -> VideoStatus:
+        status = ProductionStatusManager.get_video_status(status_path)
+        
+        if image_index is not None:
+            if 0 <= image_index < len(status['images_completed']):
+                status['images_completed'][image_index] = is_completed
+            else:
+                raise ValueError(f"Invalid image index: {image_index}")
+        
+        status['completed'] = all(status['images_completed'])
+        
+        ProductionStatusManager._save_video_status(status, status_path)
+        return status
+
+    @staticmethod
     def _save_video_status(status: VideoStatus, status_path: Path) -> None:
         with status_path.open('w') as f:
             json.dump(status, f, indent=4)

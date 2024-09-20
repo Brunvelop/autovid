@@ -67,17 +67,17 @@
     <a href="{{ url_for('index') }}">Volver al inicio</a>
     <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int - 1) }}">⬅️</a>
     <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int + 1) }}">➡️</a>
-
-
     <div class="scene-container">
         {% for scene in scenes %}
         <div class="scene">
             <h2>{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
+            <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='false') }}'">❌</button>
+            <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='true') }}'">✔️</button>
             <img src="{{ scene.image_url }}">
             <div class="texts">
                 <label for="text{{ loop.index }}">Narración:</label>
                 <textarea id="text{{ loop.index }}" name="text{{ loop.index }}">{{ scene.text }}</textarea>
-                <label for="image_prompt{{ loop.index }}">Descripción de la imagen:</label>
+                <label for="image_prompt{{ loop.index }}">Prompt imagen:</label>
                 <textarea id="image_prompt{{ loop.index }}" name="image_prompt{{ loop.index }}">{{ scene.image_prompt }}</textarea>
             </div>
             <button type="button" onclick="remakeScene({{ loop.index0 }})">Remake</button>

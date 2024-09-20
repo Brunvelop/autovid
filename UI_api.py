@@ -3,9 +3,9 @@ import json
 from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from UI_utils import ProductionStatusManager
 
@@ -64,3 +64,19 @@ async def show_video(request: Request, short_category: str, short_num: str):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
+
+@app.get("/update_status/{short_category}/{short_num}/{image_index}/{is_completed}")
+async def update_status(
+    short_category: str, 
+    short_num: str, 
+    image_index: int, 
+    is_completed: bool,
+    request: Request
+):
+    status_path = BASE_SHORTS_PATH / short_category / short_num / "status.json"
+    
+    try:
+        ProductionStatusManager.update_video_status(status_path, image_index, is_completed)
+        return RedirectResponse(url=f"/video/{short_category}/{short_num}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
