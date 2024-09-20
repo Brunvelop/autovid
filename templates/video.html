@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Video {{ mito_num }}</title>
+    <title>Video {{ short_num }}</title>
     <style>
         /* Estilos CSS para un diseño de tarjetas compacto */
         .scene-container {
@@ -63,18 +63,22 @@
     </style>
 </head>
 <body>
-    <h1>VIDEO {{ tipo_mito }} {{ mito_num }}</h1>
-    <a href="{{ url_for('index') }}">Volver a la lista de mitos</a>
+    <h1>VIDEO {{ short_category }} {{ short_num }} {{ '✔️' if status['completed'] else '❌' }}</h1>
+    <a href="{{ url_for('index') }}">Volver al inicio</a>
+    <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int - 1) }}">⬅️</a>
+    <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int + 1) }}">➡️</a>
+
 
     <div class="scene-container">
         {% for scene in scenes %}
         <div class="scene">
-            <img src="{{ scene.image_url }}" alt="Imagen del mito {{ mito_num }}">
+            <h2>{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
+            <img src="{{ scene.image_url }}">
             <div class="texts">
-                <label for="narration_text_{{ loop.index }}">Narración:</label>
-                <textarea id="narration_text_{{ loop.index }}" name="narration_text_{{ loop.index }}">{{ scene.narration_text }}</textarea>
-                <label for="description_text_{{ loop.index }}">Descripción de la imagen:</label>
-                <textarea id="description_text_{{ loop.index }}" name="description_text_{{ loop.index }}">{{ scene.description_text }}</textarea>
+                <label for="text{{ loop.index }}">Narración:</label>
+                <textarea id="text{{ loop.index }}" name="text{{ loop.index }}">{{ scene.text }}</textarea>
+                <label for="image_prompt{{ loop.index }}">Descripción de la imagen:</label>
+                <textarea id="image_prompt{{ loop.index }}" name="image_prompt{{ loop.index }}">{{ scene.image_prompt }}</textarea>
             </div>
             <button type="button" onclick="remakeScene({{ loop.index0 }})">Remake</button>
             <button type="button" onclick="remakeImage({{ loop.index0 }})">Remake Image</button>        </div>

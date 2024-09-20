@@ -6,13 +6,15 @@
 </head>
 <body>
     <h1>VIDEO PRODUCTION</h1>
-    {% for categoria, mitos in mitos_por_categoria.items() %}
-        <h2>{{ categoria }}</h2>
+    {% for category, videos in global_status.items() %}
+        <h2>{{ category }}</h2>
         <ul>
-            {% for mito in mitos %}
+            {% for video_path, status in videos.items() %}
                 <li>
-                    <a href="{{ url_for('show_video', short_category=categoria, short_num=mito) }}">Mito {{ mito }}</a>
-                    {% if estado_mitos.get(mito, False) %}
+                    <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}">
+                        {{ video_path.name }}
+                    </a>
+                    {% if status['completed'] %}
                         ✔️
                     {% else %}
                         ❌

@@ -24,18 +24,18 @@ class ProductionStatusManager:
                 if not status_file.exists():
                     ProductionStatusManager._initialize_status(status_file)
                 
-                status = ProductionStatusManager._get_video_status(status_file)
+                status = ProductionStatusManager.get_video_status(status_file)
 
                 global_status[category.name][video_assets_path] = status
 
         return global_status
 
     @staticmethod
-    def _get_video_status(status_path: Path) -> VideoStatus:
+    def get_video_status(status_path: Path) -> VideoStatus:
         if status_path.exists():
             with status_path.open('r') as f:
-                data = json.load(f)
-        return data
+                status = json.load(f)
+        return status
     
     @staticmethod
     def _save_video_status(status: VideoStatus, status_path: Path) -> None:
