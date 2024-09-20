@@ -3,25 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>AI VIDEO GENERATOR</title>
+    <style>
+        .video-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .video-item {
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body>
     <h1>VIDEO PRODUCTION</h1>
     {% for category, videos in global_status.items() %}
         <h2>{{ category }}</h2>
-        <ul>
+        <div class="video-list">
             {% for video_path, status in videos.items() %}
-                <li>
+                <div class="video-item">
                     <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}">
                         {{ video_path.name }}
                     </a>
-                    {% if status['completed'] %}
-                        ✔️
-                    {% else %}
-                        ❌
-                    {% endif %}
-                </li>
+                    [{{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}]
+                    {{ '✔️' if status['completed'] else '❌' }}
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% endfor %}
 </body>
 </html>

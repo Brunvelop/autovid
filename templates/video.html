@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <title>Video {{ short_num }}</title>
     <style>
+        body {
+            background-color: #0e0e1a;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+        }
         .scene-status {
             display: flex;
             align-items: center;
@@ -42,6 +47,8 @@
             padding: 4px;
             box-sizing: border-box;
             font-size: 0.85em;
+            background-color: #0f3460;
+            color: #e0e0e0;
         }
         .scene button {
             margin-right: 3px;  /* Reduce el espacio entre botones */
@@ -62,9 +69,8 @@
         <div class="scene">
             <div class="scene-status">
                 <h2>{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
-                <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='false') }}'">❌</button>
-                <button onclick="location.href='{{ url_for('update_status', short_category=short_category, short_num=short_num, image_index=loop.index0, is_completed='true') }}'">✔️</button>
-            </div>
+                <button onclick="updateStatus('{{ short_category }}', '{{ short_num }}', {{ loop.index0 }}, 'false')">❌</button>
+                <button onclick="updateStatus('{{ short_category }}', '{{ short_num }}', {{ loop.index0 }}, 'true')">✔️</button>            </div>
             <img src="{{ scene.image_url }}">
             <audio controls>
                 <source src="{{ scene.audio_url }}" type="audio/mpeg">
@@ -83,5 +89,31 @@
         </div>
         {% endfor %}
     </div>
+
+    <script>
+        // Guardar la posición del scroll antes de actualizar
+        window.addEventListener('beforeunload', function() {
+            localStorage.setItem('scrollPosition', window.pageYOffset);
+        });
+
+        // Restaurar la posición del scroll después de cargar la página
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('scrollPosition') !== null) {
+                window.scrollTo(0, localStorage.getItem('scrollPosition'));
+            }
+        });
+
+        // Función para actualizar el estado sin recargar la página
+        function updateStatus(shortCategory, shortNum, imageIndex, isCompleted) {
+            fetch(`/update_status/${shortCategory}/${shortNum}/${imageIndex}/${isCompleted}`)
+                .then(response => {
+                    if (response.ok) {
+                        // Actualizar el estado en la interfaz sin recargar la página
+                        let statusElement = document.querySelector(`.scene:nth-child(${imageIndex + 1}) .scene-status h2`);
+                        statusElement.textContent = isCompleted === 'true' ? '✔️' : '❌';
+                    }
+                });
+        }
+    </script>
 </body>
 </html>

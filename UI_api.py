@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from UI_utils import ProductionStatusManager
 
@@ -70,13 +70,13 @@ async def update_status(
     short_category: str, 
     short_num: str, 
     image_index: int, 
-    is_completed: bool,
+    is_completed: str,
     request: Request
 ):
     status_path = BASE_SHORTS_PATH / short_category / short_num / "status.json"
     
     try:
-        ProductionStatusManager.update_video_status(status_path, image_index, is_completed)
-        return RedirectResponse(url=f"/video/{short_category}/{short_num}")
+        ProductionStatusManager.update_video_status(status_path, image_index, is_completed == 'true')
+        return JSONResponse(content={"success": True})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
