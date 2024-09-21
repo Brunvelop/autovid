@@ -37,7 +37,7 @@ async def show_video(request: Request, short_category: str, short_num: str):
     storyboard_texts = json.loads(text_path.read_text(encoding='utf-8'))
 
     scenes = []
-    for idx, image in enumerate(sorted(images_path.iterdir())):
+    for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
         image_url = f"/data/MITO_TV/SHORTS/{short_category}/{short_num}/images/{image.name}"
         text = storyboard_texts[idx].get('text', '') 
         image_prompt = storyboard_texts[idx].get('image', '')
