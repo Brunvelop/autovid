@@ -24,4 +24,5 @@ fastapi
 uvicorn
 jinja2
 
-*You seem to be using an outdated version of Cursor. Please upgrade to the latest version by [downloading Cursor again from our website](https://www.cursor.com/). All your settings will be preserved.*
+pulumi>=3.0.0,<4.0.0
+pulumi-aws>=6.0.2,<7.0.0

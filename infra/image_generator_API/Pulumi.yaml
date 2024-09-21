@@ -1,0 +1,11 @@
+name: autovid
+runtime:
+  name: pythonz
+  options:
+    toolchain: pip
+    virtualenv: /home/user/anaconda3/envs/autovid
+description: A minimal AWS Python Pulumi program
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python
