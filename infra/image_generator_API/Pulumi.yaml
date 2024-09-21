@@ -1,6 +1,6 @@
 name: autovid
 runtime:
-  name: pythonz
+  name: python
   options:
     toolchain: pip
     virtualenv: /home/user/anaconda3/envs/autovid

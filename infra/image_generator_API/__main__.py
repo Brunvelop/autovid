@@ -14,23 +14,45 @@ aws_provider = aws.Provider('aws',
     region=os.getenv('AWS_REGION')
 )
 
-# Define un nuevo grupo de seguridad que permite SSH
+# Define un nuevo grupo de seguridad que permite SSH, HTTP, HTTPS y Gradio
 security_group = aws.ec2.SecurityGroup('web-secgrp',
-    description='Enable SSH access',
+    description='Enable SSH, HTTP, HTTPS, and Gradio access',
     ingress=[
         aws.ec2.SecurityGroupIngressArgs(
             protocol='tcp',
             from_port=22,
             to_port=22,
             cidr_blocks=['0.0.0.0/0'],
+            description='SSH'
+        ),
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol='tcp',
+            from_port=80,
+            to_port=80,
+            cidr_blocks=['0.0.0.0/0'],
+            description='HTTP'
+        ),
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol='tcp',
+            from_port=443,
+            to_port=443,
+            cidr_blocks=['0.0.0.0/0'],
+            description='HTTPS'
+        ),
+        aws.ec2.SecurityGroupIngressArgs(
+            protocol='tcp',
+            from_port=7860,
+            to_port=7860,
+            cidr_blocks=['0.0.0.0/0'],
+            description='Gradio'
         ),
     ],
     opts=pulumi.ResourceOptions(provider=aws_provider)
 )
 
 # Creamos la instancia EC2 con el par de claves especificado
-server = aws.ec2.Instance('pulumi-test',
-    instance_type='t2.micro',
+server = aws.ec2.Instance('image_generator_API',
+    instance_type='g6.xlarge',
     vpc_security_group_ids=[security_group.id],
     ami='ami-0e86e20dae9224db8',
     key_name='autovid',
@@ -48,7 +70,7 @@ def generate_ssh_config(public_dns):
     User ubuntu
     IdentityFile /home/user/Desktop/autovid/.ssh/autovid.pem
 """
-    with open('../.ssh/config', 'w') as f:
+    with open('../ssh_config', 'a') as f:
         f.write(config_content)
 
 # Llamamos a la función para generar el archivo de configuración SSH
