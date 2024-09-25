@@ -59,11 +59,26 @@ security_group = aws.ec2.SecurityGroup('web-secgrp',
     opts=pulumi.ResourceOptions(provider=aws_provider)
 )
 
+# Define el script de user_data
+user_data_script = """#!/bin/bash 
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1 
+echo "Starting user data script execution" 
+sudo apt-get update -y 
+sudo apt-get upgrade -y 
+sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/latest/download/cog_`uname -s`_`uname -m` 
+sudo chmod +x /usr/local/bin/cog 
+git clone https://github.com/replicate/cog-flux-schnell /home/ubuntu/cog-flux-schnell 
+cd /home/ubuntu/cog-flux-schnell 
+sudo cog build -t cog-flux-schnell 
+sudo docker run -d -p 80:5000 --gpus all cog-flux-schnell 
+echo "User data script execution completed" 
+"""
+
 # Creamos la instancia EC2 con el par de claves especificado
 server = aws.ec2.Instance('image_generator_API',
     instance_type='g6e.xlarge',
     vpc_security_group_ids=[security_group.id],
-    ami='ami-05c3e698bd0cffe7e',#ami-07b967c5f43fae429',#'ami-05c3e698bd0cffe7e',
+    ami='ami-05c3e698bd0cffe7e',
     key_name='autovid',
     ebs_optimized=True,
     root_block_device={
@@ -73,6 +88,7 @@ server = aws.ec2.Instance('image_generator_API',
     tags={
         "Name": "image_generator_API"
     },
+    user_data=user_data_script,
     opts=pulumi.ResourceOptions(provider=aws_provider)
 )
 
@@ -87,7 +103,7 @@ def generate_ssh_config(public_dns):
     User ubuntu
     IdentityFile /home/user/Desktop/autovid/.ssh/autovid.pem
 """
-    with open('../ssh_config', 'a') as f:
+    with open('../ssh_config', 'w') as f:
         f.write(config_content)
 
 # Llamamos a la función para generar el archivo de configuración SSH

@@ -12,6 +12,7 @@ def run_pulumi(program_path):
     )
 
     # Ejecuta el programa Pulumi
+    # up_result = stack.destroy(on_output=print)
     up_result = stack.up(on_output=print)
     
     # Imprime los resultados
