@@ -1,5 +1,4 @@
 import os
-from typing import Dict, Any
 from pathlib import Path
 from pulumi import automation as auto
 
@@ -15,10 +14,11 @@ class Deployer:
         )
         up_result = stack.up(on_output=print)
         
-        print(f"Update summary: \n{up_result.summary.result}")
-        print("Outputs:")
-        for key, value in up_result.outputs.items():
-            print(f"{key}: {value.value}")
+        if self.verbose:
+            print(f"Update summary: \n{up_result.summary.result}")
+            print("Outputs:")
+            for key, value in up_result.outputs.items():
+                print(f"{key}: {value.value}")
 
         return up_result
     
@@ -28,7 +28,9 @@ class Deployer:
             work_dir=str(infra_path),
         )
         destroy_result = stack.destroy(on_output=print)
-        print(f"Destroy summary: \n{destroy_result.summary.result}")
+
+        if self.verbose:
+            print(f"Destroy summary: \n{destroy_result.summary.result}")
 
 if __name__ == '__main__':
     deployer = Deployer()
