@@ -3,29 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>AI VIDEO GENERATOR</title>
-    <style>
-        .video-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .video-item {
-            background-color: #f0f0f0;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            white-space: nowrap;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
 </head>
 <body>
-    <h1>VIDEO PRODUCTION</h1>
+    <h1 class="text-2xl font-bold mb-4">VIDEO PRODUCTION</h1>
     {% for category, videos in global_status.items() %}
-        <h2>{{ category }}</h2>
-        <div class="video-list">
+        <h2 class="text-xl font-semibold mt-6 mb-2">{{ category }}</h2>
+        <div class="flex flex-wrap gap-[10px]">
             {% for video_path, status in videos.items() %}
-                <div class="video-item">
-                    <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}">
+                <div class="bg-gray-200 px-[10px] py-[5px] rounded-[5px] text-sm whitespace-nowrap">
+                    <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
                         {{ video_path.name }}
                     </a>
                     [{{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}]

@@ -77,6 +77,11 @@ async def update_status(
     
     try:
         ProductionStatusManager.update_video_status(status_path, image_index, is_completed == 'true')
-        return JSONResponse(content={"success": True})
+        status_symbol = '✔️' if is_completed == 'true' else '❌'
+        return HTMLResponse(content=f'<h2 id="status{image_index}">{status_symbol}</h2>')
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Devuelve un mensaje de error que HTMX puede manejar
+        return HTMLResponse(
+            content=f'<h2 id="status{image_index}" style="color:red;">Error</h2>',
+            status_code=500
+        )
