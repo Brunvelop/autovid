@@ -34,6 +34,6 @@ class Deployer:
 
 if __name__ == '__main__':
     deployer = Deployer()
-    infra_path = Path('/home/user/Desktop/autovid/infra/Flux_replicate_api')
-    # deployer.deploy_path(infra_path)
+    infra_path = Path('/home/user/Desktop/autovid/infra/flux_replicate_api')
+    deployer.deploy(infra_path)
     deployer.destroy(infra_path)
