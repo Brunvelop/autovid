@@ -5,6 +5,7 @@ from typing import Union, List
 from abc import ABC, abstractmethod
 
 import torch
+import replicate
 from tqdm import tqdm
 from pathlib import Path
 from gradio_client import Client
@@ -163,6 +164,67 @@ class HuggingFaceGradioFluxDev(ImageGenerator):
     def _load_pipeline(self) -> None:
         pass
 
+class ReplicateFluxDev(ImageGenerator):
+    def __init__(self, verbose: bool = True):
+        load_dotenv()
+        self.api_token = os.getenv('REPLICATE_API_TOKEN')
+        if not self.api_token:
+            raise ValueError("REPLICATE_API_TOKEN not found in environment variables")
+        self.verbose = verbose
+
+    def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
+        generation_config = ImageGeneratorConfig.FLUX1_SCHNELL.value.copy()
+        generation_config.update(**kwargs)
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        if isinstance(prompts, str):
+            prompts = [prompts]
+        
+        for i, prompt in enumerate(tqdm(prompts, desc=f"Generating {len(prompts)} images")):
+            result = self._query(prompt, **generation_config)
+            
+            # Download and save the image
+            image_url = result[0]
+            image_path = output_dir / f"{i}.png"
+            self._download_image(image_url, image_path)
+
+            if self.verbose:
+                print(f"Image saved: {image_path}")
+        
+        if self.verbose:
+            print(f"All images generated and saved in: {output_dir}")
+
+    def _query(self, prompt: str, **kwargs):
+        input_data = {
+            "prompt": prompt,
+            "go_fast": True,
+            "guidance": kwargs.get('guidance_scale', 3.5),
+            "num_outputs": 1,
+            "aspect_ratio": "9:16",
+            "output_format": "png",
+            "output_quality": 80,
+            "prompt_strength": 0.8,
+            "num_inference_steps": kwargs.get('num_inference_steps', 28)
+        }
+        
+        output = replicate.run(
+            "black-forest-labs/flux-dev",
+            input=input_data
+        )
+        return output
+
+    def _download_image(self, url: str, save_path: Path):
+        import requests
+        response = requests.get(url)
+        response.raise_for_status()
+        with open(save_path, 'wb') as f:
+            f.write(response.content)
+
+    def _load_pipeline(self) -> None:
+        pass
+
+
 class FakeImageGenerator(ImageGenerator):
     def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -261,9 +323,12 @@ if __name__ == "__main__":
     import time
 
     start_time = time.time()
-    image_generator = HuggingFaceGradioFluxDev(verbose=True)
+    image_generator = ReplicateFluxDev(verbose=True)
     image_generator.generate_images(
-        prompts=["a dog", "a cat", "a snake", "a horse", "a spider"],
+        prompts=[
+            "A vibrant, classical art style painting depicting the scene 'El Juicio de Paris.' In the foreground, Paris stands at the center, holding a golden apple, his expression contemplative as he faces the three goddesses. To his left, Hera stands regally, her posture commanding and eyes filled with determination. To his right, Athena, clad in armor, looks resolute and confident. In the middle, Aphrodite, draped in flowing robes, gazes at Paris with a seductive smile. The background features a lush, idyllic landscape with Mount Ida rising majestically in the distance under a clear blue sky. The bold text 'El Juicio de Paris' is elegantly inscribed in the sky, formed by delicate, wispy clouds, contrasting against the serene azure backdrop.",
+            "The golden apple with the inscription 'Para la más bella' in the foreground, with a backdrop of war and chaos, intricate details, and vibrant colors.",
+        ],
         output_dir=Path('./test'),
         width=768,
         height=1344,
