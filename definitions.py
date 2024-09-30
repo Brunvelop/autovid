@@ -33,6 +33,7 @@ class Voices:
         HERNAN_CORTES = "W5JElH3dK1UYYAiHH7uh"
         SARA_MARTIN_2 = "Ir1QNHvhaJXbAGhT50w3"
         Martin_Osborne_6 = "LlZr3QuzbW4WrPjgATHG"
+        DAN_DAN = "9F4C8ztpNUmXkdDDbz3J"
 
 class TTSModels(Enum):
     GOOGLE = 'google'
