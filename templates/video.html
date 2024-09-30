@@ -6,41 +6,41 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@2.0.2"></script>
 </head>
-<body class="bg-[#0e0e1a] text-[#e0e0e0] font-sans">
+<body class="bg-slate-900 text-gray-200 font-sans p-4">
     <h1 class="text-2xl font-bold mb-4">VIDEO {{ short_category }} {{ short_num }} {{ '✔️' if status['completed'] else '❌' }}</h1>
-    <div class="mb-4">
-        <a href="{{ url_for('index') }}" class="text-blue-500 hover:underline mx-2">Volver al inicio</a>
-        <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int - 1) }}" class="text-blue-500 hover:underline mx-2">⬅️</a>
-        <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int + 1) }}" class="text-blue-500 hover:underline mx-2">➡️</a>
+    <div class="mb-4 space-x-4">
+        <a href="{{ url_for('index') }}" class="text-blue-400 hover:underline">Volver al inicio</a>
+        <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int - 1) }}" class="text-blue-400 hover:underline">⬅️</a>
+        <a href="{{ url_for('show_video', short_category=short_category, short_num=short_num|int + 1) }}" class="text-blue-400 hover:underline">➡️</a>
     </div>
-    <div class="flex flex-wrap justify-start">
+    <div class="flex flex-wrap -mx-2">
         {% for scene in scenes %}
-        <div class="flex-grow-0 basis-[300px] m-[2px] border border-[#ccc] p-[5px]" id="scene{{ loop.index0 }}">
-            <div class="flex items-center justify-center">
+        <div class="w-72 m-2 border border-gray-600 p-2" id="scene{{ loop.index0 }}">
+            <div class="flex justify-center items-center mb-2">
                 <h2 id="status{{ loop.index0 }}">{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
-                <button hx-get="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">❌</button>
-                <button hx-get="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">✔️</button>
+                <button hx-get="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="ml-2 px-2 py-1 text-sm">❌</button>
+                <button hx-get="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="ml-2 px-2 py-1 text-sm">✔️</button>
             </div>
             <div id="image{{ loop.index0 }}">
-                <img src="{{ scene.image_url }}" class="max-w-full h-auto">
+                <img src="{{ scene.image_url }}" class="w-full">
             </div>
             <audio controls class="w-full mt-2">
                 <source src="{{ scene.audio_url }}" type="audio/mpeg">
                 Tu navegador no soporta el elemento de audio.
             </audio>
-            <div class="mt-[5px]">
+            <div class="mt-2 space-y-2">
                 <div id="narration{{ loop.index0 }}">
-                    <label for="text{{ loop.index }}" class="block font-bold mt-[5px] text-[0.85em]">Narración:</label>
-                    <textarea id="text{{ loop.index }}" name="text" class="w-full min-h-[100px] max-h-[300px] resize-y p-[4px] text-[0.85em] bg-[#0f3460] text-[#e0e0e0]">{{ scene.text }}</textarea>
-                    <button hx-post="/save_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">💾</button>
+                    <label for="text{{ loop.index }}" class="block font-bold text-sm">Narración:</label>
+                    <textarea id="text{{ loop.index }}" name="text" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.text }}</textarea>
+                    <button hx-post="/save_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" class="px-2 py-1 text-sm">💾</button>
                 </div>
                 <div id="image_prompt{{ loop.index0 }}">
-                    <label for="image_prompt{{ loop.index }}" class="block font-bold mt-[5px] text-[0.85em]">Prompt imagen:</label>
-                    <textarea id="image_prompt{{ loop.index }}" name="image_prompt" class="w-full min-h-[100px] max-h-[300px] resize-y p-[4px] text-[0.85em] bg-[#0f3460] text-[#e0e0e0]">{{ scene.image_prompt }}</textarea>
-                    <button hx-post="/save_image_prompt/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#image_prompt{{ loop.index }}" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">💾</button>
+                    <label for="image_prompt{{ loop.index }}" class="block font-bold text-sm">Prompt imagen:</label>
+                    <textarea id="image_prompt{{ loop.index }}" name="image_prompt" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.image_prompt }}</textarea>
+                    <button hx-post="/save_image_prompt/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#image_prompt{{ loop.index }}" class="px-2 py-1 text-sm">💾</button>
                 </div>
-                <button hx-post="/remake_scene/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" hx-target="#scene{{ loop.index0 }}" hx-swap="outerHTML" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">✍️</button>
-                <button hx-post="/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#image_prompt{{ loop.index }}" hx-target="#image{{ loop.index0 }}" hx-swap="outerHTML" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">🖌️</button>
+                <button hx-post="/remake_scene/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" hx-target="#scene{{ loop.index0 }}" hx-swap="outerHTML" class="px-2 py-1 text-sm">✍️</button>
+                <button hx-post="/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#image_prompt{{ loop.index }}" hx-target="#image{{ loop.index0 }}" hx-swap="outerHTML" class="px-2 py-1 text-sm">🖌️</button>
             </div>
         </div>
         {% endfor %}
