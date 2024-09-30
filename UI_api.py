@@ -87,7 +87,7 @@ async def update_status(
         )
 
 
-@app.post("/save_storyboard/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
+@app.post("/save_storyboard_text/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
 async def save_storyboard(
     request: Request,
     short_category: str,
@@ -112,5 +112,34 @@ async def save_storyboard(
     except Exception as e:
         return HTMLResponse(
             content=f'<p id="text{index + 1}" style="color:red;">Error al guardar: {str(e)}</p>',
+            status_code=500
+        )
+    
+
+@app.post("/save_storyboard_prompt/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
+async def save_storyboard(
+    request: Request,
+    short_category: str,
+    short_num: str,
+    index: int
+):
+    form_data = await request.form()
+    new_text = form_data._list[0][1]
+    
+    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
+    
+    try:
+        with open(text_path, 'r', encoding='utf-8') as f:
+            storyboard_texts = json.load(f)
+        
+        storyboard_texts[index]['image'] = new_text
+        
+        with open(text_path, 'w', encoding='utf-8') as f:
+            json.dump(storyboard_texts, f, ensure_ascii=False, indent=2)
+        
+        return HTMLResponse(content=f'<p>💾✔️</p>')
+    except Exception as e:
+        return HTMLResponse(
+            content=f'<p id="image_prompt_text{index}" style="color:red;">Error al guardar: {str(e)}</p>',
             status_code=500
         )
