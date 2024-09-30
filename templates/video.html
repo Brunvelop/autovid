@@ -32,7 +32,7 @@
                 <div id="narration{{ loop.index0 }}">
                     <label for="text{{ loop.index }}" class="block font-bold mt-[5px] text-[0.85em]">Narración:</label>
                     <textarea id="text{{ loop.index }}" name="text" class="w-full min-h-[100px] max-h-[300px] resize-y p-[4px] text-[0.85em] bg-[#0f3460] text-[#e0e0e0]">{{ scene.text }}</textarea>
-                    <button hx-post="/save_narration/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">💾</button>
+                    <button hx-post="/save_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" class="mr-[3px] mt-[5px] px-[8px] py-[4px] text-[0.85em] cursor-pointer">💾</button>
                 </div>
                 <div id="image_prompt{{ loop.index0 }}">
                     <label for="image_prompt{{ loop.index }}" class="block font-bold mt-[5px] text-[0.85em]">Prompt imagen:</label>
