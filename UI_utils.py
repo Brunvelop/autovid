@@ -73,7 +73,5 @@ class ProductionStatusManager:
         return status
 
 
-
-
 if __name__ == "__main__":
     global_status = ProductionStatusManager.get_global_status(Path('data/MITO_TV/SHORTS'))

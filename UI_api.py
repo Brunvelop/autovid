@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 
 from UI_utils import ProductionStatusManager
 
@@ -49,8 +49,6 @@ async def show_video(request: Request, short_category: str, short_num: str):
         }
         scenes.append(scene)
 
-
-
     response = templates.TemplateResponse("video.html", {
             "request": request,
             "short_category": short_category,
@@ -65,7 +63,7 @@ async def show_video(request: Request, short_category: str, short_num: str):
     response.headers["Expires"] = "0"
     return response
 
-@app.get("/update_status/{short_category}/{short_num}/{image_index}/{is_completed}")
+@app.post("/update_status/{short_category}/{short_num}/{image_index}/{is_completed}")
 async def update_status(
     short_category: str, 
     short_num: str, 

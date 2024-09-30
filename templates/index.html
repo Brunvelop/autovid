@@ -12,13 +12,13 @@
         <h2 class="text-xl font-semibold mt-6 mb-2">{{ category }}</h2>
         <div class="flex flex-wrap gap-[10px]">
             {% for video_path, status in videos.items() %}
-                <div class="bg-gray-200 px-[10px] py-[5px] rounded-[5px] text-sm whitespace-nowrap">
-                    <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
-                        {{ video_path.name }}
-                    </a>
-                    [{{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}]
-                    {{ '✔️' if status['completed'] else '❌' }}
-                </div>
+            <div class="{% if status['completed'] %}bg-green-200{% else %}bg-gray-200{% endif %} px-[10px] py-[5px] rounded-[5px] text-sm whitespace-nowrap">
+                <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
+                    {{ video_path.name }}
+                </a>
+                [{{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}]
+                {{ '✔️' if status['completed'] else '❌' }}
+            </div>
             {% endfor %}
         </div>
     {% endfor %}

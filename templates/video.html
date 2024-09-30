@@ -18,8 +18,8 @@
         <div class="w-72 m-2 border border-gray-600 p-2" id="scene{{ loop.index0 }}">
             <div class="flex justify-center items-center mb-2">
                 <h2 id="status{{ loop.index0 }}">{{ '✔️' if status['images_completed'][loop.index0] else '❌' }}</h2>
-                <button hx-get="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="ml-2 px-2 py-1 text-sm">❌</button>
-                <button hx-get="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="ml-2 px-2 py-1 text-sm">✔️</button>
+                <button hx-post="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="ml-2 px-2 py-1 text-sm">❌</button>
+                <button hx-post="/update_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" hx-target="#status{{ loop.index0 }}" hx-swap="outerHTML" class="ml-2 px-2 py-1 text-sm">✔️</button>
             </div>
             <div id="image{{ loop.index0 }}">
                 <img src="{{ scene.image_url }}" class="w-full">
