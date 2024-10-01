@@ -125,7 +125,7 @@ class ElevenLabsTTS(TTS):
 if __name__ == "__main__":
     import json
 
-    N = 14
+    N = 11
     STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
 
     with open(STORYBOARD, 'r', encoding='utf-8') as f:

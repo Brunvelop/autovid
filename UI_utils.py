@@ -3,6 +3,27 @@ from typing import List
 from pathlib import Path
 from typing import List, TypedDict
 
+from fastapi.responses import HTMLResponse
+
+async def update_storyboard(BASE_SHORTS_PATH:str ,short_category: str, short_num: str, index: int, field: str, new_value: str):
+    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
+    
+    try:
+        with open(text_path, 'r', encoding='utf-8') as f:
+            storyboard_data = json.load(f)
+        
+        storyboard_data[index][field] = new_value
+        
+        with open(text_path, 'w', encoding='utf-8') as f:
+            json.dump(storyboard_data, f, ensure_ascii=False, indent=2)
+        
+        return HTMLResponse(content=f'<p>💾✔️</p>')
+    except Exception as e:
+        return HTMLResponse(
+            content=f'<p style="color:red;">Error al guardar: {str(e)}</p>',
+            status_code=500
+        )
+    
 class ProductionStatusManager:
     class VideoStatus(TypedDict):
         images_completed: List[bool]

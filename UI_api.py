@@ -7,7 +7,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from UI_utils import ProductionStatusManager
+from UI_utils import ProductionStatusManager, update_storyboard
+from image_generator import ReplicateFluxDev
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -26,26 +27,29 @@ async def index(request: Request):
 
 @app.get("/video/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_video(request: Request, short_category: str, short_num: str):
-    images_path = BASE_SHORTS_PATH / short_category / short_num / "images"
-    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
-    status_path = BASE_SHORTS_PATH / short_category / short_num / "status.json"
+    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    images_path = VIDEO_ASSETS_PATH / "images"
+    storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
+    status_path = VIDEO_ASSETS_PATH / "status.json"
     status = ProductionStatusManager.get_video_status(status_path=status_path)
     
-    if not images_path.exists() or not text_path.exists():
+    if not images_path.exists() or not storyboard_path.exists():
         raise HTTPException(status_code=404, detail=f"No se encontró el mito {short_category}/{short_num}")
 
-    storyboard_texts = json.loads(text_path.read_text(encoding='utf-8'))
+    storyboard = json.loads(storyboard_path.read_text(encoding='utf-8'))
 
     scenes = []
     for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
-        image_url = f"/data/MITO_TV/SHORTS/{short_category}/{short_num}/images/{image.name}"
-        text = storyboard_texts[idx].get('text', '') 
-        image_prompt = storyboard_texts[idx].get('image', '')
+        image_url = images_path / image.name
+        audio_url = VIDEO_ASSETS_PATH / "audios" / f"{image.stem}.mp3"
+        text = storyboard[idx].get('text', '') 
+        image_prompt = storyboard[idx].get('image', '')
         
         scene = {
-            'image_url': image_url,
+            'image_url': "/" + image_url.as_posix(),
             'text': text,
-            'image_prompt': image_prompt
+            'image_prompt': image_prompt,
+            'audio_url': "/" + audio_url.as_posix(),
         }
         scenes.append(scene)
 
@@ -84,60 +88,41 @@ async def update_status(
             status_code=500
         )
 
-
 @app.post("/save_storyboard_text/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
-async def save_storyboard(
-    request: Request,
-    short_category: str,
-    short_num: str,
-    index: int
-):
+async def save_storyboard_text(request: Request, short_category: str, short_num: str, index: int):
     form_data = await request.form()
     new_text = form_data.get('text')
-    
-    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
-    
-    try:
-        with open(text_path, 'r', encoding='utf-8') as f:
-            storyboard_texts = json.load(f)
-        
-        storyboard_texts[index]['text'] = new_text
-        
-        with open(text_path, 'w', encoding='utf-8') as f:
-            json.dump(storyboard_texts, f, ensure_ascii=False, indent=2)
-        
-        return HTMLResponse(content=f'<p>💾✔️</p>')
-    except Exception as e:
-        return HTMLResponse(
-            content=f'<p id="text{index + 1}" style="color:red;">Error al guardar: {str(e)}</p>',
-            status_code=500
-        )
-    
+    return await update_storyboard(BASE_SHORTS_PATH, short_category, short_num, index, 'text', new_text)
 
 @app.post("/save_storyboard_prompt/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
-async def save_storyboard(
-    request: Request,
-    short_category: str,
-    short_num: str,
-    index: int
-):
+async def save_storyboard_prompt(request: Request, short_category: str, short_num: str, index: int):
     form_data = await request.form()
-    new_text = form_data._list[0][1]
-    
-    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
-    
-    try:
-        with open(text_path, 'r', encoding='utf-8') as f:
-            storyboard_texts = json.load(f)
-        
-        storyboard_texts[index]['image'] = new_text
-        
-        with open(text_path, 'w', encoding='utf-8') as f:
-            json.dump(storyboard_texts, f, ensure_ascii=False, indent=2)
-        
-        return HTMLResponse(content=f'<p>💾✔️</p>')
-    except Exception as e:
-        return HTMLResponse(
-            content=f'<p id="image_prompt_text{index}" style="color:red;">Error al guardar: {str(e)}</p>',
-            status_code=500
-        )
+    new_prompt = form_data._list[0][1]
+    return await update_storyboard(BASE_SHORTS_PATH, short_category, short_num, index, 'image', new_prompt)
+
+@app.post("/remake_image/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
+async def remake_image(request: Request, short_category: str, short_num: str, index: int):
+    form_data = await request.form()
+    image_prompt = form_data._list[0][1]
+
+    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    image_path = VIDEO_ASSETS_PATH / "images" / f"{index}.png"
+
+    # Generate new image using image_generator
+    image_generator = ReplicateFluxDev(verbose=True)
+    image_generator.generate_images(
+        prompts=[image_prompt],
+        output_dir=image_path,
+        width=768,
+        height=1344,
+        guidance_scale=3.5,
+        num_inference_steps=28
+    )
+
+    # Add a unique query parameter to the image URL to avoid caching
+    unique_string = f"{short_category}_{short_num}_{index}_{image_prompt}"
+    cache_buster = hash(unique_string)
+    image_url = f"/{image_path.as_posix()}?cb={cache_buster}"
+
+    # Return updated image HTML with the unique URL
+    return HTMLResponse(content=f'<img src="{image_url}" class="w-full">')

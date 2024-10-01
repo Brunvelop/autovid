@@ -176,6 +176,14 @@ class ReplicateFluxDev(ImageGenerator):
         generation_config = ImageGeneratorConfig.FLUX1_SCHNELL.value.copy()
         generation_config.update(**kwargs)
 
+        if isinstance(output_dir, Path) and output_dir.suffix == ".png":
+            # Si output_dir es un archivo .png, usarlo como nombre base
+            output_file = output_dir
+            output_dir = output_dir.parent
+        else:
+            # Si output_dir es un directorio, generar nombres de archivo automáticamente
+            output_file = None
+        
         output_dir.mkdir(parents=True, exist_ok=True)
         
         if isinstance(prompts, str):
@@ -186,7 +194,16 @@ class ReplicateFluxDev(ImageGenerator):
             
             # Download and save the image
             image_url = result[0]
-            image_path = output_dir / f"{i}.png"
+            if output_file:
+                # Usar el nombre de archivo especificado
+                if len(prompts) > 1:
+                    # Agregar un sufijo _001, _002, etc. si hay varios prompts
+                    image_path = output_dir / f"{output_file.stem}_{i+1:03d}{output_file.suffix}"
+                else:
+                    image_path = output_file
+            else:
+                # Generar nombres de archivo automáticamente
+                image_path = output_dir / f"{i}.png"
             self._download_image(image_url, image_path)
 
             if self.verbose:
@@ -329,7 +346,7 @@ if __name__ == "__main__":
             "A vibrant, classical art style painting depicting the scene 'El Juicio de Paris.' In the foreground, Paris stands at the center, holding a golden apple, his expression contemplative as he faces the three goddesses. To his left, Hera stands regally, her posture commanding and eyes filled with determination. To his right, Athena, clad in armor, looks resolute and confident. In the middle, Aphrodite, draped in flowing robes, gazes at Paris with a seductive smile. The background features a lush, idyllic landscape with Mount Ida rising majestically in the distance under a clear blue sky. The bold text 'El Juicio de Paris' is elegantly inscribed in the sky, formed by delicate, wispy clouds, contrasting against the serene azure backdrop.",
             "The golden apple with the inscription 'Para la más bella' in the foreground, with a backdrop of war and chaos, intricate details, and vibrant colors.",
         ],
-        output_dir=Path('./test'),
+        output_dir=Path('./testa'),
         width=768,
         height=1344,
         guidance_scale=3.5,

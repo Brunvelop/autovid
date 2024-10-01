@@ -208,7 +208,7 @@ def generate_video(
 
 
 if __name__ == "__main__":
-    N = 1
+    N = 11
     ASSETS_FOLDER = Path('data/MITO_TV/SHORTS/MITOS_GRIEGOS/')
     generate_video(
         images_path=ASSETS_FOLDER / f'{N}/images',
