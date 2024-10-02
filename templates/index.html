@@ -8,19 +8,41 @@
 </head>
 <body>
     <h1 class="text-2xl font-bold mb-4">VIDEO PRODUCTION</h1>
+    <div class="mb-6">
+        <a href="/create/text" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 inline-block">
+            CREATE NEW VIDEO
+        </a>
+    </div>
+
     {% for category, videos in global_status.items() %}
         <h2 class="text-xl font-semibold mt-6 mb-2">{{ category }}</h2>
-        <div class="flex flex-wrap gap-[10px]">
-            {% for video_path, status in videos.items() %}
-            <div class="{% if status['completed'] %}bg-green-200{% else %}bg-gray-200{% endif %} px-[10px] py-[5px] rounded-[5px] text-sm whitespace-nowrap">
-                <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
-                    {{ video_path.name }}
-                </a>
-                [{{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}]
-                {{ '✔️' if status['completed'] else '❌' }}
-            </div>
-            {% endfor %}
-        </div>
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border border-gray-300 px-4 py-2">Video</th>
+                    <th class="border border-gray-300 px-4 py-2">Progress</th>
+                    <th class="border border-gray-300 px-4 py-2">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for video_path, status in videos.items() %}
+                <tr class="{% if status['completed'] %}bg-green-100{% else %}bg-white{% endif %}">
+                    <td class="border border-gray-300 px-4 py-2">
+                        <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
+                            {{ video_path.name }}
+                        </a>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">
+                        {{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">
+                        {{ '✔️' if status['completed'] else '❌' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endfor %}
+    
 </body>
 </html>

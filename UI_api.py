@@ -7,14 +7,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from UI_utils import ProductionStatusManager, update_storyboard
+from UI_utils import ProductionStatusManager, VideoStatus, update_storyboard
 from image_generator import ReplicateFluxDev
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory="templates")
 
-BASE_SHORTS_PATH = Path("data/MITO_TV/SHORTS/")
+BASE_SHORTS_PATH = Path("data/MITO_TV/SHORTS")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -31,7 +31,7 @@ async def show_video(request: Request, short_category: str, short_num: str):
     images_path = VIDEO_ASSETS_PATH / "images"
     storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
     status_path = VIDEO_ASSETS_PATH / "status.json"
-    status = ProductionStatusManager.get_video_status(status_path=status_path)
+    status = VideoStatus.get(status_path=status_path)
     
     if not images_path.exists() or not storyboard_path.exists():
         raise HTTPException(status_code=404, detail=f"No se encontró el mito {short_category}/{short_num}")
@@ -82,7 +82,6 @@ async def update_status(
         status_symbol = '✔️' if is_completed == 'true' else '❌'
         return HTMLResponse(content=f'<h2 id="status{image_index}">{status_symbol}</h2>')
     except Exception as e:
-        # Devuelve un mensaje de error que HTMX puede manejar
         return HTMLResponse(
             content=f'<h2 id="status{image_index}" style="color:red;">Error</h2>',
             status_code=500
@@ -126,3 +125,15 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
 
     # Return updated image HTML with the unique URL
     return HTMLResponse(content=f'<img src="{image_url}" class="w-full">')
+
+@app.get("/create/text", response_class=HTMLResponse)
+async def create_text(request: Request):
+    return templates.TemplateResponse("create_text.html", {"request": request})
+
+@app.post("/create/text", response_class=HTMLResponse)
+async def create_text(request: Request):
+    
+    return templates.TemplateResponse("create_storyboard_form.html", {
+        "request": request,
+        "video_id": 1
+    })
