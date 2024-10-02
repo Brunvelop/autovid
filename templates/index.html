@@ -13,7 +13,6 @@
             CREATE NEW VIDEO
         </a>
     </div>
-
     {% for category, videos in global_status.items() %}
         <h2 class="text-xl font-semibold mt-6 mb-2">{{ category }}</h2>
         <table class="w-full border-collapse border border-gray-300">
@@ -28,7 +27,7 @@
                 {% for video_path, status in videos.items() %}
                 <tr class="{% if status['completed'] %}bg-green-100{% else %}bg-white{% endif %}">
                     <td class="border border-gray-300 px-4 py-2">
-                        <a href="{{ url_for('show_video', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
+                        <a href="{{ url_for('show_storyboard', short_category=category, short_num=video_path.name) }}" class="text-blue-500 hover:underline">
                             {{ video_path.name }}
                         </a>
                     </td>
@@ -43,6 +42,5 @@
             </tbody>
         </table>
     {% endfor %}
-    
 </body>
 </html>

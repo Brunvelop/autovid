@@ -25,16 +25,15 @@ async def index(request: Request):
         "global_status": global_status,
     })
 
-@app.get("/video/{short_category}/{short_num}", response_class=HTMLResponse)
-async def show_video(request: Request, short_category: str, short_num: str):
+@app.get("/storyboard/{short_category}/{short_num}", response_class=HTMLResponse)
+async def show_storyboard(request: Request, short_category: str, short_num: str):
     VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
     images_path = VIDEO_ASSETS_PATH / "images"
     storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
     status_path = VIDEO_ASSETS_PATH / "status.json"
-    status = VideoStatus.get(status_path=status_path)
     
-    if not images_path.exists() or not storyboard_path.exists():
-        raise HTTPException(status_code=404, detail=f"No se encontró el mito {short_category}/{short_num}")
+    if not images_path.exists() or not storyboard_path.exists() or not status_path.exists():
+        raise HTTPException(status_code=404, detail=f"Missing assets for {short_category}/{short_num}")
 
     storyboard = json.loads(storyboard_path.read_text(encoding='utf-8'))
 
@@ -58,7 +57,7 @@ async def show_video(request: Request, short_category: str, short_num: str):
             "short_category": short_category,
             "short_num": short_num,
             "scenes": scenes,
-            "status": status
+            "status": VideoStatus.get(status_path=status_path)
         }
     )
     
@@ -67,8 +66,8 @@ async def show_video(request: Request, short_category: str, short_num: str):
     response.headers["Expires"] = "0"
     return response
 
-@app.post("/update_status/{short_category}/{short_num}/{image_index}/{is_completed}")
-async def update_status(
+@app.post("/update_image_status/{short_category}/{short_num}/{image_index}/{is_completed}")
+async def update_image_status(
     short_category: str, 
     short_num: str, 
     image_index: int, 
@@ -78,7 +77,7 @@ async def update_status(
     status_path = BASE_SHORTS_PATH / short_category / short_num / "status.json"
     
     try:
-        ProductionStatusManager.update_video_status(status_path, image_index, is_completed == 'true')
+        ProductionStatusManager.update_image_status(status_path, image_index, is_completed == 'true')
         status_symbol = '✔️' if is_completed == 'true' else '❌'
         return HTMLResponse(content=f'<h2 id="status{image_index}">{status_symbol}</h2>')
     except Exception as e:

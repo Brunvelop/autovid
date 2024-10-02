@@ -84,7 +84,7 @@ class ProductionStatusManager:
         return global_status
 
     @staticmethod
-    def update_video_status(status_path: Path, image_index: int = None, is_completed: bool = False) -> VideoStatus:
+    def update_image_status(status_path: Path, image_index: int = None, is_completed: bool = False) -> VideoStatus:
         status = VideoStatus.get(status_path)
         status.update(image_index, is_completed)
         status.save(status_path)
