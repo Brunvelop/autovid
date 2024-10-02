@@ -50,14 +50,33 @@
                 <div id="narration{{ loop.index0 }}">
                     <label for="text{{ loop.index }}" class="block font-bold text-sm">Narración:</label>
                     <textarea id="text{{ loop.index }}" name="text" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.text }}</textarea>
-                    <button hx-post="/save_storyboard_text/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" class="px-2 py-1 text-sm">💾</button>
+                    <button 
+                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/text" 
+                        hx-include="#text{{ loop.index }}" 
+                        hx-swap="innerHTML"
+                        class="px-2 py-1 text-sm">💾</button>
                 </div>
                 <div id="image_prompt{{ loop.index0 }}">
                     <label for="image_prompt_text{{ loop.index0 }}" class="block font-bold text-sm">Prompt imagen:</label>
-                    <textarea id="image_prompt_text{{ loop.index0 }}" name="image_prompt{{ loop.index0 }}" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.image_prompt }}</textarea>
-                    <button hx-post="/save_storyboard_prompt/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#image_prompt_text{{ loop.index0 }}" class="px-2 py-1 text-sm">💾</button>
-                    <button hx-post="/remake_scene/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#text{{ loop.index }}" hx-target="#scene{{ loop.index0 }}" hx-swap="outerHTML" class="px-2 py-1 text-sm">✍️</button>
-                    <button hx-post="/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" hx-include="#image_prompt_text{{ loop.index0 }}" hx-target="#image{{ loop.index0 }}" hx-swap="outerHTML" class="px-2 py-1 text-sm">🎨</button>                </div>
+                    <textarea id="image_prompt_text{{ loop.index0 }}" name="image" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.image_prompt }}</textarea>
+                    <button 
+                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image" 
+                        hx-include="#image_prompt_text{{ loop.index0 }}" 
+                        hx-swap="innerHTML"
+                        class="px-2 py-1 text-sm">💾</button>
+                    <button 
+                        hx-post="/remake_scene/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
+                        hx-include="#text{{ loop.index }}" 
+                        hx-target="#scene{{ loop.index0 }}" 
+                        hx-swap="outerHTML" 
+                        class="px-2 py-1 text-sm">✍️</button>
+                    <button 
+                        hx-post="/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
+                        hx-include="#image_prompt_text{{ loop.index0 }}" 
+                        hx-target="#image{{ loop.index0 }}" 
+                        hx-swap="outerHTML" 
+                        class="px-2 py-1 text-sm">🎨</button>
+                </div>
             </div>
         </div>
         {% endfor %}

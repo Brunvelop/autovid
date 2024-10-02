@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 
 from UI_utils import ProductionStatusManager, VideoStatus, update_storyboard
 from image_generator import ReplicateFluxDev
-
+from storyboarder import Storyboarder
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -36,7 +36,7 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
     if not images_path.exists() or not storyboard_path.exists() or not status_path.exists():
         raise HTTPException(status_code=404, detail=f"Missing assets for {short_category}/{short_num}")
 
-    storyboard = json.loads(storyboard_path.read_text(encoding='utf-8'))
+    storyboard = Storyboarder.load_storyboard(storyboard_path)
 
     scenes = []
     for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
@@ -78,17 +78,33 @@ async def update_image_status(
             status_code=500
         )
 
-@app.post("/save_storyboard_text/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
-async def save_storyboard_text(request: Request, short_category: str, short_num: str, index: int):
+@app.post("/update_storyboard/{short_category}/{short_num}/{index}/{field}", response_class=HTMLResponse)
+async def update_storyboard(
+    request: Request, 
+    short_category: str, 
+    short_num: str, 
+    index: int,
+    field: str
+):
     form_data = await request.form()
-    new_text = form_data.get('text')
-    return await update_storyboard(BASE_SHORTS_PATH, short_category, short_num, index, 'text', new_text)
-
-@app.post("/save_storyboard_prompt/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
-async def save_storyboard_prompt(request: Request, short_category: str, short_num: str, index: int):
-    form_data = await request.form()
-    new_prompt = form_data._list[0][1]
-    return await update_storyboard(BASE_SHORTS_PATH, short_category, short_num, index, 'image', new_prompt)
+    new_value = form_data.get(field)
+    
+    if not new_value:
+        raise HTTPException(status_code=400, detail=f"Missing {field} in form data")
+    
+    if field not in ['text', 'image']:
+        raise HTTPException(status_code=400, detail="Invalid field. Must be 'text' or 'image'")
+    
+    storyboard_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
+    
+    try:
+        Storyboarder.update_storyboard(storyboard_path, [{
+            'index': index,
+            field: new_value
+        }])
+        return HTMLResponse(content=f'<p>💾✔️</p>')
+    except Exception as e:
+        return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
 @app.post("/remake_image/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
 async def remake_image(request: Request, short_category: str, short_num: str, index: int):
