@@ -49,21 +49,25 @@
             <div class="mt-2 space-y-2">
                 <div id="narration{{ loop.index0 }}">
                     <label for="text{{ loop.index }}" class="block font-bold text-sm">Narración:</label>
-                    <textarea id="text{{ loop.index }}" name="text" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.text }}</textarea>
-                    <button 
-                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/text" 
-                        hx-include="#text{{ loop.index }}" 
+                    <textarea 
+                        id="text{{ loop.index }}" 
+                        name="text" 
+                        class="w-full h-24 p-1 text-sm bg-slate-800"
+                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/text"
+                        hx-trigger="input changed delay:500ms"
                         hx-swap="innerHTML"
-                        class="px-2 py-1 text-sm">💾</button>
+                    >{{ scene.text }}</textarea>
                 </div>
                 <div id="image_prompt{{ loop.index0 }}">
                     <label for="image_prompt_text{{ loop.index0 }}" class="block font-bold text-sm">Prompt imagen:</label>
-                    <textarea id="image_prompt_text{{ loop.index0 }}" name="image" class="w-full h-24 p-1 text-sm bg-slate-800">{{ scene.image_prompt }}</textarea>
-                    <button 
-                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image" 
-                        hx-include="#image_prompt_text{{ loop.index0 }}" 
+                    <textarea 
+                        id="image_prompt_text{{ loop.index0 }}" 
+                        name="image" 
+                        class="w-full h-24 p-1 text-sm bg-slate-800"
+                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image"
+                        hx-trigger="input changed delay:500ms"
                         hx-swap="innerHTML"
-                        class="px-2 py-1 text-sm">💾</button>
+                    >{{ scene.image_prompt }}</textarea>
                     <button 
                         hx-post="/remake_scene/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
                         hx-include="#text{{ loop.index }}" 

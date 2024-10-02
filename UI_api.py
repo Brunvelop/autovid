@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from UI_utils import ProductionStatusManager, VideoStatus, update_storyboard
+from UI_utils import ProductionStatusManager, VideoStatus
 from image_generator import ReplicateFluxDev
 from storyboarder import Storyboarder
 
