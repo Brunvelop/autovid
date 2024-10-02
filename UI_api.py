@@ -1,5 +1,4 @@
 #uvicorn UI_api:app --reload
-import json
 from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException
@@ -60,11 +59,11 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
 
 @app.post("/update_image_status/{short_category}/{short_num}/{image_index}/{is_completed}")
 async def update_image_status(
+    request: Request,
     short_category: str, 
     short_num: str, 
     image_index: int, 
     is_completed: str,
-    request: Request
 ):
     status_path = BASE_SHORTS_PATH / short_category / short_num / "status.json"
     
@@ -91,9 +90,6 @@ async def update_storyboard(
     
     if not new_value:
         raise HTTPException(status_code=400, detail=f"Missing {field} in form data")
-    
-    if field not in ['text', 'image']:
-        raise HTTPException(status_code=400, detail="Invalid field. Must be 'text' or 'image'")
     
     storyboard_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
     
