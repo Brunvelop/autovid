@@ -10,11 +10,12 @@ from fastapi.responses import HTMLResponse
 from UI_utils import ProductionStatusManager, VideoStatus, update_storyboard
 from image_generator import ReplicateFluxDev
 
+
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory="templates")
 
-BASE_SHORTS_PATH = Path("data/MITO_TV/SHORTS")
+BASE_SHORTS_PATH = Path("./data/MITO_TV/SHORTS")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -39,16 +40,11 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
 
     scenes = []
     for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
-        image_url = images_path / image.name
-        audio_url = VIDEO_ASSETS_PATH / "audios" / f"{image.stem}.mp3"
-        text = storyboard[idx].get('text', '') 
-        image_prompt = storyboard[idx].get('image', '')
-        
         scene = {
-            'image_url': "/" + image_url.as_posix(),
-            'text': text,
-            'image_prompt': image_prompt,
-            'audio_url': "/" + audio_url.as_posix(),
+            'image_url': "/" + (images_path / image.name).as_posix(),
+            'text': storyboard[idx].get('text', ''),
+            'image_prompt': storyboard[idx].get('image', ''),
+            'audio_url': "/" + (VIDEO_ASSETS_PATH / "audios" / f"{image.stem}.mp3").as_posix(),
         }
         scenes.append(scene)
 
@@ -60,10 +56,6 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
             "status": VideoStatus.get(status_path=status_path)
         }
     )
-    
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
     return response
 
 @app.post("/update_image_status/{short_category}/{short_num}/{image_index}/{is_completed}")
