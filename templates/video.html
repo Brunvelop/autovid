@@ -63,13 +63,13 @@
                     <textarea 
                         id="image_prompt_text{{ loop.index0 }}" 
                         name="image" 
-                        class="w-full h-24 p-1 text-sm bg-slate-800"
+                        class="w-full h-40 p-1 text-sm bg-slate-800"
                         hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image"
                         hx-trigger="input changed delay:500ms"
                         hx-swap="innerHTML"
                     >{{ scene.image_prompt }}</textarea>
                     <button 
-                        hx-post="/remake_scene/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
+                        hx-post="/remake_prompt/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
                         hx-include="#text{{ loop.index }}" 
                         hx-target="#scene{{ loop.index0 }}" 
                         hx-swap="outerHTML" 
