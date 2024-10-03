@@ -128,15 +128,3 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
 
     # Return updated image HTML with the unique URL
     return HTMLResponse(content=f'<img src="{image_url}" class="w-full">')
-
-@app.get("/create/text", response_class=HTMLResponse)
-async def create_text(request: Request):
-    return templates.TemplateResponse("create_text.html", {"request": request})
-
-@app.post("/create/text", response_class=HTMLResponse)
-async def create_text(request: Request):
-    
-    return templates.TemplateResponse("create_storyboard_form.html", {
-        "request": request,
-        "video_id": 1
-    })
