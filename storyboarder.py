@@ -4,7 +4,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from prompts import OutputFormats, Styles
+from prompts import StoryboarderPrompts
 from LLM import LLM
 from definitions import Scene
 
@@ -23,9 +23,9 @@ class Storyboarder():
     
     def generate_storyboard(self, text: str, style: Styles = Styles.Flux.DARK_ATMOSPHERE) -> List[Scene]:
         output = self.llm.generate_text(
-            system_prompt=OutputFormats.ENG.GENERATE_STORYBOARD + style,
+            system_prompt=StoryboarderPrompts.System.GENERATE_STORYBOARD + style,
             human_prompt="Create a storyboard for this text: {text}".format(text=text),
-            output_format=OutputFormats.ENG.GENERATE_STORYBOARD_OUTPUT_FORMAT
+            output_format=StoryboarderPrompts.OutputFormats.GENERATE_STORYBOARD_OUTPUT_FORMAT
         )
         
         storyboard_parsed = json.loads(output)
@@ -34,7 +34,7 @@ class Storyboarder():
     
     def generate_tumbnail(self, text: str) -> str:
         output = self.llm.generate_text(
-            system_prompt=OutputFormats.ENG.GENERATE_TUMBNAIL,
+            system_prompt=StoryboarderPrompts.System.GENERATE_TUMBNAIL,
             human_prompt="Generate the description for text: '{text}'".format(text=text),
             output_format="Return only the description in english without any extra text."
         )
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         # Generate the storyboard
         storyboard = writer.generate_storyboard_from_long_text(
             text=TEXT, 
-            style=Styles.Flux.MITO_TV
+            style=StoryboarderPrompts.Styles.Flux.MITO_TV
         )
         
         # Generate thumbnail

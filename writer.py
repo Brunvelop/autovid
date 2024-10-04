@@ -1,13 +1,8 @@
-import json
-import textwrap
-from typing import List, Dict
+from typing import Dict
 from pathlib import Path
 
-from tqdm import tqdm
-
-from prompts import Prompts, OutputFormats, WriterPrompts
+from prompts import OutputFormats, WriterPrompts
 from LLM import LLM
-from definitions import Scene
 
 # Evaluation prompts
 HISTORICAL_ACCURACY_PROMPT = """
@@ -37,10 +32,10 @@ class Writer():
     def generate_story(self, content: str, words_number: int = 100) -> str:
         text = self.llm.generate_text(
             system_prompt=WriterPrompts.REGLAS_STORYTELLING,
-            human_prompt= f"Utiliza el storytelling para escribir {content}",
-            output_format = 
-                OutputFormats.ESP.NUMERO_PALABRAS.format(words_number=words_number) +
-                WriterPrompts.SALTO_DE_LINEA_SIMPLE
+            human_prompt=f"Utiliza el storytelling para escribir {content}",
+            output_format= 
+                WriterPrompts.OutputFormats.NUMERO_PALABRAS.format(words_number=words_number) +
+                WriterPrompts.OutputFormats.SALTO_DE_LINEA_SIMPLE
         )
         text = text.replace('"', "'")
         return text
