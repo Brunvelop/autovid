@@ -65,6 +65,8 @@ class LLMModels(Enum):
     GPT4o = 'gpt-4o'
     GPT4oMini ='gpt-4o-mini'
     LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
+    O1Mini = 'o1-mini'
+    O1Preview = 'o1-preview'
 
 class VideatorTasks(Enum):
     WRITE = auto()
