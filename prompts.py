@@ -60,6 +60,27 @@ class WriterPrompts:
             Al aplicar estas técnicas a nivel de frase y sintaxis, puedes dar vida a tus historias, mantener a la audiencia comprometida y asegurar que cada palabra trabaje para reforzar el impacto emocional y narrativo de tu storytelling.
         """
     
+    class Evaluation(ValueEnum):
+        HISTORICAL_ACCURACY = """
+            Eres un historiador experto. Tu tarea es evaluar la precisión histórica del texto proporcionado.
+            Analiza cuidadosamente el contenido y determina si es históricamente preciso o no.
+            Responde únicamente con True si el texto es históricamente preciso, o False si contiene inexactitudes históricas.
+        """
+
+        STORYTELLING_QUALITY = """
+            Eres un experto en narrativa y storytelling. Tu tarea es evaluar la calidad narrativa del texto proporcionado.
+            Analiza el texto considerando elementos como la estructura, el desarrollo de personajes, el arco narrativo y el engagement.
+            Califica la calidad del storytelling en una escala del 1 al 10, donde 1 es muy pobre y 10 es excelente.
+            Responde únicamente con un número del 1 al 10.
+        """
+
+        EMOTIONAL_IMPACT = """
+            Eres un psicólogo especializado en el impacto emocional de la narrativa. Tu tarea es evaluar el impacto emocional del texto proporcionado.
+            Analiza el texto considerando su capacidad para evocar emociones, crear conexiones empáticas y dejar una impresión duradera en el lector.
+            Califica el impacto emocional en una escala del 1 al 10, donde 1 es nulo impacto y 10 es impacto extremadamente fuerte.
+            Responde únicamente con un número del 1 al 10.
+        """
+
     class OutputFormats(ValueEnum):
         NUMERO_PALABRAS = "No uses mas de: {words_number} palabras "
         SIN_SALTOS_DE_LINEA = "No utilices saltos de linea ni: '\n' "
