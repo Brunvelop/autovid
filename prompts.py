@@ -64,7 +64,8 @@ class WriterPrompts:
         HISTORICAL_ACCURACY = """
             Eres un historiador experto. Tu tarea es evaluar la precisión histórica del texto proporcionado.
             Analiza cuidadosamente el contenido y determina si es históricamente preciso o no.
-            Responde únicamente con True si el texto es históricamente preciso, o False si contiene inexactitudes históricas.
+            Evalúa la precisión histórica del texto en una escala del 1 al 10, donde 1 es completamente inexacto y 10 es totalmente preciso históricamente. 
+            Responde únicamente con un número del 1 al 10.
         """
 
         STORYTELLING_QUALITY = """

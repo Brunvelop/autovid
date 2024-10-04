@@ -25,7 +25,7 @@ class Writer():
 
     def evaluate_text(self, text: str) -> Dict[str, any]:
         evaluations = {
-            "historical_accuracy": self._evaluate_aspect(text, WriterPrompts.Evaluation.HISTORICAL_ACCURACY, lambda x: x.strip().lower() == 'true'),
+            "historical_accuracy": self._evaluate_aspect(text, WriterPrompts.Evaluation.HISTORICAL_ACCURACY, lambda x: int(x.strip())),
             "storytelling_quality": self._evaluate_aspect(text, WriterPrompts.Evaluation.STORYTELLING_QUALITY, lambda x: int(x.strip())),
             "emotional_impact": self._evaluate_aspect(text,  WriterPrompts.Evaluation.EMOTIONAL_IMPACT, lambda x: int(x.strip())),
             "word_count": len(text.split())
@@ -40,22 +40,38 @@ class Writer():
         )
         return parse_function(result)
 
-    def improve_text(self, text: str) -> Tuple[str, Dict[str, str]]:
-        improvements = {}
+    def improve_text(self, text: str, depth: int = 3) -> Tuple[str, Dict[str, list]]:
+        improvements = {
+            "historical_accuracy": [],
+            "storytelling_quality": [],
+            "emotional_impact": []
+        }
         
-        # Improve historical accuracy
-        improved_text, accuracy_improvements = self._improve_aspect(text, WriterPrompts.Improvement.HISTORICAL_ACCURACY)
-        improvements["historical_accuracy"] = accuracy_improvements
+        for _ in range(depth):
+            evaluation = self.evaluate_text(text)
+            
+            # Determine which aspect to improve based on the evaluation
+            aspect_to_improve = min(evaluation, key=lambda k: evaluation[k] if k != "word_count" else float('inf'))
+            
+            if aspect_to_improve == "historical_accuracy":
+                prompt = WriterPrompts.Improvement.HISTORICAL_ACCURACY
+            elif aspect_to_improve == "storytelling_quality":
+                prompt = WriterPrompts.Improvement.STORYTELLING_QUALITY
+            elif aspect_to_improve == "emotional_impact":
+                prompt = WriterPrompts.Improvement.EMOTIONAL_IMPACT
+            else:
+                break  # No more improvements needed
+            
+            improved_text, summary = self._improve_aspect(text, prompt)
+            improvements[aspect_to_improve].append(summary)
+            
+            text = improved_text
+            
+            # Check if we've reached our objectives
+            if all(evaluation[k] >= 10 for k in ["storytelling_quality", "emotional_impact"]) and evaluation["historical_accuracy"]:
+                break
         
-        # Improve storytelling quality
-        improved_text, storytelling_improvements = self._improve_aspect(improved_text, WriterPrompts.Improvement.STORYTELLING_QUALITY)
-        improvements["storytelling_quality"] = storytelling_improvements
-        
-        # Improve emotional impact
-        improved_text, emotional_improvements = self._improve_aspect(improved_text, WriterPrompts.Improvement.EMOTIONAL_IMPACT)
-        improvements["emotional_impact"] = emotional_improvements
-        
-        return improved_text, improvements
+        return text, improvements
 
     def _improve_aspect(self, text: str, prompt: str) -> Tuple[str, str]:
         result = self.llm.generate_text(
@@ -92,24 +108,32 @@ if __name__ == "__main__":
         content='El mito nordico sobre El Árbol del Mundo Yggdrasil y los Nueve Mundos: Conexión de todos los reinos de la existencia.',
         words_number=120
     )
-    print("Texto original:")
+    print("\n" + "=" * 50)
+    print("Texto original".center(50))
+    print("=" * 50)
     print(text)
     
     evaluations = writer.evaluate_text(text)
     print("\nEvaluaciones del texto original:")
+    print("-" * 30)
     for aspect, value in evaluations.items():
-        print(f"{aspect.replace('_', ' ').title()}: {value}")
+        print(f"{aspect.replace('_', ' ').title():<30}: {value}")
     
-    improved_text, improvements = writer.improve_text(text)
-    print("\nTexto mejorado:")
+    improved_text, improvements = writer.improve_text(text, depth=5)
+    print("\n" + "=" * 50)
+    print("Texto mejorado".center(50))
+    print("=" * 50)
     print(improved_text)
     
     print("\nResumen de las mejoras:")
-    for aspect, summary in improvements.items():
+    print("-" * 30)
+    for aspect, summaries in improvements.items():
         print(f"\n{aspect.replace('_', ' ').title()}:")
-        print(summary)
+        for i, summary in enumerate(summaries, 1):
+            print(f"  Iteración {i}: {summary}")
     
     improved_evaluations = writer.evaluate_text(improved_text)
     print("\nEvaluaciones del texto mejorado:")
+    print("-" * 30)
     for aspect, value in improved_evaluations.items():
-        print(f"{aspect.replace('_', ' ').title()}: {value}")
+        print(f"{aspect.replace('_', ' ').title():<30}: {value}")
