@@ -9,6 +9,8 @@ from fastapi.responses import HTMLResponse
 from UI_utils import ProductionStatusManager, VideoStatus
 from image_generator import ReplicateFluxDev
 from storyboarder import Storyboarder
+from writer import Writer
+from LLM import Claude35Sonnet
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -128,3 +130,58 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
 
     # Return updated image HTML with the unique URL
     return HTMLResponse(content=f'<img src="{image_url}" class="w-full">')
+
+@app.get("/text/{short_category}/{short_num}", response_class=HTMLResponse)
+async def show_text(request: Request, short_category: str, short_num: str):
+    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    text_path = VIDEO_ASSETS_PATH / "text/text.txt"
+    
+    if not text_path.exists():
+        raise HTTPException(status_code=404, detail=f"Missing text file for {short_category}/{short_num}")
+
+    text_content = text_path.read_text(encoding='utf-8')
+
+    response = templates.TemplateResponse("text.html", {
+            "request": request,
+            "short_category": short_category,
+            "short_num": short_num,
+            "text_content": text_content,
+        }
+    )
+    return response
+
+@app.post("/text/update/{short_category}/{short_num}", response_class=HTMLResponse)
+async def update_text(request: Request, short_category: str, short_num: str):
+    form_data = await request.form()
+    new_text = form_data.get("text")
+    
+    if not new_text:
+        raise HTTPException(status_code=400, detail="Missing text in form data")
+    
+    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/text.txt"
+    
+    try:
+        text_path.write_text(new_text, encoding='utf-8')
+        return HTMLResponse(content=f'<p>💾✔️</p>')
+    except Exception as e:
+        return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
+
+@app.post("/text/generate/{short_category}/{short_num}", response_class=HTMLResponse)
+async def generate_text(request: Request, short_category: str, short_num: str):
+    form_data = await request.form()
+    content = form_data.get("content")
+    words_number = int(form_data.get("words_number", 100))
+    
+    if not content:
+        raise HTTPException(status_code=400, detail="Missing content in form data")
+    
+    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/text.txt"
+    
+    try:
+        llm = Claude35Sonnet(low_vram=False, llm_config={'temperature': 0.5})
+        writer = Writer(llm=llm)
+        generated_text = writer.generate_story(content=content, words_number=words_number)
+        writer.save_text(text=generated_text, save_path=text_path)
+        return HTMLResponse(content=generated_text)
+    except Exception as e:
+        return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)

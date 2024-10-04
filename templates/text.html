@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Editor - {{ short_category }}/{{ short_num }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-4">Text Editor - {{ short_category }}/{{ short_num }}</h1>
+        
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Current Text</h2>
+            <textarea id="text-content" class="w-full h-64 p-2 border rounded" rows="10">{{ text_content }}</textarea>
+            <button id="update-text" class="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Update Text
+            </button>
+        </div>
+
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Generate New Text</h2>
+            <input type="text" id="content-input" class="w-full p-2 border rounded mb-2" placeholder="Enter content for text generation">
+            <input type="number" id="words-number" class="w-full p-2 border rounded mb-2" value="100" min="1" max="1000">
+            <button id="generate-text" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Generate Text
+            </button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#update-text').click(function() {
+                const newText = $('#text-content').val();
+                $.ajax({
+                    url: '/text/update/{{ short_category }}/{{ short_num }}',
+                    method: 'POST',
+                    data: { text: newText },
+                    success: function(response) {
+                        alert('Text updated successfully');
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error updating text: ' + error);
+                    }
+                });
+            });
+
+            $('#generate-text').click(function() {
+                const content = $('#content-input').val();
+                const wordsNumber = $('#words-number').val();
+                $.ajax({
+                    url: '/text/generate/{{ short_category }}/{{ short_num }}',
+                    method: 'POST',
+                    data: { content: content, words_number: wordsNumber },
+                    success: function(response) {
+                        $('#text-content').val(response);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error generating text: ' + error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
