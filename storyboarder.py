@@ -69,7 +69,7 @@ class Storyboarder():
 
 if __name__ == "__main__":
     from LLM import GPT4o, Claude35Sonnet
-    from data.MITO_TV.SHORTS.mitos import mitos_griegos
+    from data.MITO_TV.SHORTS.mitos import mitos_nordicos
 
     def extract_myth_text(mitos_griegos, N):
         for line in mitos_griegos.split('\n'):
@@ -78,19 +78,19 @@ if __name__ == "__main__":
         return None
     
     writer = Storyboarder(
-        llm=GPT4o(
+        llm=Claude35Sonnet(
             low_vram=False,
-            llm_config={'temperature': 0}
+            llm_config={'temperature': 0.2}
         )
     )
     
 
-    for N in tqdm(range(11, 101), desc="Processing myths"):
-        TEXT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/text.txt')
+    for N in tqdm(range(1, 101), desc="Processing myths"):
+        TEXT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_NORDICOS/{N}/text/text.txt')
         TEXT = TEXT_PATH.read_text(encoding='utf-8')
         
         # Extract the myth title
-        myth_title = extract_myth_text(mitos_griegos, N)
+        myth_title = extract_myth_text(mitos_nordicos, N)
         
         # Generate the storyboard
         storyboard = writer.generate_storyboard_from_long_text(
@@ -106,4 +106,4 @@ if __name__ == "__main__":
         storyboard.insert(0, title_scene)
         
         # Save the modified storyboard
-        writer.save_storyboard(storyboard, Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json'))
+        writer.save_storyboard(storyboard, Path(f'data/MITO_TV/SHORTS/MITOS_NORDICOS/{N}/text/storyboard.json'))
