@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 from pathlib import Path
 
 from prompts import WriterPrompts
@@ -40,6 +40,42 @@ class Writer():
         )
         return parse_function(result)
 
+    def improve_text(self, text: str) -> Tuple[str, Dict[str, str]]:
+        improvements = {}
+        
+        # Improve historical accuracy
+        improved_text, accuracy_improvements = self._improve_aspect(text, WriterPrompts.Improvement.HISTORICAL_ACCURACY)
+        improvements["historical_accuracy"] = accuracy_improvements
+        
+        # Improve storytelling quality
+        improved_text, storytelling_improvements = self._improve_aspect(improved_text, WriterPrompts.Improvement.STORYTELLING_QUALITY)
+        improvements["storytelling_quality"] = storytelling_improvements
+        
+        # Improve emotional impact
+        improved_text, emotional_improvements = self._improve_aspect(improved_text, WriterPrompts.Improvement.EMOTIONAL_IMPACT)
+        improvements["emotional_impact"] = emotional_improvements
+        
+        return improved_text, improvements
+
+    def _improve_aspect(self, text: str, prompt: str) -> Tuple[str, str]:
+        result = self.llm.generate_text(
+            system_prompt=prompt,
+            human_prompt=f"Mejora el siguiente texto:\n\n{text}"
+        )
+        
+        improved_text = self._extract_content(result, "improved_text")
+        summary = self._extract_content(result, "summary")
+        
+        return improved_text.strip(), summary.strip()
+    
+    @staticmethod
+    def _extract_content(text: str, tag: str) -> str:
+        start_tag = f"<{tag}>"
+        end_tag = f"</{tag}>"
+        start = text.find(start_tag) + len(start_tag)
+        end = text.find(end_tag)
+        return text[start:end].strip()
+
 if __name__ == "__main__":
     from LLM import GPT4o, Claude35Sonnet
     
@@ -56,8 +92,24 @@ if __name__ == "__main__":
         content='El mito nordico sobre El Árbol del Mundo Yggdrasil y los Nueve Mundos: Conexión de todos los reinos de la existencia.',
         words_number=120
     )
+    print("Texto original:")
     print(text)
+    
     evaluations = writer.evaluate_text(text)
-    print("\nEvaluaciones del texto:")
+    print("\nEvaluaciones del texto original:")
     for aspect, value in evaluations.items():
+        print(f"{aspect.replace('_', ' ').title()}: {value}")
+    
+    improved_text, improvements = writer.improve_text(text)
+    print("\nTexto mejorado:")
+    print(improved_text)
+    
+    print("\nResumen de las mejoras:")
+    for aspect, summary in improvements.items():
+        print(f"\n{aspect.replace('_', ' ').title()}:")
+        print(summary)
+    
+    improved_evaluations = writer.evaluate_text(improved_text)
+    print("\nEvaluaciones del texto mejorado:")
+    for aspect, value in improved_evaluations.items():
         print(f"{aspect.replace('_', ' ').title()}: {value}")

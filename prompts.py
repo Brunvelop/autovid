@@ -81,6 +81,75 @@ class WriterPrompts:
             Responde únicamente con un número del 1 al 10.
         """
 
+    class Improvement(ValueEnum):
+        HISTORICAL_ACCURACY = """
+            Eres un historiador experto y escritor talentoso. Tu tarea es mejorar la precisión histórica del texto proporcionado sin perder su esencia narrativa y manteniendo un tamaño similar al original.
+            Sigue estos pasos para analizar y mejorar el texto:
+
+            <thinking>
+            1. Lee cuidadosamente el texto proporcionado y anota su longitud aproximada.
+            2. Identifica cualquier inexactitud histórica, anotando cada una.
+            3. Investiga los hechos correctos para cada inexactitud identificada.
+            4. Considera cómo corregir cada inexactitud mientras mantienes el tono, estilo original y longitud similar.
+            5. Evalúa si las correcciones afectan otras partes del texto y ajusta en consecuencia.
+            6. Revisa el texto completo para asegurar coherencia, fluidez y longitud similar después de las correcciones.
+            </thinking>
+
+            <improved_text>
+            [Inserta aquí el texto mejorado, incorporando las correcciones históricas mientras mantienes el tono, estilo original y una longitud similar]
+            </improved_text>
+
+            <summary>
+            [Proporciona un resumen de las mejoras realizadas, detallando cada inexactitud corregida y cómo se mejoró la precisión histórica, mencionando cómo se mantuvo una longitud similar]
+            </summary>
+        """
+
+        STORYTELLING_QUALITY = """
+            Eres un experto en narrativa y storytelling. Tu tarea es mejorar la calidad narrativa del texto proporcionado manteniendo una longitud similar al original.
+            Sigue estos pasos para analizar y mejorar el texto:
+
+            <thinking>
+            1. Lee detenidamente el texto proporcionado y anota su longitud aproximada.
+            2. Analiza la estructura actual de la narrativa.
+            3. Evalúa el desarrollo de los personajes existentes.
+            4. Examina el arco narrativo y su efectividad.
+            5. Identifica áreas donde el engagement del lector puede mejorarse.
+            6. Considera cómo mejorar cada aspecto manteniendo la esencia original y una longitud similar.
+            7. Planifica las modificaciones para aumentar el interés del lector y la fluidez de la narración sin extender significativamente el texto.
+            </thinking>
+
+            <summary>
+            [Proporciona un resumen de las mejoras realizadas, detallando cómo se ha mejorado la calidad narrativa en términos de estructura, personajes, arco narrativo y engagement, mencionando cómo se mantuvo una longitud similar]
+            </summary>
+
+            <improved_text>
+            [Inserta aquí el texto mejorado, incorporando las mejoras en estructura, desarrollo de personajes, arco narrativo y engagement, manteniendo una longitud similar al original]
+            </improved_text>
+        """
+
+        EMOTIONAL_IMPACT = """
+            Eres un psicólogo especializado en el impacto emocional de la narrativa y un escritor talentoso. Tu tarea es mejorar el impacto emocional del texto proporcionado manteniendo una longitud similar al original.
+            Sigue estos pasos para analizar y mejorar el texto:
+
+            <thinking>
+            1. Lee atentamente el texto proporcionado y anota su longitud aproximada.
+            2. Identifica las emociones principales que el texto intenta evocar.
+            3. Evalúa la efectividad actual del texto en evocar estas emociones.
+            4. Analiza las conexiones empáticas existentes entre los personajes y el lector.
+            5. Considera cómo intensificar la respuesta emocional sin cambiar drásticamente la trama, el tono o la longitud.
+            6. Planifica modificaciones sutiles que aumenten el impacto emocional sin extender significativamente el texto.
+            7. Revisa para asegurar que las mejoras creen una impresión duradera en el lector mientras mantienes una longitud similar.
+            </thinking>
+
+            <summary>
+            [Proporciona un resumen de las mejoras realizadas, detallando cómo se ha intensificado el impacto emocional y las conexiones empáticas sin cambiar drásticamente la trama, el tono original o la longitud del texto]
+            </summary>
+
+            <improved_text>
+            [Inserta aquí el texto mejorado, incorporando las mejoras para aumentar el impacto emocional y las conexiones empáticas, manteniendo una longitud similar al original]
+            </improved_text>
+        """
+        
     class OutputFormats(ValueEnum):
         NUMERO_PALABRAS = "No uses mas de: {words_number} palabras "
         SIN_SALTOS_DE_LINEA = "No utilices saltos de linea ni: '\n' "
