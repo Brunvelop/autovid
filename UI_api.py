@@ -47,7 +47,7 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
         }
         scenes.append(scene)
 
-    response = templates.TemplateResponse("video.html", {
+    response = templates.TemplateResponse("storyboard.html", {
             "request": request,
             "short_category": short_category,
             "short_num": short_num,
@@ -57,7 +57,7 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
     )
     return response
 
-@app.post("/update_image_status/{short_category}/{short_num}/{image_index}/{is_completed}")
+@app.post("/storyboard/update_image_status/{short_category}/{short_num}/{image_index}/{is_completed}")
 async def update_image_status(
     request: Request,
     short_category: str, 
@@ -77,7 +77,7 @@ async def update_image_status(
             status_code=500
         )
 
-@app.post("/update_storyboard/{short_category}/{short_num}/{index}/{field}", response_class=HTMLResponse)
+@app.post("/storyboard/update/{short_category}/{short_num}/{index}/{field}", response_class=HTMLResponse)
 async def update_storyboard(
     request: Request, 
     short_category: str, 
@@ -102,7 +102,7 @@ async def update_storyboard(
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
-@app.post("/remake_image/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
+@app.post("/storyboard/remake_image/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
 async def remake_image(request: Request, short_category: str, short_num: str, index: int):
     form_data = await request.form()
     image_prompt = form_data._list[0][1]

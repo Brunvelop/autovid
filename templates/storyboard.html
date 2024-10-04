@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Video {{ short_num }}</title>
+    <title>Storyboard {{ short_num }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@2.0.2"></script>
 </head>
 <body class="bg-slate-900 text-gray-200 font-sans p-4">
-    <h1 class="text-2xl font-bold mb-4">VIDEO {{ short_category }} {{ short_num }} {{ '✔️' if status['completed'] else '❌' }}</h1>
+    <h1 class="text-2xl font-bold mb-4">STORYBOARD {{ short_category }} {{ short_num }} {{ '✔️' if status['completed'] else '❌' }}</h1>
     <div class="mb-4 space-x-4">
         <a href="{{ url_for('index') }}" class="text-blue-400 hover:underline">Volver al inicio</a>
         <a href="{{ url_for('show_storyboard', short_category=short_category, short_num=short_num|int - 1) }}" class="text-blue-400 hover:underline">⬅️</a>
@@ -22,7 +22,7 @@
                 </h2>
                 <div class="flex space-x-2">
                     <button 
-                        hx-post="/update_image_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" 
+                        hx-post="/storyboard/update_image_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" 
                         hx-target="#status{{ loop.index0 }}" 
                         hx-swap="outerHTML" 
                         class="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md shadow-sm transition duration-150 ease-in-out"
@@ -30,7 +30,7 @@
                         ❌
                     </button>
                     <button 
-                        hx-post="/update_image_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" 
+                        hx-post="/storyboard/update_image_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" 
                         hx-target="#status{{ loop.index0 }}" 
                         hx-swap="outerHTML" 
                         class="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md shadow-sm transition duration-150 ease-in-out"
@@ -53,7 +53,7 @@
                         id="text{{ loop.index }}" 
                         name="text" 
                         class="w-full h-24 p-1 text-sm bg-slate-800"
-                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/text"
+                        hx-post="/storyboard/update/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/text"
                         hx-trigger="input changed delay:500ms"
                         hx-swap="innerHTML"
                     >{{ scene.text }}</textarea>
@@ -64,7 +64,7 @@
                         id="image_prompt_text{{ loop.index0 }}" 
                         name="image" 
                         class="w-full h-40 p-1 text-sm bg-slate-800"
-                        hx-post="/update_storyboard/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image"
+                        hx-post="/storyboard/update/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image"
                         hx-trigger="input changed delay:500ms"
                         hx-swap="innerHTML"
                     >{{ scene.image_prompt }}</textarea>
@@ -75,7 +75,7 @@
                         hx-swap="outerHTML" 
                         class="px-2 py-1 text-sm">✍️</button>
                     <button 
-                        hx-post="/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
+                        hx-post="/storyboard/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
                         hx-include="#image_prompt_text{{ loop.index0 }}" 
                         hx-target="#image{{ loop.index0 }}" 
                         hx-swap="outerHTML" 
