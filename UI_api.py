@@ -10,7 +10,7 @@ from UI_utils import ProductionStatusManager, VideoStatus
 from image_generator import ReplicateFluxDev
 from storyboarder import Storyboarder
 from writer import Writer
-from LLM import Claude35Sonnet
+from LLM import Claude35Sonnet, GPT4o
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -20,7 +20,9 @@ BASE_SHORTS_PATH = Path("./data/MITO_TV/SHORTS")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    global_status = ProductionStatusManager.get_global_status(shorts_path=BASE_SHORTS_PATH)
+    llm = GPT4o(low_vram=False, llm_config={'temperature': 0.5})
+    writer = Writer(llm=llm)
+    global_status = ProductionStatusManager.get_global_status(shorts_path=BASE_SHORTS_PATH, writer=writer)
 
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -49,12 +51,14 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
         }
         scenes.append(scene)
 
+    llm = Claude35Sonnet(low_vram=False, llm_config={'temperature': 0.5})
+    writer = Writer(llm=llm)
     response = templates.TemplateResponse("storyboard.html", {
             "request": request,
             "short_category": short_category,
             "short_num": short_num,
             "scenes": scenes,
-            "status": VideoStatus.get(status_path=status_path)
+            "status": VideoStatus.get(status_path=status_path, writer=writer)
         }
     )
     return response

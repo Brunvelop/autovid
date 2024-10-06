@@ -4,7 +4,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from prompts import StoryboarderPrompts
+from prompts import StoryboarderPrompts, Styles
 from LLM import LLM
 from definitions import Scene
 

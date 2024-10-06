@@ -4,7 +4,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Union, List
 
-from sd import SD
+from image_generator import FluxSchell
 from writer import Writer
 from LLM import LLM
 from tts import TTS
@@ -89,16 +89,14 @@ class VideoGenerator:
         if storyboard is None:
             storyboard = self._load_storyboard()
 
-        sd = SD(model_id=self.sd_model_id, low_vram=self.low_vram)
+        sd = FluxSchell(low_vram=self.low_vram)
         
         prompts = [scene["image"] + " " + self.style for scene in storyboard]
-        images = sd.generate_images(
+        sd.generate_images(
             prompt=prompts,
             height=self.height,
             width=self.width,
         )
-        for i, image in enumerate(images):
-            image.save(self.image_dir / f"{i}.png")
 
     def edit_video(self, output_dir: Union[str, Path]) -> None:
         video_editor.generate_video(
@@ -136,36 +134,59 @@ class VideoGenerator:
 
 
 if __name__ == "__main__":
+    # import time
+    # start_time = time.time()
+
+    # video_num = 18
+    # video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
+
+    # vg = VideoGenerator(
+    #     llm_model=LLMModels.GPT4o,
+    #     tts_model=TTSModels.GOOGLE,
+    #     tts_voice=Voices.Google.SPAIN,
+    #     sd_model=SDModels.FLUX1_SCHNELL,
+    #     height=912,
+    #     width=432,
+    #     assets_dir=Path(f"./tmp/{video_num}"),
+    #     style="3d animation digital art 4k detailed",
+    #     low_vram=True
+    # )
+    # vg.videate(
+    #     tasks=[
+    #         # VideatorTasks.WRITE,
+    #         # VideatorTasks.AUDIO,
+    #         VideatorTasks.IMAGES,
+    #         # VideatorTasks.VIDEO,
+    #         # VideatorTasks.FULL
+    #     ],
+    #     video_theme=video_theme, 
+    #     output_dir=Path(f"./output/{video_num}.mp4")
+    # )
+
+    # end_time = time.time()
+    # elapsed_time = end_time - start_time
+
+    # print(f"\nGenerated in: {elapsed_time:.2f} s")
+
     import time
     start_time = time.time()
-
-    video_num = 18
-    video_theme = 'La historia ficticia y humoristica estilo Animación Comedia Parodia Sátira de como un mouestro feo se transforma en guapo al estilo de el patito feo'
 
     vg = VideoGenerator(
         llm_model=LLMModels.GPT4o,
         tts_model=TTSModels.GOOGLE,
         tts_voice=Voices.Google.SPAIN,
         sd_model=SDModels.FLUX1_SCHNELL,
-        height=912,
-        width=432,
-        assets_dir=Path(f"./tmp/{video_num}"),
+        height=1080,
+        width=1920,
+        assets_dir=Path(f".\data\HOMERO\LA_ILIADA\CAPITULO_001"),
         style="3d animation digital art 4k detailed",
         low_vram=True
     )
-    vg.videate(
-        tasks=[
-            # VideatorTasks.WRITE,
-            # VideatorTasks.AUDIO,
-            # VideatorTasks.IMAGES,
-            # VideatorTasks.VIDEO,
-            VideatorTasks.FULL
-        ],
-        video_theme=video_theme, 
-        output_dir=Path(f"./output/{video_num}.mp4")
-    )
+    with open(Path('data\HOMERO\LA_ILIADA\CAPITULO_001\CAPITULO_001_STORYBOARD.json'), 'r', encoding='utf-8') as f:
+        storyboard = json.load(f)
+    vg.generate_images(storyboard)
+
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-
     print(f"\nGenerated in: {elapsed_time:.2f} s")

@@ -227,28 +227,28 @@ class StoryboarderPrompts:
             ]
             """
 
-    class Styles():
-        class Flux(ValueEnum):
-            DARK_ATMOSPHERE = """
-            When creating the image description, add a horrific style inspired by the following elements:
+class Styles():
+    class Flux(ValueEnum):
+        DARK_ATMOSPHERE = """
+        When creating the image description, add a horrific style inspired by the following elements:
 
-            - Lovecraftian cosmic horror: vast, unknowable entities, tentacles, non-Euclidean geometry
-            - Giger-esque biomechanical nightmares: fusion of flesh and machine, intricate details
-            - Beksiński's hellish landscapes: surreal, decaying structures, muted color palettes
-            - Junji Ito's body horror: grotesque transformations, spiral motifs, unsettling close-ups
-            - Gothic horror ambiance: fog-shrouded castles, gargoyles, candlelit corridors
-            - Clive Barker's hellraiser aesthetics: chains, hooks, leather, intricate puzzle boxes
-            - Silent Hill's rust and decay: abandoned, corroded environments, ash-like particles
-            - Dario Argento's vivid color schemes: stark reds and blues in shadowy scenes
-            - Francis Bacon's distorted figures: warped, screaming faces, isolated in void-like spaces
-            - Dark surrealism: melting realities, impossible creatures, dreamlike terror
+        - Lovecraftian cosmic horror: vast, unknowable entities, tentacles, non-Euclidean geometry
+        - Giger-esque biomechanical nightmares: fusion of flesh and machine, intricate details
+        - Beksiński's hellish landscapes: surreal, decaying structures, muted color palettes
+        - Junji Ito's body horror: grotesque transformations, spiral motifs, unsettling close-ups
+        - Gothic horror ambiance: fog-shrouded castles, gargoyles, candlelit corridors
+        - Clive Barker's hellraiser aesthetics: chains, hooks, leather, intricate puzzle boxes
+        - Silent Hill's rust and decay: abandoned, corroded environments, ash-like particles
+        - Dario Argento's vivid color schemes: stark reds and blues in shadowy scenes
+        - Francis Bacon's distorted figures: warped, screaming faces, isolated in void-like spaces
+        - Dark surrealism: melting realities, impossible creatures, dreamlike terror
 
-            Atmosphere keywords: oppressive, claustrophobic, uncanny, dread-inducing, nightmarish
-            Visual elements: deep shadows, harsh contrasts, unsettling symmetry, eerie lighting
-            Textures: visceral, slimy, decaying, chitinous, veiny, pulsating
-            Color palettes: muted with vivid accents, deep crimsons, sickly greens, void-like blacks
-            """
-            MITO_TV = """
-        When creating the image description, add a creative style inspired by the following words elements:
-        intricate details, ultrafine detail, vibrant color, 8k resolution masterpiece, cinematic raw realism, UHDR,32K, ultra-detailed ,   metallic plating
+        Atmosphere keywords: oppressive, claustrophobic, uncanny, dread-inducing, nightmarish
+        Visual elements: deep shadows, harsh contrasts, unsettling symmetry, eerie lighting
+        Textures: visceral, slimy, decaying, chitinous, veiny, pulsating
+        Color palettes: muted with vivid accents, deep crimsons, sickly greens, void-like blacks
         """
+        MITO_TV = """
+    When creating the image description, add a creative style inspired by the following words elements:
+    intricate details, ultrafine detail, vibrant color, 8k resolution masterpiece, cinematic raw realism, UHDR,32K, ultra-detailed ,   metallic plating
+    """
