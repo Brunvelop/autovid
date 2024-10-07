@@ -164,11 +164,11 @@ class VideoEditor:
             print(f"Transition clips: {transition_clip_1, transition_clip_2}")
 
             return transition_clip_1, transition_clip_2
-    
+
     @staticmethod
     def adjust_video_duration(video: mp.VideoClip) -> mp.VideoClip:
         if video.duration >= 59:
-            return video.fx(vfx.speedx, video.duration/59).set_fps(30)
+            return video.fx(vfx.speedx, video.duration / 59).set_fps(30)
         return video
 
     @staticmethod
@@ -189,21 +189,21 @@ class VideoEditor:
 
             image_clip_1 = mp.ImageClip(str(image)).set_fps(30)
             audio_1, duration_1 = VideoEditor.get_audio_and_duration(n, audios_path)
-            image_clip_1 = image_clip_1.set_duration(duration_1 -  transition_n_frames / fps / 2)
+            image_clip_1 = image_clip_1.set_duration(duration_1 - transition_n_frames / fps / 2)
             image_clip_1 = VideoEffects.zoom_in_face_effect(image_clip_1)
 
-            image_clip_2 = mp.ImageClip(str(images[n+1])).set_fps(30)
-            audio_2, duration_2 = VideoEditor.get_audio_and_duration(n+1, audios_path)
-            image_clip_2 = image_clip_2.set_duration(duration_2 -  transition_n_frames / fps / 2)
+            image_clip_2 = mp.ImageClip(str(images[n + 1])).set_fps(30)
+            audio_2, duration_2 = VideoEditor.get_audio_and_duration(n + 1, audios_path)
+            image_clip_2 = image_clip_2.set_duration(duration_2 - transition_n_frames / fps / 2)
 
             transition_clip_1, transition_clip_2 = VideoEditor.generate_transition(image_clip_1, image_clip_2, transition_n_frames)
             full_video_1 = mp.concatenate_videoclips([image_clip_1, transition_clip_1, transition_clip_2]).set_audio(audio_1)
-            
+
             timeline.append(full_video_1)
 
-        image_clip_last = mp.ImageClip(str(images[n+1])).set_fps(30)
-        audio_last, duration_last = VideoEditor.get_audio_and_duration(n+1, audios_path)
-        image_clip_last = image_clip_2.set_duration(duration_last -  transition_n_frames / fps / 2)
+        image_clip_last = mp.ImageClip(str(images[n + 1])).set_fps(30)
+        audio_last, duration_last = VideoEditor.get_audio_and_duration(n + 1, audios_path)
+        image_clip_last = image_clip_2.set_duration(duration_last - transition_n_frames / fps / 2)
         image_clip_last = VideoEffects.zoom_in_face_effect(image_clip_last)
         image_clip_last = image_clip_last.set_audio(audio_last)
         timeline.append(image_clip_last)
@@ -224,6 +224,7 @@ class VideoEditor:
         transition_n_frames: int = 6,
         images_path: Path = Path('tmp/images'),
         audios_path: Path = Path('tmp/audios'),
+        background_music_path: Path = None,
         transitions_path: Path = Path('tmp/transitions'),
         output_path: Path = Path('output/video.mp4')
     ) -> None:
@@ -238,27 +239,27 @@ class VideoEditor:
 
             # Generar video con efecto de profundidad
             depth_video_path = VideoEditor._generate_depth_effect(str(image_path), str(transitions_path / f"{n}_depth.mp4"), duration=clip_duration)
-            
+
             # Crear clip de video con el efecto de profundidad
             depth_clip = mp.VideoFileClip(depth_video_path)
-            
+
             # Generar transición al siguiente clip
-            next_image_path = images[n+1]
-            next_audio, next_duration = VideoEditor.get_audio_and_duration(n+1, audios_path)
+            next_image_path = images[n + 1]
+            next_audio, next_duration = VideoEditor.get_audio_and_duration(n + 1, audios_path)
             next_clip_duration = next_duration - transition_n_frames / fps / 2
-            next_depth_video_path = VideoEditor._generate_depth_effect(str(next_image_path), str(transitions_path / f"{n+1}_depth.mp4"), duration=next_clip_duration)
+            next_depth_video_path = VideoEditor._generate_depth_effect(str(next_image_path), str(transitions_path / f"{n + 1}_depth.mp4"), duration=next_clip_duration)
             next_depth_clip = mp.VideoFileClip(next_depth_video_path)
-            
+
             transition_clip_1, transition_clip_2 = VideoEditor.generate_transition(depth_clip, next_depth_clip, transition_n_frames)
-            
+
             full_video = mp.concatenate_videoclips([depth_clip, transition_clip_1, transition_clip_2]).set_audio(audio)
-            
+
             timeline.append(full_video)
 
         # Procesar la última imagen
-        last_audio, last_duration = VideoEditor.get_audio_and_duration(len(images)-1, audios_path)
+        last_audio, last_duration = VideoEditor.get_audio_and_duration(len(images) - 1, audios_path)
         last_clip_duration = last_duration - transition_n_frames / fps / 2
-        last_depth_video_path = VideoEditor._generate_depth_effect(str(images[-1]), str(transitions_path / f"{len(images)-1}_depth.mp4"), duration=last_clip_duration)
+        last_depth_video_path = VideoEditor._generate_depth_effect(str(images[-1]), str(transitions_path / f"{len(images) - 1}_depth.mp4"), duration=last_clip_duration, fps=fps)
         last_depth_clip = mp.VideoFileClip(last_depth_video_path)
         last_depth_clip = last_depth_clip.set_audio(last_audio)
         timeline.append(last_depth_clip)
@@ -266,25 +267,56 @@ class VideoEditor:
         # Concatenar clips y ajustar duración
         video = mp.concatenate_videoclips(timeline)
         video = VideoEditor.adjust_video_duration(video)
+        video = video.set_audio(video.audio.volumex(1.995))  # Aproximadamente +6dB
+
+        if background_music_path:
+            background_music = mp.AudioFileClip(str(background_music_path))
+            background_music_duration = background_music.duration
+            video_duration = video.duration
+
+            # Calcular cuántas veces se necesita repetir la música
+            repeat_times = int(video_duration / background_music_duration) + 1
+
+            # Crear una lista de clips de audio para la música de fondo
+            bg_music_clips = []
+            for i in range(repeat_times):
+                if i == repeat_times - 1:
+                    # Última repetición: aplicar fade out
+                    remaining_duration = video_duration - (i * background_music_duration)
+                    fade_duration = min(remaining_duration, background_music_duration)
+                    # Aplicar fade out en los últimos fade_duration segundos
+                    faded_clip = background_music.subclip(0, fade_duration).audio_fadeout(fade_duration * 0.75)
+                    bg_music_clips.append(faded_clip)
+                else:
+                    bg_music_clips.append(background_music)
+
+            # Concatenar los clips de música de fondo
+            full_bg_music = mp.concatenate_audioclips(bg_music_clips)
+            full_bg_music = full_bg_music.subclip(0, video_duration)  # Asegurar que la duración coincida con el video
+            full_bg_music = full_bg_music.volumex(0.5)  # Ajustar el volumen general de la música de fondo
+
+            # Mezclar el audio original con la música de fondo
+            final_audio = mp.CompositeAudioClip([video.audio, full_bg_music])
+            video = video.set_audio(final_audio)
 
         # Escribir archivo de video
         video.write_videofile(str(output_path))
 
     @staticmethod
-    def _generate_depth_effect(input_image_path, output_video_path, duration=5, fps=60):
+    def _generate_depth_effect(input_image_path, output_video_path, duration=5, fps=30):
         scene = DepthScene(backend="headless")
-        
+
         estimator = DepthAnythingV2()
         scene.set_estimator(estimator)
-        
+
         image = Image.open(input_image_path)
         depth = estimator.estimate(image)
-        
+
         width, height = image.size
-        
+
         scene.input(image=image, depth=depth)
         scene.aspect_ratio = None
-        
+
         scene.add_animation(
             Presets.Dolly(
                 intensity=1,
@@ -295,7 +327,7 @@ class VideoEditor:
                 depth=0.5,
             )
         )
-        
+
         output_path = scene.main(
             width=width,
             height=height,
@@ -304,10 +336,11 @@ class VideoEditor:
             time=duration,
             loop=0,
             output=Path(output_video_path),
-            noturbo=(os.getenv("NOTURBO","0")=="1"),
+            noturbo=(os.getenv("NOTURBO", "0") == "1"),
         )[0]
-        
+
         return str(output_path)
+
 
 if __name__ == "__main__":
     N = 1
@@ -315,5 +348,6 @@ if __name__ == "__main__":
     VideoEditor.generate_depth_video(
         images_path=ASSETS_FOLDER / f'{N}/images',
         audios_path=ASSETS_FOLDER / f'{N}/audios',
-        output_path=ASSETS_FOLDER / f"{N}/{N}.mp4"
+        output_path=ASSETS_FOLDER / f"{N}/{N}.mp4",
+        background_music_path=Path("C:/Users/bruno/Desktop/autovid/music/mito_tv_loop_01.mp3")
     )

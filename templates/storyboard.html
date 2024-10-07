@@ -12,6 +12,26 @@
         <a href="{{ url_for('index') }}" class="text-blue-400 hover:underline">Volver al inicio</a>
         <a href="{{ url_for('show_storyboard', short_category=short_category, short_num=short_num|int - 1) }}" class="text-blue-400 hover:underline">⬅️</a>
         <a href="{{ url_for('show_storyboard', short_category=short_category, short_num=short_num|int + 1) }}" class="text-blue-400 hover:underline">➡️</a>
+
+        <button 
+            hx-post="{{ url_for('generate_tts', short_category=short_category, short_num=short_num) }}"
+            hx-trigger="click"
+            hx-target="#tts_status"
+            hx-swap="innerHTML"
+            class="px-4 py-2 bg-green-500 text-white rounded-md"
+        >Generar TTS</button>
+
+        <button 
+            hx-post="{{ url_for('generate_video', short_category=short_category, short_num=short_num) }}"
+            hx-trigger="click"
+            hx-target="#video_status"
+            hx-swap="innerHTML"
+            class="px-4 py-2 bg-blue-500 text-white rounded-md"
+        >Generar Video</button>
+    </div>
+    <div class="mb-4">
+        <span id="tts_status"></span>
+        <span id="video_status"></span>
     </div>
     <div class="flex flex-wrap -mx-2">
         {% for scene in scenes %}

@@ -1,4 +1,3 @@
-#uvicorn UI_api:app --reload
 from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException
@@ -11,6 +10,10 @@ from image_generator import ReplicateFluxDev
 from storyboarder import Storyboarder
 from writer import Writer
 from LLM import Claude35Sonnet, GPT4o
+
+from definitions import Voices, TTSModels
+from tts import ElevenLabsTTS
+from video_editor import VideoEditor
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -189,3 +192,51 @@ async def generate_text(request: Request, short_category: str, short_num: str):
         return HTMLResponse(content=generated_text)
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
+
+@app.post("/generate_tts/{short_category}/{short_num}", response_class=HTMLResponse)
+async def generate_tts(request: Request, short_category: str, short_num: str):
+    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
+    audios_path = VIDEO_ASSETS_PATH / "audios"
+
+    if not storyboard_path.exists():
+        raise HTTPException(status_code=404, detail=f"Storyboard not found for {short_category}/{short_num}")
+
+    storyboard = Storyboarder.load_storyboard(storyboard_path)
+
+    try:
+        for idx, scene in enumerate(storyboard):
+            text = scene.get('text', '')
+            output_file = audios_path / f"{idx}.mp3"
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            ElevenLabsTTS.generate_speech(
+                text=text,
+                output_file=output_file,
+                voice=Voices.ElevenLabs.DAN_DAN
+            )
+        return HTMLResponse(content="<p>✅ TTS generation completed</p>")
+    except Exception as e:
+        return HTMLResponse(content=f"<p style='color:red;'>Error generating TTS: {str(e)}</p>", status_code=500)
+
+@app.post("/generate_video/{short_category}/{short_num}", response_class=HTMLResponse)
+async def generate_video(request: Request, short_category: str, short_num: str):
+    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    images_path = VIDEO_ASSETS_PATH / "images"
+    audios_path = VIDEO_ASSETS_PATH / "audios"
+    output_path = VIDEO_ASSETS_PATH / f"{short_num}.mp4"
+
+    if not images_path.exists() or not audios_path.exists():
+        raise HTTPException(status_code=404, detail=f"Missing images or audios for {short_category}/{short_num}")
+
+    try:
+        VideoEditor.generate_depth_video(
+            images_path=images_path,
+            audios_path=audios_path,
+            output_path=output_path,
+            background_music_path=Path("C:/Users/bruno/Desktop/autovid/music/mito_tv_loop_01.mp3")
+        )
+        video_url = "/" + output_path.as_posix()
+        return HTMLResponse(content=f"<p>✅ Video generation completed. <a href='{video_url}' target='_blank'>Watch Video</a></p>")
+    except Exception as e:
+        return HTMLResponse(content=f"<p style='color:red;'>Error generating video: {str(e)}</p>", status_code=500)
