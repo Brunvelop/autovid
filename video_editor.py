@@ -14,6 +14,15 @@ from pathlib import Path
 
 import vid_transition
 
+
+import os
+from pathlib import Path
+import moviepy.editor as mp
+from DepthFlow import DepthScene
+from PIL import Image
+from Broken.Externals.Depthmap import DepthAnythingV2
+from DepthFlow.Motion import Presets
+
 #VIDEO EFFECTS:
 def add_positional_noise(clip: mp.VideoClip, noise_level: int = 5, inertia: float = 0.9) -> mp.VideoClip:
     last_dx = 0
@@ -206,11 +215,100 @@ def generate_video(
     # Escribir archivo de video
     video.write_videofile(str(output_path))
 
+def generate_depth_video(
+    fps: int = 30,
+    transition_n_frames: int = 6,
+    images_path: Path = Path('tmp/images'),
+    audios_path: Path = Path('tmp/audios'),
+    transitions_path: Path = Path('tmp/transitions'),
+    output_path: Path = Path('output/video.mp4')
+) -> None:
+    _create_or_clear_transitions_folder(transitions_path)
+
+    images = sorted(images_path.iterdir(), key=lambda x: int(x.stem))
+
+    timeline = []
+    for n, image_path in enumerate(images[:-1]):
+        audio, duration = get_audio_and_duration(n, audios_path)
+        clip_duration = duration - transition_n_frames / fps / 2
+
+        # Generar video con efecto de profundidad
+        depth_video_path = generate_depth_effect(str(image_path), str(transitions_path / f"{n}_depth.mp4"), duration=clip_duration)
+        
+        # Crear clip de video con el efecto de profundidad
+        depth_clip = mp.VideoFileClip(depth_video_path)
+        
+        # Generar transición al siguiente clip
+        next_image_path = images[n+1]
+        next_audio, next_duration = get_audio_and_duration(n+1, audios_path)
+        next_clip_duration = next_duration - transition_n_frames / fps / 2
+        next_depth_video_path = generate_depth_effect(str(next_image_path), str(transitions_path / f"{n+1}_depth.mp4"), duration=next_clip_duration)
+        next_depth_clip = mp.VideoFileClip(next_depth_video_path)
+        
+        transition_clip_1, transition_clip_2 = generate_transition(depth_clip, next_depth_clip, transition_n_frames)
+        
+        full_video = mp.concatenate_videoclips([depth_clip, transition_clip_1, transition_clip_2]).set_audio(audio)
+        
+        timeline.append(full_video)
+
+    # Procesar la última imagen
+    last_audio, last_duration = get_audio_and_duration(len(images)-1, audios_path)
+    last_clip_duration = last_duration - transition_n_frames / fps / 2
+    last_depth_video_path = generate_depth_effect(str(images[-1]), str(transitions_path / f"{len(images)-1}_depth.mp4"), duration=last_clip_duration)
+    last_depth_clip = mp.VideoFileClip(last_depth_video_path)
+    last_depth_clip = last_depth_clip.set_audio(last_audio)
+    timeline.append(last_depth_clip)
+
+    # Concatenar clips y ajustar duración
+    video = mp.concatenate_videoclips(timeline)
+    video = adjust_video_duration(video)
+
+    # Escribir archivo de video
+    video.write_videofile(str(output_path))
+
+
+def generate_depth_effect(input_image_path, output_video_path, duration=5, fps=60):
+    scene = DepthScene(backend="headless")
+    
+    estimator = DepthAnythingV2()
+    scene.set_estimator(estimator)
+    
+    image = Image.open(input_image_path)
+    depth = estimator.estimate(image)
+    
+    width, height = image.size
+    
+    scene.input(image=image, depth=depth)
+    scene.aspect_ratio = None
+    
+    scene.add_animation(
+        Presets.Dolly(
+            intensity=1,
+            reverse=False,
+            cumulative=False,
+            smooth=False,
+            loop=False,
+            depth=0.5,
+        )
+    )
+    
+    output_path = scene.main(
+        width=width,
+        height=height,
+        ssaa=1.5,
+        fps=fps,
+        time=duration,
+        loop=0,
+        output=Path(output_video_path),
+        noturbo=(os.getenv("NOTURBO","0")=="1"),
+    )[0]
+    
+    return str(output_path)
 
 if __name__ == "__main__":
-    N = 11
-    ASSETS_FOLDER = Path('data/MITO_TV/SHORTS/MITOS_GRIEGOS/')
-    generate_video(
+    N = 1
+    ASSETS_FOLDER = Path('data/MITO_TV/SHORTS/MITOS_NORDICOS/')
+    generate_depth_video(
         images_path=ASSETS_FOLDER / f'{N}/images',
         audios_path=ASSETS_FOLDER / f'{N}/audios',
         output_path=ASSETS_FOLDER / f"{N}/{N}.mp4"
