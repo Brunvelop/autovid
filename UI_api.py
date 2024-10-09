@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -130,13 +131,12 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
         num_inference_steps=28
     )
 
-    # Add a unique query parameter to the image URL to avoid caching
-    unique_string = f"{short_category}_{short_num}_{index}_{image_prompt}"
-    cache_buster = hash(unique_string)
-    image_url = f"/{image_path.as_posix()}?cb={cache_buster}"
+    # Use a timestamp for the cache-buster
+    timestamp = int(time.time() * 1000)  # Use milliseconds for more uniqueness
+    image_url = f"/{image_path.as_posix()}?t={timestamp}"
 
-    # Return updated image HTML with the unique URL
-    return HTMLResponse(content=f'<img src="{image_url}" class="w-full">')
+    # Return updated image HTML with the unique URL, wrapped in a div with the correct ID
+    return HTMLResponse(content=f'<div id="image{index}"><img src="{image_url}" class="w-full" onload="this.style.opacity=1"></div>')
 
 @app.get("/text/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_text(request: Request, short_category: str, short_num: str):
