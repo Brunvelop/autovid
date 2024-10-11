@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from typing import List, Optional
 
-
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
@@ -71,6 +70,9 @@ class YouTubeScheduler:
         except HttpError as e:
             print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
             return None
+    
+    def check_quota_usage(self) -> dict:
+        pass
 
     def _resumable_upload(self, request):
         response = None
@@ -100,6 +102,7 @@ class YouTubeScheduler:
 
 if __name__ == "__main__":
     scheduler = YouTubeScheduler()
+    # c = scheduler.check_quota_usage()
     CATEGORY = 'MITOS_NORDICOS'
     VIDEO_N = 7
     VIDEO_PATH = Path(f'data/MITO_TV/SHORTS/{CATEGORY}/{VIDEO_N}')
