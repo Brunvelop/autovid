@@ -5,8 +5,10 @@ output
 music
 models/*
 data/*
+data - copia/*
 output_images
 cursor
 .vscode
 .ssh
 infra/ssh_config
+.tokens
