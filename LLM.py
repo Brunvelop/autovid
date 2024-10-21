@@ -1,6 +1,8 @@
 import os
-from typing import Dict, Any, Optional
 from dotenv import load_dotenv
+from typing import Dict, Any, Optional
+from abc import ABC, abstractmethod
+
 from anthropic import Anthropic
 from openai import OpenAI
 
@@ -8,21 +10,43 @@ from definitions import LLMModels, LLMCosts
 
 load_dotenv()
 
-class AnthropicHandler:
-    def __init__(self, model: LLMModels, llm_config: dict = {'max_tokens':1000}):
-        self.client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+class LLM(ABC):
+    def __new__(cls, model: LLMModels, llm_config: dict = None):
+        if cls is LLM:
+            if isinstance(model, LLMModels.Anthropic):
+                return super().__new__(AnthropicHandler)
+            if isinstance(model, LLMModels.OpenAI):
+                return super().__new__(OpenAIHandler)
+            else:
+                raise ValueError(f"Unsupported model: {model}")
+        return super().__new__(cls)
+
+    def __init__(self, model: LLMModels, llm_config: dict = None):
         self.model = model
         self.llm_config = llm_config
+
+    @abstractmethod
+    def generate_text(
+        self, 
+        human_prompt: str, 
+        system_prompt: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        pass # return {'text': text, 'usage': usage, 'cost': cost}
+
+class AnthropicHandler(LLM):
+    def __init__(self, model: LLMModels.Anthropic, llm_config: dict = {'max_tokens':1000}):
+        self.model = model
+        self.llm_config = llm_config
+        self.client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     def generate_text(self, prompt: str, system_prompt: Optional[str] = None) -> Optional[Dict[str, Any]]:
         try:
             message = self._create_message(prompt, system_prompt)
-            text = self._extract_text(message)
-            usage, cost = self._calculate_usage_and_cost(message)
             return {
-                'text': text,
-                'usage': usage,
-                'cost': cost
+                'text': message.content[0].text,
+                'usage': message.usage.input_tokens + message.usage.output_tokens,
+                'cost': self._calculate_cost(message)
             }
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -39,32 +63,26 @@ class AnthropicHandler:
             params["system"] = system_prompt
         
         return self.client.messages.create(**params)
-    
-    def _extract_text(self, message: Any) -> str:
-        return message.content[0].text
 
-    def _calculate_usage_and_cost(self, message: Any) -> tuple[int, float]:
-        usage = message.usage.input_tokens + message.usage.output_tokens
+    def _calculate_cost(self, message: Any) -> tuple[int, float]:
         model_costs = getattr(LLMCosts, self.model.name).value
         cost_input = message.usage.input_tokens * model_costs['input']
         cost_output = message.usage.output_tokens * model_costs['input']
-        return usage, cost_input + cost_output
+        return cost_input + cost_output
     
-class OpenAIHandler:
+class OpenAIHandler(LLM):
     def __init__(self, model: LLMModels, llm_config: dict = {'max_tokens': 1000}):
-        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         self.model = model
         self.llm_config = llm_config
+        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
     def generate_text(self, prompt: str, system_prompt: Optional[str] = None) -> Optional[Dict[str, Any]]:
         try:
             message = self._create_message(prompt, system_prompt)
-            text = self._extract_text(message)
-            usage, cost = self._calculate_usage_and_cost(message)
             return {
-                'text': text,
-                'usage': usage,
-                'cost': cost
+                'text': message.choices[0].message.content,
+                'usage': message.usage.prompt_tokens + message.usage.completion_tokens,
+                'cost': self._calculate_cost(message)
             }
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -81,23 +99,19 @@ class OpenAIHandler:
             messages=messages,
             max_tokens=self.llm_config.get('max_tokens', 1000)
         )
-    
-    def _extract_text(self, message: Any) -> str:
-        return message.choices[0].message.content
 
-    def _calculate_usage_and_cost(self, message: Any) -> tuple[int, float]:
-        usage = message.usage.prompt_tokens + message.usage.completion_tokens
+    def _calculate_cost(self, message: Any) -> tuple[int, float]:
         model_costs = getattr(LLMCosts, self.model.name).value
         input_cost = message.usage.prompt_tokens * model_costs['input']
         output_cost = message.usage.completion_tokens * model_costs['output']
-        return usage, input_cost + output_cost
+        return input_cost + output_cost
 
 if __name__ == "__main__":
     from definitions import LLMModels
 
     # Initialize both handlers
-    anthropic_handler = AnthropicHandler(model=LLMModels.CLAUDE_3_5_sonnet)
-    openai_handler = OpenAIHandler(model=LLMModels.GPT4o)
+    anthropic_handler = LLM(model=LLMModels.Anthropic.CLAUDE_3_5_sonnet)
+    openai_handler = LLM(model=LLMModels.OpenAI.GPT4o)
 
     # Test prompt and system prompt
     test_prompt = "What is the capital of France?"

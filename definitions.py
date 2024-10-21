@@ -61,13 +61,18 @@ class ImageGeneratorConfig(Enum):
         'guidance_scale': 0.0
     }
 
-class LLMModels(Enum):
-    GPT4o = 'gpt-4o'
-    GPT4oMini ='gpt-4o-mini'
-    LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
-    O1Mini = 'o1-mini'
-    O1Preview = 'o1-preview'
-    CLAUDE_3_5_sonnet = 'claude-3-5-sonnet-20240620'
+class LLMModels:
+    class OpenAI(Enum):
+        GPT4o = 'gpt-4o'
+        GPT4oMini = 'gpt-4o-mini'
+
+    class Anthropic(Enum):
+        CLAUDE_3_5_sonnet = 'claude-3-5-sonnet-20240620'
+
+    class Local(Enum):
+        LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
+        O1Mini = 'o1-mini'
+        O1Preview = 'o1-preview'
 
 class LLMCosts(Enum):
     #https://www.anthropic.com/pricing#anthropic-api
