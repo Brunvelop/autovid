@@ -19,6 +19,14 @@ class Writer():
         text = text.replace('"', "'")
         return text
     
+    def generate_hook(self, content: str) -> str:
+        text = self.llm.generate_text(
+            system_prompt=WriterPrompts.HOOK,
+            human_prompt= f"Crea un hook sobre: {content}"
+        )
+        text = text.replace('"', "'")
+        return text
+    
     def save_text(self, text: str, save_path: Path) -> None:
         save_path.parent.mkdir(parents=True, exist_ok=True)
         save_path.write_text(text, encoding='utf-8')
@@ -100,40 +108,15 @@ if __name__ == "__main__":
         llm=Claude35Sonnet(
             low_vram=False,
             llm_config={
-                'temperature': 0.5,
+                'temperature': 0.1,
             }
         )
     )
-    text = writer.generate_story(
-        content='El mito nordico sobre El Árbol del Mundo Yggdrasil y los Nueve Mundos: Conexión de todos los reinos de la existencia.',
-        words_number=120
+
+    with open('data/MITO_TV/SHORTS/MITOS_EGIPCIOS/1/text/text.txt', 'r', encoding='utf-8') as file:
+        content = file.read().strip()
+
+    hook = writer.generate_hook(
+        content=content,
     )
-    print("\n" + "=" * 50)
-    print("Texto original".center(50))
-    print("=" * 50)
-    print(text)
-    
-    evaluations = writer.evaluate_text(text)
-    print("\nEvaluaciones del texto original:")
-    print("-" * 30)
-    for aspect, value in evaluations.items():
-        print(f"{aspect.replace('_', ' ').title():<30}: {value}")
-    
-    improved_text, improvements = writer.improve_text(text, depth=5)
-    print("\n" + "=" * 50)
-    print("Texto mejorado".center(50))
-    print("=" * 50)
-    print(improved_text)
-    
-    print("\nResumen de las mejoras:")
-    print("-" * 30)
-    for aspect, summaries in improvements.items():
-        print(f"\n{aspect.replace('_', ' ').title()}:")
-        for i, summary in enumerate(summaries, 1):
-            print(f"  Iteración {i}: {summary}")
-    
-    improved_evaluations = writer.evaluate_text(improved_text)
-    print("\nEvaluaciones del texto mejorado:")
-    print("-" * 30)
-    for aspect, value in improved_evaluations.items():
-        print(f"{aspect.replace('_', ' ').title():<30}: {value}")
+    print(hook)

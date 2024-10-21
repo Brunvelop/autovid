@@ -67,6 +67,7 @@ class LLMModels(Enum):
     LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
     O1Mini = 'o1-mini'
     O1Preview = 'o1-preview'
+    CLAUDE_3_5_sonnet = 'claude-3-5-sonnet-20240620'
 
 class VideatorTasks(Enum):
     WRITE = auto()

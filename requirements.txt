@@ -1,33 +1,32 @@
+# HTTP requests and API interaction
 requests
+openai
+
+# Image and video processing
 Pillow
-langchain
 moviepy
-python-dotenv
+diffusers
+depthflow
+
+# Text-to-Speech
 edge-tts
 gTTS
-openai
-transformers
-accelerate
-safetensors
-diffusers
-langchain-openai
-langchain-anthropic
-opencv-python
 
-sentencepiece
-langchain-community
-xformer
-accelerate
-bitsandbytes
+# Environment and configuration
+python-dotenv
 
+# Web framework and templating
 fastapi
 uvicorn
 jinja2
+
+# Machine learning model deployment
 replicate
 
+# Infrastructure as Code
 pulumi>=3.0.0,<4.0.0
 pulumi-aws>=6.0.2,<7.0.0
 
-depthflow
+# Google API integration
 google-auth-oauthlib==0.4.6
 google-api-python-client==2.47.0
