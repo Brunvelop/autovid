@@ -1,12 +1,14 @@
 import json
-from typing import List, Dict, Any
-from pathlib import Path
-
 from tqdm import tqdm
+from pathlib import Path
+from typing import List, Dict, Any, TypedDict
 
-from prompts import StoryboarderPrompts, Styles
-from LLM import LLM
-from definitions import Scene
+from prompts import StoryboarderPrompts, Styles, OutputFormats
+from generators.LLM import LLM
+
+class Scene(TypedDict):
+    text: str
+    image: str
 
 class Storyboarder():
     def __init__(self, llm: LLM) -> None:
@@ -21,12 +23,14 @@ class Storyboarder():
 
         return storyboard
     
-    def generate_storyboard(self, text: str, style: Styles = Styles.Flux.DARK_ATMOSPHERE) -> List[Scene]:
+    def generate_storyboard(self, text: str, style: Styles = Styles.Flux.MITO_TV) -> List[Scene]:
         output = self.llm.generate_text(
             system_prompt=StoryboarderPrompts.System.GENERATE_STORYBOARD + style,
-            human_prompt="Create a storyboard for this text: {text}".format(text=text),
-            output_format=StoryboarderPrompts.OutputFormats.GENERATE_STORYBOARD_OUTPUT_FORMAT
-        )
+            prompt = "\n".join([
+                f"Create a storyboard for this text: {text}",
+                OutputFormats.GENERATE_STORYBOARD_OUTPUT_FORMAT,
+            ])
+        )['text']
         
         storyboard_parsed = json.loads(output)
         storyboard = [Scene(text=scene['text'], image=scene['image']) for scene in storyboard_parsed]
@@ -35,9 +39,11 @@ class Storyboarder():
     def generate_tumbnail(self, text: str) -> str:
         output = self.llm.generate_text(
             system_prompt=StoryboarderPrompts.System.GENERATE_TUMBNAIL,
-            human_prompt="Generate the description for text: '{text}'".format(text=text),
-            output_format="Return only the description in english without any extra text."
-        )
+            prompt = "\n".join([
+                f"Generate the description for text: '{text}'",
+                OutputFormats.GENERATE_STORYBOARD_OUTPUT_FORMAT,
+            ])
+        )['text']
         return output
     
     @classmethod
@@ -68,42 +74,19 @@ class Storyboarder():
             yield '\n'.join(lines[i:i+chunk_size])
 
 if __name__ == "__main__":
-    from LLM import GPT4o, Claude35Sonnet
-    from data.MITO_TV.SHORTS.mitos import mitos_nordicos
-
-    def extract_myth_text(mitos_griegos, N):
-        for line in mitos_griegos.split('\n'):
-            if line.startswith(f"{N}. "):
-                return line.split(': ')[0].split('. ', 1)[1]
-        return None
+    from generators.LLM import Models
     
-    writer = Storyboarder(
-        llm=Claude35Sonnet(
-            low_vram=False,
-            llm_config={'temperature': 0.2}
-        )
+    storyboarder = Storyboarder(LLM(model=Models.Anthropic.CLAUDE_3_5_sonnet))
+    
+    # Generate the storyboard
+    storyboard = storyboarder.generate_storyboard_from_long_text(
+        text='Tres niños corrian en la oscuridad, de repente un monstruo verde aparecio. Corrieron sin mirar atrás.', 
+        style=Styles.Flux.MITO_TV
     )
     
+    # Generate thumbnail
+    thumbnail = storyboarder.generate_tumbnail('Los tres niños')
 
-    for N in tqdm(range(1, 101), desc="Processing myths"):
-        TEXT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_NORDICOS/{N}/text/text.txt')
-        TEXT = TEXT_PATH.read_text(encoding='utf-8')
-        
-        # Extract the myth title
-        myth_title = extract_myth_text(mitos_nordicos, N)
-        
-        # Generate the storyboard
-        storyboard = writer.generate_storyboard_from_long_text(
-            text=TEXT, 
-            style=StoryboarderPrompts.Styles.Flux.MITO_TV
-        )
-        
-        # Generate thumbnail
-        thumbnail = writer.generate_tumbnail(myth_title)
-        
-        # Add the title scene at the beginning
-        title_scene = Scene(text=myth_title, image=thumbnail)
-        storyboard.insert(0, title_scene)
-        
-        # Save the modified storyboard
-        writer.save_storyboard(storyboard, Path(f'data/MITO_TV/SHORTS/MITOS_NORDICOS/{N}/text/storyboard.json'))
+    print(storyboard)
+    print('------------')
+    print(thumbnail)

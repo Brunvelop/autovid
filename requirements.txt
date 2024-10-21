@@ -1,12 +1,14 @@
 # HTTP requests and API interaction
 requests
 openai
+Anthropic
 
 # Image and video processing
 Pillow
 moviepy
 diffusers
 depthflow
+transformers
 
 # Text-to-Speech
 edge-tts
@@ -30,3 +32,6 @@ pulumi-aws>=6.0.2,<7.0.0
 # Google API integration
 google-auth-oauthlib==0.4.6
 google-api-python-client==2.47.0
+
+#torch
+torch==2.5.0 --index-url https://download.pytorch.org/whl/cu121

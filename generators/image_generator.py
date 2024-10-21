@@ -1,5 +1,9 @@
 import os
+import io
+import base64
 import random
+import requests
+from enum import Enum
 from dotenv import load_dotenv
 from typing import Union, List
 from abc import ABC, abstractmethod
@@ -8,12 +12,26 @@ import torch
 import replicate
 from tqdm import tqdm
 from pathlib import Path
-from gradio_client import Client
 from PIL import Image, ImageDraw, ImageFont
 from diffusers import AutoPipelineForText2Image, FluxPipeline
 
-from definitions import ImageGenerators, ImageGeneratorConfig
+class ImageGenerators(Enum):
+    FAKE = 'FAKE'
+    SDXL_TURBO = 'stabilityai/sdxl-turbo'
+    SD3 = 'stabilityai/stable-diffusion-3-medium-diffusers'
+    FLUX1_SCHNELL = 'black-forest-labs/FLUX.1-schnell'
 
+class ImageGeneratorConfig(Enum):
+    FLUX1_SCHNELL = {
+        'height': 1280,
+        'width': 768,
+        'num_inference_steps': 1,
+        'guidance_scale': 0.0
+    }
+    SDXL_TURBO = {
+        'num_inference_steps': 5,
+        'guidance_scale': 0.0
+    }
 
 class ImageGenerator(ABC):
     def __init__(
@@ -117,53 +135,6 @@ class SDXLTURBO(ImageGenerator):
             pipe.enable_attention_slicing()
         return pipe
 
-class HuggingFaceGradioFluxDev(ImageGenerator):
-    def __init__(self, verbose: bool = True):
-        load_dotenv()
-        self.client = Client(
-            src="brunvelop/FLUX.1-dev",
-            hf_token=os.getenv('HUGGINGFACE_API_KEY'),
-        )
-        self.verbose = verbose
-
-    def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
-        generation_config = ImageGeneratorConfig.FLUX1_SCHNELL.value.copy()
-        generation_config.update(**kwargs)
-
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        if isinstance(prompts, str):
-            prompts = [prompts]
-        
-        for i, prompt in enumerate(tqdm(prompts, desc=f"Generating {len(prompts)} images")):
-            result = self._query(prompt, **generation_config)
-            image_path_gradio_tmp = result[0]
-            # Copy the generated image to the output directory
-            image_path = output_dir / f"{i}.png"
-            Image.open(image_path_gradio_tmp).save(image_path)
-
-            if self.verbose:
-                print(f"Image saved: {image_path}")
-        
-        if self.verbose:
-            print(f"All images generated and saved in: {output_dir}")
-
-    def _query(self, prompt: str, **kwargs):
-        result = self.client.predict(
-            prompt=prompt,
-            seed=kwargs.get('seed', 0),
-            randomize_seed=kwargs.get('randomize_seed', True),
-            width=kwargs.get('width', 1024),
-            height=kwargs.get('height', 1024),
-            guidance_scale=kwargs.get('guidance_scale', 3.5),
-            num_inference_steps=kwargs.get('num_inference_steps', 28),
-            api_name="/infer"
-        )
-        return result
-
-    def _load_pipeline(self) -> None:
-        pass
-
 class ReplicateFluxDev(ImageGenerator):
     def __init__(self, verbose: bool = True):
         load_dotenv()
@@ -177,11 +148,9 @@ class ReplicateFluxDev(ImageGenerator):
         generation_config.update(**kwargs)
 
         if isinstance(output_dir, Path) and output_dir.suffix == ".png":
-            # Si output_dir es un archivo .png, usarlo como nombre base
             output_file = output_dir
             output_dir = output_dir.parent
         else:
-            # Si output_dir es un directorio, generar nombres de archivo automáticamente
             output_file = None
         
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -191,20 +160,15 @@ class ReplicateFluxDev(ImageGenerator):
         
         for i, prompt in enumerate(tqdm(prompts, desc=f"Generating {len(prompts)} images")):
             result = self._query(prompt, **generation_config)
-            
-            # Download and save the image
-            image_url = result[0]
+            image_base64 = result[0].url
             if output_file:
-                # Usar el nombre de archivo especificado
                 if len(prompts) > 1:
-                    # Agregar un sufijo _001, _002, etc. si hay varios prompts
                     image_path = output_dir / f"{output_file.stem}_{i+1:03d}{output_file.suffix}"
                 else:
                     image_path = output_file
             else:
-                # Generar nombres de archivo automáticamente
                 image_path = output_dir / f"{i}.png"
-            self._download_image(image_url, image_path)
+            self._save_image(image_base64, image_path)
 
             if self.verbose:
                 print(f"Image saved: {image_path}")
@@ -231,16 +195,72 @@ class ReplicateFluxDev(ImageGenerator):
         )
         return output
 
-    def _download_image(self, url: str, save_path: Path):
-        import requests
-        response = requests.get(url)
-        response.raise_for_status()
+    def _save_image(self, image_base64: str, save_path: Path):
+        if image_base64.startswith('data:image'):
+            image_base64 = image_base64.split(',', 1)[1]
+        
+        image_data = base64.b64decode(image_base64)
+        
         with open(save_path, 'wb') as f:
-            f.write(response.content)
+            f.write(image_data)
 
     def _load_pipeline(self) -> None:
         pass
 
+class InfraFluxDev(ImageGenerator):
+    def __init__(self, verbose: bool = True):
+        super().__init__(verbose=verbose)
+        self.url = "http://ec2-107-23-131-11.compute-1.amazonaws.com/predictions"
+        self.headers = {
+            "Content-Type": "application/json"
+        }
+
+    def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        if isinstance(prompts, str):
+            prompts = [prompts]
+        
+        for i, prompt in enumerate(tqdm(prompts, desc=f"Generating {len(prompts)} images")):
+            response = self._query(prompt, **kwargs)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                for j, image_data in enumerate(response_data['output']):
+                    image = self._process_image_data(image_data)
+                    image_path = output_dir / f"{i}_{j}.png"
+                    image.save(image_path)
+                    if self.verbose:
+                        print(f"Image saved: {image_path}")
+            else:
+                print(f"Error in request for prompt {i}: {response.status_code}")
+                print(response.text)
+        
+        if self.verbose:
+            print(f"All images generated and saved in: {output_dir}")
+
+    def _query(self, prompt: str, **kwargs):
+        data = {
+            "input": {
+                "prompt": prompt,
+                "aspect_ratio": kwargs.get('aspect_ratio', "9:16"),
+                "num_outputs": kwargs.get('num_outputs', 1),
+                "seed": kwargs.get('seed', None),
+                "output_format": "png",
+                "output_quality": 80,
+                "disable_safety_checker": False
+            }
+        }
+        return requests.post(self.url, json=data, headers=self.headers)
+
+    def _process_image_data(self, image_data: str) -> Image.Image:
+        if image_data.startswith('data:'):
+            image_data = image_data.split(',', 1)[1]
+        image_bytes = base64.b64decode(image_data)
+        return Image.open(io.BytesIO(image_bytes))
+
+    def _load_pipeline(self) -> None:
+        pass
 
 class FakeImageGenerator(ImageGenerator):
     def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:

@@ -1,8 +1,8 @@
 from typing import Dict, Tuple
 from pathlib import Path
 
-from prompts import WriterPrompts
-from LLM import LLM
+from prompts import WriterPrompts, OutputFormats
+from generators.LLM import LLM
 
 class Writer():
     def __init__(self, llm: LLM) -> None:
@@ -11,26 +11,29 @@ class Writer():
     def generate_story(self, content: str, words_number: int = 100) -> str:
         text = self.llm.generate_text(
             system_prompt=WriterPrompts.System.REGLAS_STORYTELLING,
-            human_prompt=f"Utiliza el storytelling para escribir {content}",
-            output_format= 
-                WriterPrompts.OutputFormats.NUMERO_PALABRAS.format(words_number=words_number) +
-                WriterPrompts.OutputFormats.SALTO_DE_LINEA_SIMPLE
-        )
-        text = text.replace('"', "'")
-        return text
+            prompt = "\n".join([
+                f"Utiliza el storytelling para escribir {content}",
+                OutputFormats.SALTO_DE_LINEA_SIMPLE,
+                OutputFormats.NUMERO_PALABRAS.format(words_number=words_number),
+            ])
+        )['text']
+        return self._clean_text(text)
     
     def generate_hook(self, content: str) -> str:
         text = self.llm.generate_text(
-            system_prompt=WriterPrompts.HOOK,
-            human_prompt= f"Crea un hook sobre: {content}"
-        )
-        text = text.replace('"', "'")
-        return text
+            system_prompt=WriterPrompts.System.HOOK,
+            prompt= f"Crea un hook sobre: {content}"
+        )['text']
+        return self._clean_text(text)
     
     def save_text(self, text: str, save_path: Path) -> None:
         save_path.parent.mkdir(parents=True, exist_ok=True)
         save_path.write_text(text, encoding='utf-8')
 
+    def _clean_text(self, text):
+        text = text.replace('"', "'")
+        return text
+    
     def evaluate_text(self, text: str) -> Dict[str, any]:
         evaluations = {
             "historical_accuracy": self._evaluate_aspect(text, WriterPrompts.Evaluation.HISTORICAL_ACCURACY, lambda x: int(x.strip())),
@@ -43,9 +46,9 @@ class Writer():
     def _evaluate_aspect(self, text: str, prompt: str, parse_function: callable) -> any:
         result = self.llm.generate_text(
             system_prompt=prompt,
-            human_prompt=f"Evalúa el siguiente texto:\n\n{text}",
+            prompt=f"Evalúa el siguiente texto:\n\n{text}",
             output_format="Responde únicamente con el formato especificado en las instrucciones."
-        )
+        )['text']
         return parse_function(result)
 
     def improve_text(self, text: str, depth: int = 3) -> Tuple[str, Dict[str, list]]:
@@ -84,8 +87,8 @@ class Writer():
     def _improve_aspect(self, text: str, prompt: str) -> Tuple[str, str]:
         result = self.llm.generate_text(
             system_prompt=prompt,
-            human_prompt=f"Mejora el siguiente texto:\n\n{text}"
-        )
+            prompt=f"Mejora el siguiente texto:\n\n{text}"
+        )['text']
         
         improved_text = self._extract_content(result, "improved_text")
         summary = self._extract_content(result, "summary")
@@ -101,17 +104,10 @@ class Writer():
         return text[start:end].strip()
 
 if __name__ == "__main__":
-    from LLM import GPT4o, Claude35Sonnet
+    from generators.LLM import Models
     
     N = 3
-    writer = Writer(
-        llm=Claude35Sonnet(
-            low_vram=False,
-            llm_config={
-                'temperature': 0.1,
-            }
-        )
-    )
+    writer = Writer(LLM(model=Models.OpenAI.GPT4o))
 
     with open('data/MITO_TV/SHORTS/MITOS_EGIPCIOS/1/text/text.txt', 'r', encoding='utf-8') as file:
         content = file.read().strip()

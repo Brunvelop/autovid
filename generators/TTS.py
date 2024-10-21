@@ -1,6 +1,7 @@
 import os
 import asyncio
 import requests
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
@@ -10,7 +11,48 @@ import edge_tts
 from gtts import gTTS
 from openai import OpenAI
 
-from definitions import Voices, TTSModels
+load_dotenv()
+
+class TTSModels(Enum):
+    GOOGLE = 'google'
+    AZURE = 'azure'
+    OPENAI_TTS_1 = 'tts-1'
+    OPENAI_TTS_1_HD = 'tts-1-hd'
+    ELEVENLABS_MULTILINGUAL_V2 = "eleven_multilingual_v2"
+
+class Voices:
+    class Google(Enum):
+        MEXICO = {'lang': 'es', 'tld': 'com.mx'}
+        SPAIN = {'lang': 'es', 'tld': 'es'}
+        USA = {'lang': 'es', 'tld': 'us'}
+
+    class Azure(Enum):
+        ARGENTINA = 'es-AR-ElenaNeural'
+        BOLIVIA = 'es-BO-MarceloNeural'
+        CHILE = 'es-CL-LorenzoNeural'
+        COSTA_RICA = 'es-CR-JuanNeural'
+        DOMINICAN_REPUBLIC = 'es-DO-RamonaNeural'
+        GUATEMALA = 'es-GT-AndresNeural'
+        HONDURAS = 'es-HN-KarlaNeural'
+        PANAMA = 'es-PA-RobertoNeural'
+        PUERTO_RICO = 'es-PR-KarinaNeural'
+
+    class OpenAI(Enum):
+        ALLOY = 'alloy'
+        ECHO = 'echo'
+        FABLE = 'fable'
+        ONYX = 'onyx'
+        NOVA = 'nova'
+        SHIMMER = 'shimmer'
+    
+    class ElevenLabs(Enum):
+        RACHEL = "Rachel"
+        DOMI = "Domi"
+        BELLA = "Bella"
+        HERNAN_CORTES = "W5JElH3dK1UYYAiHH7uh"
+        SARA_MARTIN_2 = "Ir1QNHvhaJXbAGhT50w3"
+        Martin_Osborne_6 = "LlZr3QuzbW4WrPjgATHG"
+        DAN_DAN = "9F4C8ztpNUmXkdDDbz3J"
 
 class TTS(ABC):
     @staticmethod

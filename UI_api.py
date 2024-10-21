@@ -7,13 +7,12 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
 from UI_utils import ProductionStatusManager, VideoStatus
-from image_generator import ReplicateFluxDev
+from generators.image_generator import ReplicateFluxDev
 from storyboarder import Storyboarder
 from writer import Writer
-from LLM import Claude35Sonnet, GPT4o
+from generators.LLM import LLM, Models
 
-from definitions import Voices, TTSModels
-from tts import ElevenLabsTTS
+from generators.TTS import ElevenLabsTTS, Voices, TTSModels
 from video_editor import VideoEditor
 
 app = FastAPI()
@@ -24,8 +23,7 @@ BASE_SHORTS_PATH = Path("./data/MITO_TV/SHORTS")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    llm = GPT4o(low_vram=False, llm_config={'temperature': 0.5})
-    writer = Writer(llm=llm)
+    writer = Writer(llm=LLM(Models.OpenAI.GPT4o, llm_config={'temperature': 0.5}))
     global_status = ProductionStatusManager.get_global_status(shorts_path=BASE_SHORTS_PATH, writer=writer)
 
     return templates.TemplateResponse("index.html", {
@@ -55,8 +53,7 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
         }
         scenes.append(scene)
 
-    llm = Claude35Sonnet(low_vram=False, llm_config={'temperature': 0.5})
-    writer = Writer(llm=llm)
+    writer = Writer(LLM(Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature': 0.5}))
     response = templates.TemplateResponse("storyboard.html", {
             "request": request,
             "short_category": short_category,
@@ -185,8 +182,7 @@ async def generate_text(request: Request, short_category: str, short_num: str):
     text_path = BASE_SHORTS_PATH / short_category / short_num / "text/text.txt"
     
     try:
-        llm = Claude35Sonnet(low_vram=False, llm_config={'temperature': 0.5})
-        writer = Writer(llm=llm)
+        writer = Writer(LLM(Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature': 0.5}))
         generated_text = writer.generate_story(content=content, words_number=words_number)
         writer.save_text(text=generated_text, save_path=text_path)
         return HTMLResponse(content=generated_text)

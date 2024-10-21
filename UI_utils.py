@@ -4,7 +4,6 @@ from typing import List, Dict, Optional
 from pathlib import Path
 from dataclasses import dataclass, field
 from writer import Writer
-from LLM import Claude35Sonnet
 
 @dataclass
 class VideoStatus:
@@ -127,21 +126,4 @@ class ProductionStatusManager:
         return status
 
 if __name__ == "__main__":
-    video_status = VideoStatus.get(
-        Path('/home/user/Desktop/autovid/data/MITO_TV/SHORTS/MITOS_NORDICOS/2/status.json')
-    )
-    print(video_status)
-
-    # Create a writer instance
-    writer = Writer(
-        llm=Claude35Sonnet(
-            low_vram=False,
-            llm_config={
-                'temperature': 0.5,
-            }
-        )
-    )
-
-    # Get global status (including text evaluations)
-    global_status = ProductionStatusManager.get_global_status(writer=writer)
-    print(global_status)
+    pass

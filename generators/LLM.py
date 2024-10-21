@@ -1,41 +1,66 @@
 import os
+from enum import Enum
 from dotenv import load_dotenv
-from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional
 
 from anthropic import Anthropic
 from openai import OpenAI
 
-from definitions import LLMModels, LLMCosts
-
 load_dotenv()
 
+class Models:
+    #https://openai.com/api/pricing/
+    class OpenAI(Enum):
+        GPT4o = {
+            'name': 'gpt-4o',
+            'input_cost': 2.5/10**6,  # $3 / MTok
+            'output_cost': 10/10**6  # $15 / MTok
+        }
+        GPT4oMini = {
+            'name': 'gpt-4o-mini',
+            'input_cost': 0.15/10**6,  # $0.15 / MTok
+            'output_cost': 0.6/10**6  # $0.6 / MTok
+        }
+
+    #https://www.anthropic.com/pricing#anthropic-api
+    class Anthropic(Enum):
+        CLAUDE_3_5_sonnet = {
+            'name': 'claude-3-5-sonnet-20240620',
+            'input_cost': 3/10**6,  # $3 / MTok
+            'output_cost': 15/10**6  # $15 / MTok
+        }
+
+    class Local(Enum):
+        LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
+        O1Mini = 'o1-mini'
+        O1Preview = 'o1-preview'
 
 class LLM(ABC):
-    def __new__(cls, model: LLMModels, llm_config: dict = None):
+    def __new__(cls, model: Models, llm_config: dict = None):
         if cls is LLM:
-            if isinstance(model, LLMModels.Anthropic):
+            if isinstance(model, Models.Anthropic):
                 return super().__new__(AnthropicHandler)
-            if isinstance(model, LLMModels.OpenAI):
+            if isinstance(model, Models.OpenAI):
                 return super().__new__(OpenAIHandler)
             else:
                 raise ValueError(f"Unsupported model: {model}")
         return super().__new__(cls)
 
-    def __init__(self, model: LLMModels, llm_config: dict = None):
+    def __init__(self, model: Models, llm_config: dict = None):
         self.model = model
         self.llm_config = llm_config
 
     @abstractmethod
     def generate_text(
         self, 
-        human_prompt: str, 
+        prompt: str, 
         system_prompt: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         pass # return {'text': text, 'usage': usage, 'cost': cost}
 
 class AnthropicHandler(LLM):
-    def __init__(self, model: LLMModels.Anthropic, llm_config: dict = {'max_tokens':1000}):
+    def __init__(self, model: Models.Anthropic, llm_config: dict = {'max_tokens':1000}):
         self.model = model
         self.llm_config = llm_config
         self.client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -54,7 +79,7 @@ class AnthropicHandler(LLM):
 
     def _create_message(self, prompt: str, system_prompt: Optional[str] = None) -> Any:
         params = {
-            "model": self.model.value,
+            "model": self.model.value['name'],
             "max_tokens": self.llm_config.get('max_tokens', 1000),
             "messages": [{"role": "user", "content": prompt}]
         }
@@ -65,13 +90,13 @@ class AnthropicHandler(LLM):
         return self.client.messages.create(**params)
 
     def _calculate_cost(self, message: Any) -> tuple[int, float]:
-        model_costs = getattr(LLMCosts, self.model.name).value
-        cost_input = message.usage.input_tokens * model_costs['input']
-        cost_output = message.usage.output_tokens * model_costs['input']
+        model_costs = getattr(Models.Anthropic, self.model.name).value
+        cost_input = message.usage.input_tokens * model_costs['input_cost']
+        cost_output = message.usage.output_tokens * model_costs['output_cost']
         return cost_input + cost_output
     
 class OpenAIHandler(LLM):
-    def __init__(self, model: LLMModels, llm_config: dict = {'max_tokens': 1000}):
+    def __init__(self, model: Models, llm_config: dict = {'max_tokens': 1000}):
         self.model = model
         self.llm_config = llm_config
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -95,23 +120,22 @@ class OpenAIHandler(LLM):
         messages.append({"role": "user", "content": prompt})
 
         return self.client.chat.completions.create(
-            model=self.model.value,
+            model=self.model.value['name'],
             messages=messages,
             max_tokens=self.llm_config.get('max_tokens', 1000)
         )
 
     def _calculate_cost(self, message: Any) -> tuple[int, float]:
-        model_costs = getattr(LLMCosts, self.model.name).value
-        input_cost = message.usage.prompt_tokens * model_costs['input']
-        output_cost = message.usage.completion_tokens * model_costs['output']
+        model_costs = getattr(Models.OpenAI, self.model.name).value
+        input_cost = message.usage.prompt_tokens * model_costs['input_cost']
+        output_cost = message.usage.completion_tokens * model_costs['output_cost']
         return input_cost + output_cost
 
 if __name__ == "__main__":
-    from definitions import LLMModels
 
     # Initialize both handlers
-    anthropic_handler = LLM(model=LLMModels.Anthropic.CLAUDE_3_5_sonnet)
-    openai_handler = LLM(model=LLMModels.OpenAI.GPT4o)
+    anthropic_handler = LLM(model=Models.Anthropic.CLAUDE_3_5_sonnet)
+    openai_handler = LLM(model=Models.OpenAI.GPT4o)
 
     # Test prompt and system prompt
     test_prompt = "What is the capital of France?"
