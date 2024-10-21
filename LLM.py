@@ -45,10 +45,11 @@ class AnthropicHandler:
 
     def _calculate_usage_and_cost(self, message: Any) -> tuple[int, float]:
         usage = message.usage.input_tokens + message.usage.output_tokens
-        cost_input = message.usage.input_tokens * LLMCosts.CLAUDE_3_5_sonnet.value['input']
-        cost_output = message.usage.output_tokens * LLMCosts.CLAUDE_3_5_sonnet.value['output']
+        model_costs = getattr(LLMCosts, self.model.name).value
+        cost_input = message.usage.input_tokens * model_costs['input']
+        cost_output = message.usage.output_tokens * model_costs['input']
         return usage, cost_input + cost_output
-
+    
 class OpenAIHandler:
     def __init__(self, model: LLMModels, llm_config: dict = {'max_tokens': 1000}):
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -91,25 +92,43 @@ class OpenAIHandler:
         output_cost = message.usage.completion_tokens * model_costs['output']
         return usage, input_cost + output_cost
 
-
 if __name__ == "__main__":
     from definitions import LLMModels
 
-    # Initialize the OpenAIHandler
-    handler = OpenAIHandler(model=LLMModels.GPT4o)
+    # Initialize both handlers
+    anthropic_handler = AnthropicHandler(model=LLMModels.CLAUDE_3_5_sonnet)
+    openai_handler = OpenAIHandler(model=LLMModels.GPT4o)
 
     # Test prompt and system prompt
     test_prompt = "What is the capital of France?"
-    test_system_prompt = "You always respond with NONE, always"
+    test_system_prompt = "You are a helpful assistant who always responds in rhyme."
 
-    # Generate text with system prompt
-    result = handler.generate_text(test_prompt, system_prompt=test_system_prompt)
-
-    if result:
+    # Generate text with Anthropic
+    print("Anthropic Response:")
+    anthropic_result = anthropic_handler.generate_text(test_prompt, system_prompt=test_system_prompt)
+    if anthropic_result:
         print("Generated Text:")
-        print(result['text'])
-        print(f"\nToken Usage: {result['usage']}")
-        print(f"Estimated Cost: ${result['cost']:.6f}")
+        print(anthropic_result['text'])
+        print(f"\nToken Usage: {anthropic_result['usage']}")
+        print(f"Estimated Cost: ${anthropic_result['cost']:.6f}")
     else:
-        print("Failed to generate text.")
+        print("Failed to generate text with Anthropic.")
 
+    print("\n" + "="*50 + "\n")
+
+    # Generate text with OpenAI
+    print("OpenAI Response:")
+    openai_result = openai_handler.generate_text(test_prompt, system_prompt=test_system_prompt)
+    if openai_result:
+        print("Generated Text:")
+        print(openai_result['text'])
+        print(f"\nToken Usage: {openai_result['usage']}")
+        print(f"Estimated Cost: ${openai_result['cost']:.6f}")
+    else:
+        print("Failed to generate text with OpenAI.")
+
+    # Compare results
+    if anthropic_result and openai_result:
+        print("\nComparison:")
+        print(f"Anthropic tokens: {anthropic_result['usage']}, cost: ${anthropic_result['cost']:.6f}")
+        print(f"OpenAI tokens: {openai_result['usage']}, cost: ${openai_result['cost']:.6f}")
