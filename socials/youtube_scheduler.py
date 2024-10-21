@@ -10,6 +10,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 
@@ -21,7 +22,7 @@ class YouTubeScheduler:
         self.youtube = self._authenticate()
 
     def _authenticate(self) -> build:
-        TOKENS_DIR = Path('./.tokens')
+        TOKENS_DIR = Path('.tokens')
         YOUTUBE_TOKEN_PATH = TOKENS_DIR / 'youtube_token.json'
         creds = None
         
@@ -30,8 +31,14 @@ class YouTubeScheduler:
             creds = Credentials.from_authorized_user_file(YOUTUBE_TOKEN_PATH, self.SCOPES)
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
+                try:
+                    creds.refresh(Request())
+                except RefreshError:
+                    # If refresh fails, delete the token file and start fresh
+                    YOUTUBE_TOKEN_PATH.unlink(missing_ok=True)
+                    creds = None
+            
+            if not creds:
                 credentials_json = json.loads(os.getenv('YOUTUBE_CLIENT_SECRET'))
                 flow = InstalledAppFlow.from_client_config(credentials_json, self.SCOPES)
                 creds = flow.run_local_server(port=0)
@@ -40,10 +47,10 @@ class YouTubeScheduler:
         return build('youtube', 'v3', credentials=creds)
 
 
-    def schedule_video(self, video_path: Path, title: str, description: str, 
-                       tags: List[str], category: str = '22', 
-                       privacy_status: str = 'private', 
-                       publish_time: Optional[datetime] = None) -> str:       
+    def schedule_video(self, video_path: Path, title: str, description: str,
+                       tags: List[str], category: str = '22',
+                       privacy_status: str = 'private',
+                       publish_time: Optional[datetime] = None) -> str:
         body = {
             'snippet': {
                 'title': title,
@@ -108,7 +115,7 @@ if __name__ == "__main__":
     scheduler = YouTubeScheduler()
 
     CATEGORY = 'MITOS_EGIPCIOS'
-    VIDEO_N = 32
+    VIDEO_N = 47
     VIDEO_PATH = Path(f'data/MITO_TV/SHORTS/{CATEGORY}/{VIDEO_N}')
 
     video_id = scheduler.schedule_video(
@@ -117,7 +124,7 @@ if __name__ == "__main__":
         description=open(VIDEO_PATH / 'text/text.txt', 'r', encoding='utf-8').read(),
         tags=[],
         privacy_status='private',
-        publish_time = datetime(2024, 10, 28, 15, 0, 0, tzinfo=ZoneInfo("Europe/Madrid"))
+        publish_time = datetime(2024, 11, 1, 15, 0, 0, tzinfo=ZoneInfo("Europe/Madrid"))
     )
     
     if video_id:
