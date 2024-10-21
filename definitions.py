@@ -69,6 +69,13 @@ class LLMModels(Enum):
     O1Preview = 'o1-preview'
     CLAUDE_3_5_sonnet = 'claude-3-5-sonnet-20240620'
 
+class LLMCosts(Enum):
+    #https://www.anthropic.com/pricing#anthropic-api
+    CLAUDE_3_5_sonnet = {
+        'input': 3/10**6,  # $3 / MTok
+        'output': 15/10**6  # $15 / MTok
+    }
+
 class VideatorTasks(Enum):
     WRITE = auto()
     AUDIO = auto()
