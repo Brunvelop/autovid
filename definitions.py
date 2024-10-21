@@ -75,6 +75,11 @@ class LLMCosts(Enum):
         'input': 3/10**6,  # $3 / MTok
         'output': 15/10**6  # $15 / MTok
     }
+    #https://openai.com/api/pricing/
+    GPT4o = {
+        'input': 2.5/10**6,  # $2.50 / MTok
+        'output': 10/10**6,  # $10.00 / MTok
+    }
 
 class VideatorTasks(Enum):
     WRITE = auto()
