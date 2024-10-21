@@ -101,19 +101,23 @@ class YouTubeScheduler:
 
 
 if __name__ == "__main__":
+    class Categories:
+        nordicos = 'MITOS_NORDICOS'
+        egipcios = 'MITOS_EGIPCIOS'
+
     scheduler = YouTubeScheduler()
-    # c = scheduler.check_quota_usage()
-    CATEGORY = 'MITOS_NORDICOS'
-    VIDEO_N = 7
+
+    CATEGORY = 'MITOS_EGIPCIOS'
+    VIDEO_N = 32
     VIDEO_PATH = Path(f'data/MITO_TV/SHORTS/{CATEGORY}/{VIDEO_N}')
 
     video_id = scheduler.schedule_video(
         video_path=VIDEO_PATH / f'{VIDEO_N}.mp4',
-        title=json.load(open(VIDEO_PATH / 'text/storyboard.json'))[0].get('text', ''),
+        title=json.load(open(VIDEO_PATH / 'text/storyboard.json', 'r', encoding='utf-8'))[0].get('text', ''),
         description=open(VIDEO_PATH / 'text/text.txt', 'r', encoding='utf-8').read(),
         tags=[],
         privacy_status='private',
-        publish_time = datetime(2024, 10, 12, 15, 0, 0, tzinfo=ZoneInfo("Europe/Madrid"))
+        publish_time = datetime(2024, 10, 28, 15, 0, 0, tzinfo=ZoneInfo("Europe/Madrid"))
     )
     
     if video_id:
