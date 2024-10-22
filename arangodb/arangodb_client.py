@@ -1,33 +1,34 @@
 from arango import ArangoClient
 
 def connect_to_arangodb():
-    # Conectarse al cliente ArangoDB
     client = ArangoClient(hosts='http://localhost:8529')
-
-    # Iniciar sesión como root
     db = client.db('_system', username='root', password='password123')
-
-    # Crear una base de datos si no existe
     if not db.has_database('mydb'):
         db.create_database('mydb')
-
-    # Conectar a la base de datos creada
     mydb = client.db('mydb', username='root', password='password123')
-
     return mydb
 
-def create_collection(db, collection_name):
-    # Crear una colección
+def create_collection(db, collection_name, edge=False):
     if not db.has_collection(collection_name):
-        collection = db.create_collection(collection_name)
+        if edge:
+            collection = db.create_collection(collection_name, edge=True)
+        else:
+            collection = db.create_collection(collection_name)
     else:
         collection = db.collection(collection_name)
-    
     return collection
 
 def insert_document(collection, document):
-    # Insertar un documento
     result = collection.insert(document)
+    return result
+
+def create_relationship(db, edge_collection_name, from_id, to_id):
+    edge_collection = create_collection(db, edge_collection_name, edge=True)
+    edge_document = {
+        '_from': from_id,
+        '_to': to_id
+    }
+    result = edge_collection.insert(edge_document)
     return result
 
 if __name__ == "__main__":
