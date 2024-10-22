@@ -1,5 +1,5 @@
 import docker
-import os
+from pathlib import Path
 #sudo systemctl start docker
 #sudo systemctl status docker
 
@@ -10,8 +10,8 @@ class ArangoDBManager:
         self.image_name = "arangodb-custom"
         self.port = 8529
         self.password = "password123"
-        self.data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arangodb_data")
-        self.dockerfile_path = os.path.dirname(os.path.abspath(__file__))
+        self.data_dir = Path("arangodb/arangodb_data")
+        self.dockerfile_path = Path("arangodb")
 
     def is_container_running(self):
         try:
@@ -35,8 +35,8 @@ class ArangoDBManager:
 
     def start_container(self):
         if not self.is_container_running():
-            if not os.path.exists(self.data_dir):
-                os.makedirs(self.data_dir)
+            if not self.data_dir.exists():
+                self.data_dir.mkdir(parents=True, exist_ok=True)
             
             try:
                 self.build_image()  # Build the custom image before running
