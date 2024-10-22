@@ -1,5 +1,7 @@
 import docker
 import os
+#sudo systemctl start docker
+#sudo systemctl status docker
 
 class ArangoDBManager:
     def __init__(self):
@@ -9,6 +11,7 @@ class ArangoDBManager:
         self.port = 8529
         self.password = "password123"
         self.data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arangodb_data")
+        self.dockerfile_path = os.path.dirname(os.path.abspath(__file__))
 
     def is_container_running(self):
         try:
@@ -17,20 +20,37 @@ class ArangoDBManager:
         except docker.errors.NotFound:
             return False
 
+    def build_image(self):
+        try:
+            print("Building custom ArangoDB image...")
+            self.client.images.build(
+                path=self.dockerfile_path,
+                tag=self.image_name,
+                dockerfile="Dockerfile"
+            )
+            print("Custom ArangoDB image built successfully.")
+        except docker.errors.BuildError as e:
+            print(f"Error building custom ArangoDB image: {str(e)}")
+            raise
+
     def start_container(self):
         if not self.is_container_running():
             if not os.path.exists(self.data_dir):
                 os.makedirs(self.data_dir)
             
-            self.client.containers.run(
-                self.image_name,
-                name=self.container_name,
-                detach=True,
-                environment={"ARANGO_ROOT_PASSWORD": self.password},
-                ports={f"{self.port}/tcp": self.port},
-                volumes={self.data_dir: {"bind": "/var/lib/arangodb3", "mode": "rw"}},
-            )
-            print(f"ArangoDB container started. Data directory: {self.data_dir}")
+            try:
+                self.build_image()  # Build the custom image before running
+                self.client.containers.run(
+                    self.image_name,
+                    name=self.container_name,
+                    detach=True,
+                    environment={"ARANGO_ROOT_PASSWORD": self.password},
+                    ports={f"{self.port}/tcp": self.port},
+                    volumes={self.data_dir: {"bind": "/var/lib/arangodb3", "mode": "rw"}},
+                )
+                print(f"ArangoDB container started. Data directory: {self.data_dir}")
+            except docker.errors.APIError as e:
+                print(f"Error starting ArangoDB container: {str(e)}")
         else:
             print("ArangoDB container is already running.")
 
