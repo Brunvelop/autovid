@@ -32,7 +32,6 @@ def create_relationship(db, edge_collection_name, from_id, to_id):
     return result
 
 if __name__ == "__main__":
-    # Ejemplo de uso
     db = connect_to_arangodb()
     mycollection = create_collection(db, 'mycollection')
     

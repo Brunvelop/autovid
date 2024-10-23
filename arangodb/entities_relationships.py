@@ -42,6 +42,12 @@ class Community(Entity):
     beliefs: List[str] = field(default_factory=list)
 
 @dataclass
+class Video(Entity):
+    uploaded: bool
+    url: Optional[str] = None
+    realse_date: List[str] = field(default_factory=list)
+
+@dataclass
 class Theme(Entity):
     cultural_interpretations: Dict[str, str] = field(default_factory=dict)
 
