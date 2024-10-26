@@ -11,70 +11,111 @@ class ValueEnum(Enum):
 
 class WriterPrompts():
     class System(ValueEnum):
-        REGLAS_STORYTELLING = """
-            Técnicas de storytelling Específicas a Nivel de Frase y Sintaxis
-            1. Comenzar con una Frase de Impacto
-            Uso de declaraciones fuertes: Abre con una frase que sorprenda o capte la atención de inmediato. Ejemplo: "Ese fue el día en que todo cambió." o "Nunca pensé que el silencio pudiera ser tan ensordecedor."
-            Frases cortas y contundentes: Una frase breve y precisa puede ser más efectiva que una larga. Ejemplo: "Todo estaba perdido." o "Nada volvería a ser igual."
-            Uso de preguntas retóricas: Iniciar con una pregunta invita a la reflexión y al engagement inmediato. Ejemplo: "¿Alguna vez has sentido que el tiempo se detiene?" o "¿Qué harías si no tuvieras nada que perder?"
-
-            2. Construcción de Frases para Crear Tensión
-            Frases incompletas o elípticas: Deja a la audiencia esperando más, creando una pausa dramática. Ejemplo: "Y entonces, justo cuando pensaba que todo estaba bien..."
-            Uso de oraciones yuxtapuestas: Colocar dos frases contradictorias o en contraste inmediato puede crear tensión. Ejemplo: "Todo estaba en calma. Luego, un grito rompió la noche."
-            Repetición con variación: Repetir una palabra o frase clave para aumentar la intensidad, con una ligera variación para desarrollar la trama. Ejemplo: "Corría y corría, pero la sombra seguía ahí, siempre detrás, siempre más cerca."
-
-            3. Ritmo y Cadencia en las Frases
-            Ritmo rápido en escenas de acción: Usa frases cortas y directas para transmitir urgencia. Ejemplo: "Corrió. Tropezó. Cayó. Se levantó y siguió corriendo."
-            Ritmo lento en momentos de reflexión o emoción: Emplea frases más largas y descriptivas para ralentizar la narrativa y permitir que la emoción se asiente. Ejemplo: "La lluvia caía lentamente, cada gota resbalando por el cristal, como lágrimas en una cara cansada."
-            Pausas efectivas: Usa comas, puntos y otros signos de puntuación para controlar el ritmo. Ejemplo: "Miró hacia atrás, su corazón latía rápido. No había nadie. O eso creía."
-
-            4. Construcción de Frases para Evocar Emociones
-            Detalles sensoriales: Usa frases que describan lo que se ve, se oye, se siente, se huele o se saborea. Ejemplo: "El aroma a café recién hecho llenaba la habitación, mezclándose con el dulce olor de los libros viejos."
-            Metáforas y símiles: Comparaciones que añaden profundidad y significado. Ejemplo: "Su risa era como un río en verano, refrescante y libre." o "El miedo se arrastraba por su espalda como una serpiente fría."
-            Adjetivos y adverbios poderosos: Elige palabras que carguen con connotaciones emocionales fuertes. Ejemplo: "Una luz tenue y triste se filtraba por la ventana, haciendo que todo pareciera desvanecerse."
-
-            5. Uso de Diálogo para Crear Inmediatez
-            Interrumpir con diálogos cortos: Los diálogos cortos y entrecortados pueden aumentar la tensión y el dinamismo. Ejemplo: "- No lo hagas. - ¿Por qué no? - Porque te amo, y no puedo perderte."
-            Silencio implícito: A veces, lo que no se dice es más poderoso que lo que se dice. Usa pausas y reacciones no verbales. Ejemplo: "Ella lo miró, sus labios temblando. No dijo nada, pero sus ojos lo gritaban todo."
-            Frases colgadas: Dejar frases incompletas para sugerir duda o suspenso. Ejemplo: "Sabía que debía decirle la verdad, pero... no podía."
-
-            6. Construcción de Imágenes Poderosas
-            Imágenes vívidas: Usa descripciones que sean visuales y concretas. Ejemplo: "Las hojas crujían bajo sus pies, como si el bosque entero murmurara en su contra."
-            Uso del contraste: Colocar imágenes opuestas para crear un efecto dramático. Ejemplo: "En el silencio de la noche, el sonido de su risa era un grito de luz."
-            Personificación: Dar cualidades humanas a objetos inanimados para añadir profundidad emocional. Ejemplo: "La casa lo observaba, cada crujido del suelo un susurro de secretos antiguos."
-
-            7. Frases que Conecten con la Experiencia Humana
-            Reflexiones universales: Usa frases que toquen temas universales como el amor, la pérdida, el miedo o la esperanza. Ejemplo: "En ese momento, se dio cuenta de que el amor no era algo que se encontraba, sino algo que se construía."
-            Uso de máximas y proverbios: Frases que suenan como sabiduría antigua pueden resonar fuertemente. Ejemplo: "Sabía lo que decían: 'La esperanza es lo último que se pierde'. Pero en ese momento, la esperanza también se había ido."
-            Conexión emocional directa: Dirígete directamente a los sentimientos del lector con frases que inviten a la introspección. Ejemplo: "Todos tenemos cicatrices, pero es cómo las llevamos lo que nos define."
-
-            8. Frases de Transición que Mantienen el Flujo
-            Frases puente: Usa frases que conecten ideas o escenas, asegurando que la narrativa fluya sin problemas. Ejemplo: "Pero ese no era el final, sino el principio de algo mucho más grande."
-            Cambio de perspectiva: Introduce cambios de escena o punto de vista con frases claras pero fluidas. Ejemplo: "Mientras tanto, al otro lado de la ciudad..."
-            Uso de leitmotivs: Repetir una frase o idea clave en diferentes puntos de la historia puede unificar la narrativa. Ejemplo: "Y siempre volvía a ese pensamiento: '¿Qué habría pasado si...?'."
-
-            Ejemplos de Frases Utilizando Estas Técnicas
-            Impacto Inmediato: "Nunca olvidaré el sonido de la puerta cerrándose; fue como si todo el aire hubiese salido de la habitación de un solo golpe."
-            Tensión Creciente: "Cada paso lo acercaba más al borde. El suelo crujía, amenazando con romperse bajo su peso. Sabía que no podía dar marcha atrás."
-            Reflexión Emocional: "La verdad es que todos buscamos algo, aunque no sepamos qué es exactamente. Y a veces, lo encontramos en los lugares más inesperados."
-            Al aplicar estas técnicas a nivel de frase y sintaxis, puedes dar vida a tus historias, mantener a la audiencia comprometida y asegurar que cada palabra trabaje para reforzar el impacto emocional y narrativo de tu storytelling.
+        THEME_WRITER = """
+            Eres un guionista experto en {expertise}, capaz de crear guiones irresistibles que capturan la atención
+            de lectores de todas las edades. Narras con claridad y encanto, explicando cualquier concepto que pueda
+            generar dudas y manteniendo al público enganchado hasta el final.
         """
-        HOOK = """
-            A partir del siguiente tema o texto, quiero que generes un hook de texto breve, de una sola frase, que capte la atención inmediata del lector y lo haga querer seguir leyendo. El hook debe sentirse como un "guantazo" de sorpresa, curiosidad o emoción, algo que interrumpa el flujo habitual de pensamiento y provoque una pausa en su atención. Debe basarse en el tema dado y reflejar una de estas estrategias:
-
-            Disonancia cognitiva: Presenta una afirmación que desafíe las expectativas del lector o rompa la lógica común, generando una pausa inmediata en su pensamiento. El hook debe ser lo suficientemente inesperado para que el lector sienta la necesidad de entender más.
-
-            Curiosidad sin respuesta inmediata: Plantea una pregunta o insinuación intrigante basada en el tema, dejando una incógnita que obligue al lector a seguir adelante. La clave es generar una sensación de misterio con pocas palabras.
-
-            Vulnerabilidad emocional: Relaciona el tema con una emoción fuerte, como el miedo o el deseo. El hook debe conectar con una experiencia universal o una verdad emocional que haga que el lector sienta algo personal.
-
-            Paradoja o contradicción: Utiliza una paradoja o contradicción clara que confunda momentáneamente al lector. La idea es provocar una fricción mental que lo invite a resolver el conflicto interno.
-
-            Urgencia o inmediatez: Haz que el tema parezca urgente o esencial, jugando con el concepto de tiempo. El hook debe sugerir que algo importante está a punto de suceder o que el tiempo es crucial, para aumentar la atención inmediata.
-
-            Recuerda que el hook debe ser directo, claro y no más largo de una frase, con el objetivo de generar un fuerte deseo de continuar la lectura. Mantén el contenido conciso y evita la verbosidad. Cada palabra cuenta y debe tener mucho impacto. Recerda usar muy pocas palabras, las minimas posibles
-        """    
     
+    class User(ValueEnum):
+        SHORTS_TEXT_GENERATOR = """
+            Antes de comenzar, aquí están los detalles importantes:
+
+            Tema del vídeo:
+            <tema>
+            {theme}
+            </tema>
+
+            Número de palabras objetivo:
+            <numero_palabras>
+            {words_number}
+            </numero_palabras>
+
+            Instrucciones:
+
+            1. Genera un hook breve y directo, de una sola frase, que capte la atención inmediata. 
+            Usa estrategias como disonancia cognitiva, curiosidad, vulnerabilidad, paradoja o urgencia
+            para provocar una pausa y crear un fuerte deseo de seguir leyendo. 
+            Cada palabra debe ser impactante y precisa.
+
+            2. Estructura tu guion siguiendo estos elementos narrativos:
+            - Introducción: Presenta el tema y la idea principal
+            - Desarrollo: Desarrolla el tema con puntos de apoyo
+            - Clímax: Destaca el aspecto más importante o interesante
+            - Resolución: Resume los puntos clave o llama a la acción
+
+            3. Apunta a escribir aproximadamente el número de palabras especificado en <numero_palabras>.
+
+            4. Utiliza un lenguaje claro y conciso, manteniendo un tono conversacional adecuado para un artículo 
+            para iniciados en el tema. No omitas información que pueda desconocer el lector. Contextualiza todo
+            lo necesario para que sea un articulo pleno y autoconclusivo.
+
+            5. Incluye recursos retóricos como metáforas, analogías, símiles, hipérboles, anáforas y aliteraciones 
+            para potenciar el compromiso del espectador. Utiliza imágenes vívidas, contrastes impactantes 
+            y juegos de palabras que despierten emociones, generen curiosidad y hagan que el mensaje resuene
+            de manera memorable y duradera en el espectador.
+
+            6. Asegúrate de que todo el contenido de tu guion se relacione y apoye el tema proporcionado en <tema>.
+
+            Antes de escribir el guion final, desarrolla tus ideas dentro de las etiquetas <planning>. En esta sección:
+            - Desglosa el tema en puntos clave o aspectos a cubrir.
+            - Contexto e informacion para aclarar a un lector que desconozca el tema.
+            - Haz una lluvia de ideas de posibles "ganchos" para la introducción.
+            - Esboza la estructura del guion.
+            - Anota posibles recursos retóricos que podrías utilizar.
+
+            Luego, presenta el guion final dentro de las etiquetas <text>, escribiendo el texto de forma continua 
+            sin etiquetas de sección.
+
+            Recuerda:
+            - Verifica que tu guion se adhiera al tema dado
+            - Asegúrate de que el recuento de palabras sea cercano al objetivo
+            - Revisa tu guion para garantizar coherencia, atractivo y fluidez
+            - Garantiza la veracidad historica del texto
+
+            Comienza ahora con tu proceso de planificación y la creación del guion.
+        """
+        SHORTS_TEXT_IMPROVER = """
+            Eres un experto en mejorar y clarificar textos, haciéndolos más accesibles y atractivos para
+            nuevos lectores sobre el tema. Tu tarea es analizar y mejorar el siguiente texto,
+            ajustando la longitud a aproximadamente {words_number} palabras:
+
+            <texto_original>
+            {text}
+            </texto_original>
+
+            Por favor, sigue estos pasos para mejorar el texto:
+
+            1. Analiza cuidadosamente el texto original. En las etiquetas <análisis>, proporciona:
+            - Identificación del tema principal y propósito del texto original.
+            - Lista de términos clave o conceptos que puedan necesitar explicación.
+            - Puntos que puedan ser poco claros o desconocidos para un nuevo lector.
+            - Consideraciones sobre cómo mejorar el tono general para hacerlo más accesible y entretenido.
+            - Ideas de ejemplos o analogías atractivas que podrían usarse.
+            - Lista de imprecisiones historicas o elementos que no pertenecen a la historia original
+
+            2. Planea los cambios a ejecutar en el texto para hacerlo mas claro y accesible en la etiqueta <plan>:
+            - Propuestas para explicar estos puntos de manera más simple o proporcionar contexto adicional.
+            - Plan para aumentar la participación del lector mediante técnicas de escritura atractivas.
+            - Correciones de las imprecisiones historicas
+
+            3. Reescribe el texto, incorporando tus mejoras y clarificaciones. En <texto_mejorado>, Asegúrate de:
+            - Usar un lenguaje más conversacional.
+            - Añadir ejemplos o analogías relevantes.
+            - Desglosar ideas complejas en conceptos más simples.
+            - Usar la voz activa con más frecuencia.
+            - Incorporar preguntas retóricas para involucrar al lector.
+            - Crear una introducción atractiva.
+            - Corrige las imprecisiones historicas si las hay
+            - Usar párrafos y oraciones más cortas para mejorar la legibilidad.
+            - Añadir subtítulos si es apropiado para dividir el texto.
+            - Concluir con una declaración que invite a la reflexión o a la acción.
+            - Mantener la longitud del texto en aproximadamente {words_number} palabras.
+
+            Recuerda, tu objetivo es hacer que el texto sea más claro y atractivo mientras mantienes su mensaje
+            e intención original, todo en español y con la longitud especificada.
+
+        """
     class Evaluation(ValueEnum):
         HISTORICAL_ACCURACY = """
             Eres un historiador experto. Tu tarea es evaluar la precisión histórica del texto proporcionado.
@@ -161,7 +202,8 @@ class WriterPrompts():
             [Inserta aquí el texto mejorado, incorporando las mejoras para aumentar el impacto emocional y las conexiones empáticas, manteniendo una longitud similar al original]
             </improved_text>
         """
-        
+
+
 class OutputFormats(ValueEnum):
     NUMERO_PALABRAS = "No uses mas de: {words_number} palabras "
     SIN_SALTOS_DE_LINEA = "No utilices saltos de linea ni: '\n' "
@@ -241,3 +283,8 @@ class Styles():
             When creating the image description, add a creative style inspired by the following words elements:
             intricate details, ultrafine detail, vibrant color, 8k resolution masterpiece, cinematic raw realism, UHDR,32K, ultra-detailed, metallic plating
         """
+
+class AgentPrompts(ValueEnum):
+    SHORTS_WRITER = """
+    
+    """
