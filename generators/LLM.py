@@ -99,12 +99,12 @@ class AnthropicHandler(LLM):
         return cost_input + cost_output
     
 class OpenAIHandler(LLM):
-    def __init__(self, model: Models, llm_config: dict = {'max_tokens': 1000}):
+    def __init__(self, model: Models.OpenAI, llm_config: dict = None):
         self.model = model
-        self.llm_config = llm_config
+        self.llm_config = {**model.value.get('llm_config', {}), **(llm_config or {})}
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    def generate_text(self, prompt: str, system_prompt: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
         try:
             message = self._create_message(prompt, system_prompt)
             return {
@@ -116,17 +116,18 @@ class OpenAIHandler(LLM):
             print(f"An error occurred: {e}")
             return None
 
-    def _create_message(self, prompt: str, system_prompt: Optional[str] = None) -> Any:
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-
-        return self.client.chat.completions.create(
-            model=self.model.value['name'],
-            messages=messages,
-            max_tokens=self.llm_config.get('max_tokens', 1000)
-        )
+    def _create_message(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Any:
+        params = {
+            "model": self.model.value['name'],
+            "messages": [
+                ({"role": "system", "content": system_prompt} if system_prompt else()),
+                {"role": "user", "content": prompt},
+                *({"role": "assistant", "content": prefill} if prefill else ()),
+            ],
+            **({'system': system_prompt} if system_prompt else {}),
+            **self.llm_config
+        }
+        return self.client.chat.completions.create(**params)
 
     def _calculate_cost(self, message: Any) -> tuple[int, float]:
         model_costs = getattr(Models.OpenAI, self.model.name).value
