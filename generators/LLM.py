@@ -71,7 +71,7 @@ class AnthropicHandler(LLM):
         try:
             message = self._create_message(prompt, system_prompt, prefill)
             return {
-                'text': message.content[0].text,
+                'text': (prefill if prefill else "") + message.content[0].text,
                 'usage': message.usage.input_tokens + message.usage.output_tokens,
                 'cost': self._calculate_cost(message)
             }
@@ -84,8 +84,7 @@ class AnthropicHandler(LLM):
             "model": self.model.value['name'],
             "messages": [
                 {"role": "user", "content": prompt},
-                *({"role": "assistant", "content": prefill} if prefill else ()),
-            ],
+            ] + ([{"role": "assistant", "content": prefill}] if prefill else []),
             **({'system': system_prompt} if system_prompt else {}),
             **self.llm_config
         }
@@ -119,12 +118,11 @@ class OpenAIHandler(LLM):
     def _create_message(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Any:
         params = {
             "model": self.model.value['name'],
-            "messages": [
-                ({"role": "system", "content": system_prompt} if system_prompt else()),
-                {"role": "user", "content": prompt},
-                *({"role": "assistant", "content": prefill} if prefill else ()),
-            ],
-            **({'system': system_prompt} if system_prompt else {}),
+            "messages": (
+                ([{"role": "system", "content": system_prompt}] if system_prompt else []) +
+                [{"role": "user", "content": prompt}] +
+                ([{"role": "assistant", "content": prefill}] if prefill else [])
+            ),
             **self.llm_config
         }
         return self.client.chat.completions.create(**params)
@@ -138,16 +136,17 @@ class OpenAIHandler(LLM):
 if __name__ == "__main__":
 
     # Initialize both handlers
-    anthropic_handler = LLM(model=Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature':1})
+    anthropic_handler = LLM(model=Models.Anthropic.CLAUDE_3_5_sonnet)
     openai_handler = LLM(model=Models.OpenAI.GPT4o)
 
     # Test prompt and system prompt
-    test_prompt = "What is the capital of France?"
-    test_system_prompt = "You are a helpful assistant who always responds in rhyme."
-
+    test_prompt = "Escribe una lista del 1 al 5"
+    test_system_prompt = "Solo devuelves estructuras de datos evaluables en python"
+    prefill = "["
+    
     # Generate text with Anthropic
     print("Anthropic Response:")
-    anthropic_result = anthropic_handler.generate_text(test_prompt, system_prompt=test_system_prompt)
+    anthropic_result = anthropic_handler.generate_text(test_prompt, system_prompt=test_system_prompt, prefill=prefill)
     if anthropic_result:
         print("Generated Text:")
         print(anthropic_result['text'])
@@ -160,7 +159,7 @@ if __name__ == "__main__":
 
     # Generate text with OpenAI
     print("OpenAI Response:")
-    openai_result = openai_handler.generate_text(test_prompt, system_prompt=test_system_prompt)
+    openai_result = openai_handler.generate_text(test_prompt, system_prompt=test_system_prompt, prefill=prefill)
     if openai_result:
         print("Generated Text:")
         print(openai_result['text'])
@@ -174,3 +173,4 @@ if __name__ == "__main__":
         print("\nComparison:")
         print(f"Anthropic tokens: {anthropic_result['usage']}, cost: ${anthropic_result['cost']:.6f}")
         print(f"OpenAI tokens: {openai_result['usage']}, cost: ${openai_result['cost']:.6f}")
+
