@@ -33,8 +33,6 @@ class Models:
 
     class Local(Enum):
         LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
-        O1Mini = 'o1-mini'
-        O1Preview = 'o1-preview'
 
 class LLM(ABC):
     def __new__(cls, model: Models, llm_config: dict = None):
@@ -55,37 +53,39 @@ class LLM(ABC):
     def generate_text(
         self, 
         prompt: str, 
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
+        prefill: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         pass # return {'text': text, 'usage': usage, 'cost': cost}
 
 class AnthropicHandler(LLM):
-    def __init__(self, model: Models.Anthropic, llm_config: dict = {'max_tokens':1000}):
+    def __init__(self, model: Models.Anthropic, llm_config: dict = {'max_tokens':8192, 'temperature': 0}):
         self.model = model
         self.llm_config = llm_config
-        self.client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        self.client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
-    def generate_text(self, prompt: str, system_prompt: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
         try:
-            message = self._create_message(prompt, system_prompt)
+            message = self._create_message(prompt, system_prompt, prefill)
             return {
                 'text': message.content[0].text,
                 'usage': message.usage.input_tokens + message.usage.output_tokens,
                 'cost': self._calculate_cost(message)
             }
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f'An error occurred: {e}')
             return None
 
-    def _create_message(self, prompt: str, system_prompt: Optional[str] = None) -> Any:
+    def _create_message(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Any:
         params = {
             "model": self.model.value['name'],
-            "max_tokens": self.llm_config.get('max_tokens', 1000),
-            "messages": [{"role": "user", "content": prompt}]
+            "messages": [
+                {"role": "user", "content": prompt},
+                *({"role": "assistant", "content": prefill} if prefill else ()),
+            ],
+            **({'system': system_prompt} if system_prompt else {}),
+            **self.llm_config
         }
-        
-        if system_prompt:
-            params["system"] = system_prompt
         
         return self.client.messages.create(**params)
 
