@@ -106,7 +106,7 @@ class OpenAIHandler(LLM):
 
     def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
         try:
-            message = self._create_message(prompt, system_prompt)
+            message = self._create_message(prompt, system_prompt, prefill)
             return {
                 'text': message.choices[0].message.content,
                 'usage': message.usage.prompt_tokens + message.usage.completion_tokens,
