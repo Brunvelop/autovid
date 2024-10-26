@@ -14,11 +14,13 @@ class Models:
     class OpenAI(Enum):
         GPT4o = {
             'name': 'gpt-4o',
+            'llm_config': {'max_tokens':16384 , 'temperature': 0},
             'input_cost': 2.5/10**6,  # $3 / MTok
             'output_cost': 10/10**6  # $15 / MTok
         }
         GPT4oMini = {
             'name': 'gpt-4o-mini',
+            'llm_config': {'max_tokens':16384 , 'temperature': 0},
             'input_cost': 0.15/10**6,  # $0.15 / MTok
             'output_cost': 0.6/10**6  # $0.6 / MTok
         }
@@ -27,8 +29,9 @@ class Models:
     class Anthropic(Enum):
         CLAUDE_3_5_sonnet = {
             'name': 'claude-3-5-sonnet-20240620',
+            'llm_config': {'max_tokens':8192, 'temperature': 0},
             'input_cost': 3/10**6,  # $3 / MTok
-            'output_cost': 15/10**6  # $15 / MTok
+            'output_cost': 15/10**6,  # $15 / MTok
         }
 
     class Local(Enum):
@@ -59,9 +62,9 @@ class LLM(ABC):
         pass # return {'text': text, 'usage': usage, 'cost': cost}
 
 class AnthropicHandler(LLM):
-    def __init__(self, model: Models.Anthropic, llm_config: dict = {'max_tokens':8192, 'temperature': 0}):
+    def __init__(self, model: Models.Anthropic, llm_config: dict = None):
         self.model = model
-        self.llm_config = llm_config
+        self.llm_config = {**model.value.get('llm_config', {}), **(llm_config or {})}
         self.client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
     def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -134,7 +137,7 @@ class OpenAIHandler(LLM):
 if __name__ == "__main__":
 
     # Initialize both handlers
-    anthropic_handler = LLM(model=Models.Anthropic.CLAUDE_3_5_sonnet)
+    anthropic_handler = LLM(model=Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature':1})
     openai_handler = LLM(model=Models.OpenAI.GPT4o)
 
     # Test prompt and system prompt
