@@ -3,6 +3,7 @@ requests
 openai
 Anthropic
 cohere
+wikipedia
 
 # Image and video processing
 Pillow
@@ -36,7 +37,6 @@ google-api-python-client==2.47.0
 
 #torch
 torch==2.5.0 --index-url https://download.pytorch.org/whl/cu121
-
 
 python-arango
 docker
