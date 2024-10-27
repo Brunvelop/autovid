@@ -2,6 +2,7 @@
 requests
 openai
 Anthropic
+cohere
 
 # Image and video processing
 Pillow
