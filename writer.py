@@ -1,7 +1,7 @@
 from typing import Dict, Tuple
 from pathlib import Path
 
-from prompts import WriterPrompts, OutputFormats
+from prompts import WriterPrompts
 from generators.LLM import LLM
 
 class Writer():
@@ -9,29 +9,31 @@ class Writer():
         self.llm = llm
         
     def generate_story(self, expertise: str, theme: str, words_number: int = 100) -> str:
-        text = self.llm.generate_text(
+        output = self.llm.generate_text(
             system_prompt=WriterPrompts.System.THEME_WRITER.format(expertise=expertise),
             prompt=WriterPrompts.User.SHORTS_TEXT_GENERATOR.format(
                 theme=theme,
                 words_number=words_number
             )
-        )['text']
+        )
         return {
-            'text': self._clean_text(self._extract_tag(text, 'text')),
-            'full_output' : text
+            'text': self._clean_text(self._extract_tag(output['text'], 'text')),
+            'full_output' : output['text'],
+            'cost': output['cost']
         }
     
     def improve_story(self, expertise: str, text: str, words_number: int = 100) -> str:
-        text = self.llm.generate_text(
+        output = self.llm.generate_text(
             system_prompt=WriterPrompts.System.THEME_WRITER.format(expertise=expertise),
-            prompt=WriterPrompts.User.SHORTS_TEXT_IMPROVER.format(
+            prompt=WriterPrompts.User.IMPROVE_CLARITY.format(
                 text=text,
                 words_number=words_number
             )
-        )['text']
+        )
         return {
-            'text': self._clean_text(self._extract_tag(text, 'texto_mejorado')),
-            'full_output' : text
+            'text': self._clean_text(self._extract_tag(output['text'], 'texto_mejorado')),
+            'full_output' : output['text'],
+            'cost': output['cost']
         }
     
     def save_text(self, text: str, save_path: Path) -> None:
@@ -114,18 +116,20 @@ class Writer():
 if __name__ == "__main__":
     from generators.LLM import Models
     
-    writer = Writer(LLM(model=Models.OpenAI.GPT4o))
+    writer = Writer(LLM(model=Models.OpenAI.GPT4oMini))
 
     story = writer.generate_story(
         expertise='Mitología Griega',
         theme='El origen de Zeus',
         words_number=100,
     )
-    print(story['text'])
+    print(story['full_output'])
+
+    print("\n ########################## \n")
 
     improved_story = writer.improve_story(
         expertise='Mitología Griega',
         text=story['text'],
         words_number=100,
     )
-    print(improved_story['text'])
+    print(improved_story['full_output'])

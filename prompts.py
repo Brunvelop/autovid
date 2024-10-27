@@ -116,6 +116,43 @@ class WriterPrompts():
             e intención original, todo en español y con la longitud especificada.
 
         """
+        IMPROVE_CLARITY = """
+            Eres un experto en hacer guiones más accesibles y atractivos para nuevos lectores sobre el tema. 
+            Tu tarea es analizar y mejorar el siguiente texto, ajustando la longitud a aproximadamente
+            {words_number} palabras:
+
+            <texto_original>
+            {text}
+            </texto_original>
+
+            Por favor, sigue estos pasos para mejorar el texto:
+
+            1. En las etiquetas <preguntas>, proporciona una lista de preguntas que una persona agena al tema podría
+            hacer. Preguntas que clarifiquen el contexto y ayuden al texto a ser autocontenido. Proporciona toda la
+            información necesaria para ser comprendido sin necesidad de contexto adicional o referencias externas.
+
+            2. Planea los cambios a ejecutar en el texto para hacerlo mas claro y accesible en la etiqueta <plan>:
+            - Informacion necesaria para hacer que el texto sea autocontenido.
+            - Propuestas para aclarar estas preguntas añadiendo contexto o infromacion manteniendo un buen storytelling
+            - Posibles propuestas de correciones a impreciosiones históricas si las hubiese
+            - Identifica áreas donde el engagement del lector puede mejorarse.
+            - Planifica las modificaciones para aumentar el interés del lector y la fluidez de la narración.
+
+            3. Reescribe el texto, incorporando tus mejoras y clarificaciones. En <texto_mejorado>, Asegúrate de:
+            - Usar un lenguaje más conversacional.
+            - Añadir ejemplos o analogías relevantes.
+            - Desglosar ideas complejas en conceptos más simples.
+            - Usar la voz activa con más frecuencia.
+            - Incorporar preguntas retóricas para involucrar al lector.
+            - Crear una introducción atractiva.
+            - Corrige las imprecisiones historicas si las hay
+            - Usar párrafos y oraciones más cortas para mejorar la legibilidad.
+            - Mantener la longitud del texto en aproximadamente {words_number} palabras.
+
+            Recuerda, tu objetivo es hacer que el texto sea más claro y atractivo mientras mantienes su mensaje
+            e intención original.
+        """
+
     class Evaluation(ValueEnum):
         HISTORICAL_ACCURACY = """
             Eres un historiador experto. Tu tarea es evaluar la precisión histórica del texto proporcionado.
@@ -138,7 +175,8 @@ class WriterPrompts():
 
     class Improvement(ValueEnum):
         HISTORICAL_ACCURACY = """
-            Eres un historiador experto y escritor talentoso. Tu tarea es mejorar la precisión histórica del texto proporcionado sin perder su esencia narrativa y manteniendo un tamaño similar al original.
+            Eres un historiador experto y escritor talentoso. Tu tarea es mejorar la precisión histórica del texto 
+            proporcionado sin perder su esencia narrativa y manteniendo un tamaño similar al original.
             Sigue estos pasos para analizar y mejorar el texto:
 
             <thinking>

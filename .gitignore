@@ -13,3 +13,4 @@ cursor
 infra/ssh_config
 .tokens
 arangodb/arangodb_data
+prompts
