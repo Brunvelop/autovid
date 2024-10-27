@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 from dotenv import load_dotenv
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 
@@ -46,6 +47,12 @@ class Models:
     class Local(Enum):
         LLAMA31_8B = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
 
+@dataclass
+class LLMResponse:
+    text: str
+    usage: int
+    cost: float
+
 class LLM(ABC):
     def __new__(cls, model: Models, llm_config: dict = None):
         if cls is LLM:
@@ -69,8 +76,8 @@ class LLM(ABC):
         prompt: str, 
         system_prompt: Optional[str] = None,
         prefill: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
-        pass # return {'text': text, 'usage': usage, 'cost': cost}
+    ) -> Optional[LLMResponse]:
+        pass
 
 class AnthropicHandler(LLM):
     def __init__(self, model: Models.Anthropic, llm_config: dict = None):
@@ -78,14 +85,14 @@ class AnthropicHandler(LLM):
         self.llm_config = {**model.value.get('llm_config', {}), **(llm_config or {})}
         self.client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
-    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[LLMResponse]:
         try:
             message = self._create_message(prompt, system_prompt, prefill)
-            return {
-                'text': (prefill if prefill else "") + message.content[0].text,
-                'usage': message.usage.input_tokens + message.usage.output_tokens,
-                'cost': self._calculate_cost(message)
-            }
+            return LLMResponse(
+                text=(prefill or '') + message.content[0].text,
+                usage=message.usage.input_tokens + message.usage.output_tokens,
+                cost=self._calculate_cost(message)
+            )
         except Exception as e:
             print(f'An error occurred: {e}')
             return None
@@ -99,7 +106,6 @@ class AnthropicHandler(LLM):
             **({'system': system_prompt} if system_prompt else {}),
             **self.llm_config
         }
-        
         return self.client.messages.create(**params)
 
     def _calculate_cost(self, message: Any) -> tuple[int, float]:
@@ -114,14 +120,14 @@ class OpenAIHandler(LLM):
         self.llm_config = {**model.value.get('llm_config', {}), **(llm_config or {})}
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[LLMResponse]:
         try:
             message = self._create_message(prompt, system_prompt, prefill)
-            return {
-                'text': message.choices[0].message.content,
-                'usage': message.usage.prompt_tokens + message.usage.completion_tokens,
-                'cost': self._calculate_cost(message)
-            }
+            return LLMResponse(
+                text=message.choices[0].message.content,
+                usage=message.usage.prompt_tokens + message.usage.completion_tokens,
+                cost=self._calculate_cost(message)
+            )
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
@@ -150,14 +156,14 @@ class CohereHandler(LLM):
         self.llm_config = {**model.value.get('llm_config', {}), **(llm_config or {})}
         self.client = cohere.ClientV2(api_key=os.environ.get("COHERE_API_KEY"))
 
-    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def generate_text(self, prompt: str, system_prompt: Optional[str] = None, prefill: Optional[str] = None) -> Optional[LLMResponse]:
         try:
             message = self._create_message(prompt, system_prompt, prefill)
-            return {
-                'text': message.message.content[0].text,
-                'usage': message.usage.tokens.input_tokens + message.usage.tokens.output_tokens,
-                'cost': self._calculate_cost(message)
-            }
+            return LLMResponse(
+                text=message.message.content[0].text,
+                usage=message.usage.tokens.input_tokens + message.usage.tokens.output_tokens,
+                cost=self._calculate_cost(message)
+            )
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
@@ -196,9 +202,9 @@ if __name__ == "__main__":
     anthropic_result = anthropic_handler.generate_text(test_prompt, system_prompt=test_system_prompt, prefill=prefill)
     if anthropic_result:
         print("Generated Text:")
-        print(anthropic_result['text'])
-        print(f"\nToken Usage: {anthropic_result['usage']}")
-        print(f"Estimated Cost: ${anthropic_result['cost']:.6f}")
+        print(anthropic_result.text)
+        print(f"\nToken Usage: {anthropic_result.usage}")
+        print(f"Estimated Cost: ${anthropic_result.cost:.6f}")
     else:
         print("Failed to generate text with Anthropic.")
 
@@ -209,15 +215,14 @@ if __name__ == "__main__":
     openai_result = openai_handler.generate_text(test_prompt, system_prompt=test_system_prompt, prefill=prefill)
     if openai_result:
         print("Generated Text:")
-        print(openai_result['text'])
-        print(f"\nToken Usage: {openai_result['usage']}")
-        print(f"Estimated Cost: ${openai_result['cost']:.6f}")
+        print(openai_result.text)
+        print(f"\nToken Usage: {openai_result.usage}")
+        print(f"Estimated Cost: ${openai_result.cost:.6f}")
     else:
         print("Failed to generate text with OpenAI.")
 
     # Compare results
     if anthropic_result and openai_result:
         print("\nComparison:")
-        print(f"Anthropic tokens: {anthropic_result['usage']}, cost: ${anthropic_result['cost']:.6f}")
-        print(f"OpenAI tokens: {openai_result['usage']}, cost: ${openai_result['cost']:.6f}")
-
+        print(f"Anthropic tokens: {anthropic_result.usage}, cost: ${anthropic_result.cost:.6f}")
+        print(f"OpenAI tokens: {openai_result.usage}, cost: ${openai_result.cost:.6f}")
