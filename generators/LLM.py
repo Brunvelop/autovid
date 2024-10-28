@@ -49,9 +49,16 @@ class Models:
 
 @dataclass
 class LLMResponse:
-    text: str
+    text: str 
     usage: int
     cost: float
+
+    def extract_tag(self, tag: str) -> str:
+        start_tag = f"<{tag}>"
+        end_tag = f"</{tag}>"
+        start = self.text.find(start_tag) + len(start_tag)
+        end = self.text.find(end_tag)
+        return self.text[start:end].strip()
 
 class LLM(ABC):
     def __new__(cls, model: Models, llm_config: dict = None):

@@ -187,7 +187,7 @@ class OutputFormats(ValueEnum):
         """
 
 class StoryboarderPrompts:    
-    class System(ValueEnum):
+    class User(ValueEnum):
         GENERATE_STORYBOARD_VISUAL_ANALYSIS = """
             You are an AI specialized in analyzing text to create detailed visual descriptions of characters and environments, specifically for the purpose of storyboarding or concept art creation. Your task is to read the following text and generate a comprehensive visual context for it, focusing only on elements that can be drawn or visually represented.
 

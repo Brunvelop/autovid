@@ -17,7 +17,7 @@ class Writer():
             )
         )
         return {
-            'text': self._clean_text(self._extract_tag(output.text, 'text')),
+            'text': self._clean_text(output.extract_tag('text')),
             'full_output': output.text,
             'cost': output.cost
         }
@@ -31,7 +31,7 @@ class Writer():
             )
         )
         return {
-            'text': self._clean_text(self._extract_tag(output.text, 'texto_mejorado')),
+            'text': self._clean_text(output.extract_tag('texto_mejorado')),
             'full_output': output.text,
             'cost': output.cost
         }
@@ -59,14 +59,6 @@ class Writer():
             prompt=f"Evalúa el siguiente texto:\n\n{text}",
         )
         return parse_function(result.text)
-    
-    @staticmethod
-    def _extract_tag(text: str, tag: str) -> str:
-        start_tag = f"<{tag}>"
-        end_tag = f"</{tag}>"
-        start = text.find(start_tag) + len(start_tag)
-        end = text.find(end_tag)
-        return text[start:end].strip()
 
 if __name__ == "__main__":
     from generators.LLM import Models
