@@ -48,7 +48,13 @@ class FastAPIWindow(QMainWindow):
         
         # Configurar la URL de FastAPI
         self.api_url = "http://127.0.0.1:8000"
-        self.browser.setUrl(QUrl(self.api_url))
+        
+        # Variables de control de carga
+        self.server_ready = False
+        self.page_loaded = False
+        
+        # Conectar señal de carga completada
+        self.browser.loadFinished.connect(self.on_page_load_finished)
         
         # Añadir el navegador al layout
         self.layout.addWidget(self.browser)
@@ -62,14 +68,21 @@ class FastAPIWindow(QMainWindow):
         """Verifica si el servidor FastAPI está listo"""
         try:
             response = requests.get(self.api_url)
-            if response.status_code == 200:
-                # Servidor listo, mostrar el navegador
-                self.loading_widget.hide()
-                self.browser.show()
+            if response.status_code == 200 and not self.server_ready:
+                self.server_ready = True
+                self.browser.setUrl(QUrl(self.api_url))
                 self.check_timer.stop()
         except requests.exceptions.ConnectionError:
             # Servidor aún no está listo
             pass
+    
+    def on_page_load_finished(self, success):
+        """Manejador para cuando la página termina de cargar"""
+        if success:
+            self.page_loaded = True
+            if self.server_ready:
+                self.loading_widget.hide()
+                self.browser.show()
 
 def run_fastapi():
     """Función para ejecutar el servidor FastAPI"""
