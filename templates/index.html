@@ -1,101 +1,18 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>AI VIDEO GENERATOR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
+{% include 'components/head.html' %}
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">VIDEO PRODUCTION</h1>
-        <div class="mb-8 text-center">
-            <a href="/create/video" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-110">
-                CREATE NEW VIDEO
-            </a>
-        </div>
+        {% include 'components/create_new_video_button.html' %}
+        
         {% for category, videos in global_status.items() %}
-            <div x-data="{ open: false }" class="mb-8">
-                <div @click="open = !open" class="bg-white shadow-md rounded-lg p-4 cursor-pointer">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-semibold text-gray-700">{{ category }}</h2>
-                        <div>
-                            <span class="text-sm text-gray-500">
-                                Completed: {{ videos.values()|selectattr('completed', 'eq', true)|list|length }}/{{ videos|length }}
-                            </span>
-                            <span class="ml-2" x-text="open ? '▲' : '▼'"></span>
-                        </div>
-                    </div>
-                </div>
-                <div x-show="open" x-transition class="mt-4">
-                    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="bg-gray-200 text-gray-700">
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Video</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Text Evaluation</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Storyboard Progress</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                {% for video_path, status in videos.items() %}
-                                <tr class="{% if status['completed'] %}bg-green-50{% else %}hover:bg-gray-50{% endif %}">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        {{ video_path.name }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            <a href="{{ url_for('show_text', short_category=category, short_num=video_path.name) }}" class="text-green-600 hover:text-green-900 font-medium mr-2">
-                                                Edit
-                                            </a>
-                                            <div class="flex-grow">
-                                                {% if status['text_evaluation'] %}
-                                                    <span class="text-sm font-medium text-gray-900">Evaluated</span>
-                                                    <ul class="mt-1 text-sm text-gray-500">
-                                                        <li>Historical Accuracy: {{ status['text_evaluation']['historical_accuracy'] }}</li>
-                                                        <li>Storytelling Quality: {{ status['text_evaluation']['storytelling_quality'] }}</li>
-                                                        <li>Emotional Impact: {{ status['text_evaluation']['emotional_impact'] }}</li>
-                                                        <li>Word Count: {{ status['text_evaluation']['word_count'] }}</li>
-                                                    </ul>
-                                                {% else %}
-                                                    <span class="text-sm text-gray-500">Not evaluated</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <a href="{{ url_for('show_storyboard', short_category=category, short_num=video_path.name) }}" class="text-blue-600 hover:text-blue-900 font-medium mr-2">
-                                                Edit
-                                            </a>
-                                            <div class="flex-grow">
-                                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ (status['images_completed'].count(True) / status['images_completed']|length) * 100 }}%"></div>
-                                                </div>
-                                                <span class="text-sm text-gray-500 mt-1 block">{{ status['images_completed'].count(True) }}/{{ status['images_completed']|length }}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        {% if status['completed'] %}
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Completed
-                                            </span>
-                                        {% else %}
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                In Progress
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            {% with %}
+                {% set category_data = {
+                    'name': category,
+                    'completed_count': videos.values()|selectattr('completed', 'eq', true)|list|length,
+                    'total_count': videos|length
+                } %}
+                {% include 'components/video_category.html' %}
+            {% endwith %}
         {% endfor %}
     </div>
 </body>
