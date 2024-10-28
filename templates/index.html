@@ -4,15 +4,8 @@
         <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">VIDEO PRODUCTION</h1>
         {% include 'components/create_new_video_button.html' %}
         
-        {% for category, videos in global_status.items() %}
-            {% with %}
-                {% set category_data = {
-                    'name': category,
-                    'completed_count': videos.values()|selectattr('completed', 'eq', true)|list|length,
-                    'total_count': videos|length
-                } %}
-                {% include 'components/video_category.html' %}
-            {% endwith %}
+        {% for serie_name, videos in global_status.series.items() %}
+            {% include 'components/serie_production.html' %}
         {% endfor %}
     </div>
 </body>

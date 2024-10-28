@@ -3,119 +3,81 @@ import json
 from typing import List, Dict, Optional
 from pathlib import Path
 from dataclasses import dataclass, field
-from writer import Writer
 
 @dataclass
 class VideoStatus:
     images_completed: List[bool] = field(default_factory=list)
     text_evaluation: Optional[Dict[str, any]] = None
     completed: bool = False
+    assets_path: Optional[Path] = None
 
     @classmethod
-    def get(cls, status_path: Path, writer: Optional[Writer] = None) -> VideoStatus:
-        if status_path.exists():
-            with status_path.open('r') as f:
-                data = json.load(f)
-            
-            # Handle case where status exists but is from an older version with text_progress
-            if 'text_progress' in data:
-                if writer:
-                    text_path = status_path.parent / "text" / "text.txt"
-                    if text_path.exists():
-                        with text_path.open('r', encoding='utf-8') as f:
-                            text = f.read()
-                        data['text_evaluation'] = writer.evaluate_text(text)
-                    else:
-                        data['text_evaluation'] = None
-                else:
-                    data['text_evaluation'] = None
-                del data['text_progress']
-            
-            # Handle case where status exists but is from an older version without text_evaluation
-            if 'text_evaluation' not in data:
-                data['text_evaluation'] = None
+    def get(cls, status_path: Path) -> VideoStatus:
+        if not status_path.exists():
+            return cls(
+                images_completed=[],
+                text_evaluation=None, 
+                completed=False,
+                assets_path=status_path.parent
+            )
 
-            status = cls(**data)
-            
-            # Ensure images_completed is a list
-            if not isinstance(status.images_completed, list):
-                status.images_completed = []
-            
-            # Update status based on actual image files
-            images_path = status_path.parent / 'images'
-            if images_path.exists() and images_path.is_dir():
-                image_files = sorted(images_path.glob('*.png'))
-                if len(image_files) != len(status.images_completed):
-                    status.images_completed = [False] * len(image_files)
-            
-            status.update_completion_status()
-            return status
-        
-        return cls.initialize(status_path)
-
-    @classmethod
-    def initialize(cls, status_path: Path) -> VideoStatus:
-        images_path = status_path.parent / 'images'
-        if images_path.exists() and images_path.is_dir():
-            image_files = sorted(images_path.glob('*.png'))
-            images_completed = [False] * len(image_files)
-        else:
-            images_completed = []
-
-        status = cls(images_completed=images_completed, completed=False, text_evaluation=None)
-        status.save(status_path)
+        data = json.loads(status_path.read_text())
+        status = cls(
+            images_completed=data.get('images_completed', []),
+            text_evaluation=data.get('text_evaluation'), 
+            completed=data.get('completed', False),
+            assets_path=status_path.parent
+        )
         return status
 
-    def save(self, status_path: Path) -> None:
-        with status_path.open('w') as f:
-            json.dump(self.__dict__, f, indent=4)
+    def save(self) -> None:
+        if not self.status_path:
+            raise ValueError("Cannot save status: assets_path is not set")
+            
+        data = {
+            'images_completed': self.images_completed,
+            'text_evaluation': self.text_evaluation,
+            'completed': self.completed
+        }
+        self.status_path.write_text(json.dumps(data, indent=4))
 
-    def update_image_completion_status(self, image_index: Optional[int] = None, is_completed: bool = False) -> None:
-        if image_index is not None:
-            if 0 <= image_index < len(self.images_completed):
-                self.images_completed[image_index] = is_completed
-            else:
-                raise ValueError(f"Invalid image index: {image_index}")
-        
-        self.update_completion_status()
+    def update(
+            self, 
+            images_completed: List[bool] = None,
+            text_evaluation: Dict[str, any] = None,
+            completed: bool = None
+        ) -> None:
+        if images_completed is not None:
+            self.images_completed = images_completed
+        if text_evaluation is not None:
+            self.text_evaluation = text_evaluation
+        if completed is not None:
+            self.completed = completed
+        self.save()
 
-    def update_completion_status(self) -> None:
-        self.completed = all(self.images_completed) and self.text_evaluation is not None
-
-    def evaluate_text(self, writer: Writer, text_path: Path) -> None:
-        if text_path.exists() and self.text_evaluation is None:
-            with text_path.open('r', encoding='utf-8') as f:
-                text = f.read()
-            self.text_evaluation = writer.evaluate_text(text)
-        self.update_completion_status()
+@dataclass
+class GlobalStatus:
+    series: Dict[str, List[VideoStatus]] = field(default_factory=dict)
 
 class ProductionStatusManager:
-    @staticmethod
-    def _process_video(video_assets_path: Path, writer: Optional[Writer] = None) -> VideoStatus:
+    @classmethod
+    def get_video_status(cls, video_assets_path: Path) -> VideoStatus:
         status_file = video_assets_path / 'status.json'
-        status = VideoStatus.get(status_file, writer)
-        text_path = video_assets_path / "text" / "text.txt"
-        if writer and text_path.exists() and status.text_evaluation is None:
-            status.evaluate_text(writer, text_path)
-        status.save(status_file)
+        status = VideoStatus.get(status_file) 
         return status
 
-    @staticmethod
-    def get_global_status(shorts_path: Path = Path('data/MITO_TV/SHORTS'), writer: Optional[Writer] = None) -> Dict[str, Dict[Path, VideoStatus]]:
-        global_status = {}
-
-        for category in Path(shorts_path).iterdir():
-            if not category.is_dir():
+    @classmethod
+    def get_global_status(cls, shorts_path: Path = Path('data/MITO_TV/SHORTS')) -> GlobalStatus:
+        global_status = GlobalStatus()
+        for serie in Path(shorts_path).iterdir():
+            if not serie.is_dir():
                 continue
-
-            global_status[category.name] = {}
-            for video_assets_path in sorted(category.iterdir(), key=lambda x: int(x.name)):
+            global_status.series[serie.name] = {}
+            for video_assets_path in sorted(serie.iterdir(), key=lambda x: int(x.name)):
                 if not video_assets_path.is_dir():
                     continue
-
-                status = ProductionStatusManager._process_video(video_assets_path, writer)
-                global_status[category.name][video_assets_path] = status
-
+                video_status = cls.get_video_status(video_assets_path)
+                global_status.series[serie.name][video_assets_path] = video_status
         return global_status
 
     @staticmethod

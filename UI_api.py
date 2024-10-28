@@ -8,12 +8,12 @@ from fastapi.responses import HTMLResponse
 
 from UI_utils import ProductionStatusManager, VideoStatus
 from generators.image_generator import ReplicateFluxDev
-from storyboarder import Storyboarder
-from writer import Writer
+from tools.storyboarder import Storyboarder
+from tools.writer import Writer
 from generators.LLM import LLM, Models
 
-from generators.TTS import ElevenLabsTTS, Voices, TTSModels
-from video_editor import VideoEditor
+from generators.TTS import ElevenLabsTTS, Voices
+from tools.video_editor import VideoEditor
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -23,9 +23,7 @@ BASE_SHORTS_PATH = Path("./data/MITO_TV/SHORTS")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    writer = Writer(llm=LLM(Models.OpenAI.GPT4o, llm_config={'temperature': 0.5}))
-    global_status = ProductionStatusManager.get_global_status(shorts_path=BASE_SHORTS_PATH, writer=writer)
-
+    global_status = ProductionStatusManager.get_global_status(shorts_path=BASE_SHORTS_PATH)
     return templates.TemplateResponse("index.html", {
         "request": request,
         "global_status": global_status,
