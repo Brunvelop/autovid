@@ -173,75 +173,6 @@ class WriterPrompts():
             Responde únicamente con un número del 1 al 10.
         """
 
-    class Improvement(ValueEnum):
-        HISTORICAL_ACCURACY = """
-            Eres un historiador experto y escritor talentoso. Tu tarea es mejorar la precisión histórica del texto 
-            proporcionado sin perder su esencia narrativa y manteniendo un tamaño similar al original.
-            Sigue estos pasos para analizar y mejorar el texto:
-
-            <thinking>
-            1. Lee cuidadosamente el texto proporcionado y anota su longitud aproximada.
-            2. Identifica cualquier inexactitud histórica, anotando cada una.
-            3. Investiga los hechos correctos para cada inexactitud identificada.
-            4. Considera cómo corregir cada inexactitud mientras mantienes el tono, estilo original y longitud similar.
-            5. Evalúa si las correcciones afectan otras partes del texto y ajusta en consecuencia.
-            6. Revisa el texto completo para asegurar coherencia, fluidez y longitud similar después de las correcciones.
-            </thinking>
-
-            <improved_text>
-            [Inserta aquí el texto mejorado, incorporando las correcciones históricas mientras mantienes el tono, estilo original y una longitud similar]
-            </improved_text>
-
-            <summary>
-            [Proporciona un resumen de las mejoras realizadas, detallando cada inexactitud corregida y cómo se mejoró la precisión histórica, mencionando cómo se mantuvo una longitud similar]
-            </summary>
-        """
-        STORYTELLING_QUALITY = """
-            Eres un experto en narrativa y storytelling. Tu tarea es mejorar la calidad narrativa del texto proporcionado manteniendo una longitud similar al original.
-            Sigue estos pasos para analizar y mejorar el texto:
-
-            <thinking>
-            1. Lee detenidamente el texto proporcionado y anota su longitud aproximada.
-            2. Analiza la estructura actual de la narrativa.
-            3. Evalúa el desarrollo de los personajes existentes.
-            4. Examina el arco narrativo y su efectividad.
-            5. Identifica áreas donde el engagement del lector puede mejorarse.
-            6. Considera cómo mejorar cada aspecto manteniendo la esencia original y una longitud similar.
-            7. Planifica las modificaciones para aumentar el interés del lector y la fluidez de la narración sin extender significativamente el texto.
-            </thinking>
-
-            <summary>
-            [Proporciona un resumen de las mejoras realizadas, detallando cómo se ha mejorado la calidad narrativa en términos de estructura, personajes, arco narrativo y engagement, mencionando cómo se mantuvo una longitud similar]
-            </summary>
-
-            <improved_text>
-            [Inserta aquí el texto mejorado, incorporando las mejoras en estructura, desarrollo de personajes, arco narrativo y engagement, manteniendo una longitud similar al original]
-            </improved_text>
-        """
-        EMOTIONAL_IMPACT = """
-            Eres un psicólogo especializado en el impacto emocional de la narrativa y un escritor talentoso. Tu tarea es mejorar el impacto emocional del texto proporcionado manteniendo una longitud similar al original.
-            Sigue estos pasos para analizar y mejorar el texto:
-
-            <thinking>
-            1. Lee atentamente el texto proporcionado y anota su longitud aproximada.
-            2. Identifica las emociones principales que el texto intenta evocar.
-            3. Evalúa la efectividad actual del texto en evocar estas emociones.
-            4. Analiza las conexiones empáticas existentes entre los personajes y el lector.
-            5. Considera cómo intensificar la respuesta emocional sin cambiar drásticamente la trama, el tono o la longitud.
-            6. Planifica modificaciones sutiles que aumenten el impacto emocional sin extender significativamente el texto.
-            7. Revisa para asegurar que las mejoras creen una impresión duradera en el lector mientras mantienes una longitud similar.
-            </thinking>
-
-            <summary>
-            [Proporciona un resumen de las mejoras realizadas, detallando cómo se ha intensificado el impacto emocional y las conexiones empáticas sin cambiar drásticamente la trama, el tono original o la longitud del texto]
-            </summary>
-
-            <improved_text>
-            [Inserta aquí el texto mejorado, incorporando las mejoras para aumentar el impacto emocional y las conexiones empáticas, manteniendo una longitud similar al original]
-            </improved_text>
-        """
-
-
 class OutputFormats(ValueEnum):
     NUMERO_PALABRAS = "No uses mas de: {words_number} palabras "
     SIN_SALTOS_DE_LINEA = "No utilices saltos de linea ni: '\n' "
@@ -257,27 +188,101 @@ class OutputFormats(ValueEnum):
 
 class StoryboarderPrompts:    
     class System(ValueEnum):
-        GENERATE_STORYBOARD = """
-            You are a program that splits any given text into an array of dictionaries, where each dictionary represents a single, concise scene in a storyboard with accompanying image description. Follow these guidelines:
-            1. Divide the text into extremely short segments, with each segment being a maximum of one sentence.
-            2. Maintain the original language and wording of the text for the 'text' element.
-            3. Each segment should capture a single, clear visual or action that can be easily illustrated.
-            4. Create a detailed image description in English for each segment, suitable for Stable Diffusion.
-            5. Prioritize key moments and vivid imagery over explanatory text.
-            6. Ensure each segment can stand alone as a distinct visual scene.
-            7. In the image descriptions, use detailed physical descriptions for characters instead of names or references to previous scenes. Include:
-               - Approximate age
-               - Hair color, length, and style
-               - Eye color
-               - Skin tone
-               - Body type and height
-               - Distinctive features (e.g., scars, tattoos, glasses)
-               - Clothing style and colors
-            8. Treat each image description as if it were the first and only image being generated. Do not use phrases like "the same couple" or "as before".
-            9. Maintain consistency in character descriptions by using the same key physical attributes each time a character appears, but describe them fully each time as if it were the first mention.
-            10. Avoid using pronouns or references that depend on previous context. Each description should be completely self-contained.
-            11. Ensure that the sequence of images, when viewed together, tells a complete and coherent story that aligns with the original text.
+        GENERATE_STORYBOARD_VISUAL_ANALYSIS = """
+            You are an AI specialized in analyzing text to create detailed visual descriptions of characters and environments, specifically for the purpose of storyboarding or concept art creation. Your task is to read the following text and generate a comprehensive visual context for it, focusing only on elements that can be drawn or visually represented.
+
+            Here is the text you need to process:
+
+            {{TEXT}}
+
+            Please follow these steps to create the visual context:
+
+            1. Read the entire text carefully.
+
+            2. Analyze the text and establish key visual elements. Wrap your analysis process in <visual_analysis> tags, considering the following:
+
+            a. Identify main characters and list them.
+            b. For each character, note any mentioned visual characteristics.
+            c. Identify key settings and list them.
+            d. For each setting, note any mentioned visual elements.
+            e. Consider the overall mood or artistic style suggested by the text.
+
+            3. After your analysis, provide a detailed description of the visual elements inside <visual_description> tags. Include the following:
+
+            a. For each main character, describe:
+                - Approximate age
+                - Hair color, length, and style
+                - Eye color
+                - Skin tone
+                - Body type and height
+                - Distinctive visual features (e.g., scars, tattoos, glasses)
+                - Clothing style and colors
+
+            b. For each key setting, describe:
+                - Overall environment (e.g., indoor, outdoor, urban, rural)
+                - Key visual elements (e.g., furniture, landmarks, weather conditions)
+                - Color palette
+                - Lighting conditions
+                - Any unique or distinctive visual aspects
+
+            c. Suggest an overall artistic style or mood for the visuals based on the text.
+
+            Remember to focus solely on visual elements that can be represented in a storyboard or generated by an AI image generation tool. Do not include analysis of emotions, themes, or non-visual story elements.
+
+            Begin your analysis now:
             """
+        GENERATE_STORYBOARD = """
+            You are an AI specialized in creating detailed storyboards from text input. Your task is to process the following text and, using the provided context, convert it into a series of concise scenes with accompanying image descriptions.
+
+            Here is the text you need to process:
+
+            <input_text> {{TEXT}} </input_text>
+
+            Here is the context for the story:
+
+            <context> {{CONTEXT}} </context>
+            Please follow these steps to create the storyboard:
+
+            Read the entire text and the context carefully.
+
+            Divide the text into extremely short segments, with each segment being a maximum of one sentence.
+
+            List these segments, ensuring each captures a single, clear visual or action that can be easily illustrated.
+
+            Consider the visual flow and transitions between scenes, noting any significant changes in setting or mood.
+
+            Count and note the total number of segments.
+
+            Create an array of dictionaries, one for each segment. Each dictionary should have two keys: "text" and "image". Follow these guidelines:
+
+            The "text" value should be the original text of the segment in its original language.
+
+            The "image" value should be a detailed description in English for Stable Diffusion, with a maximum of 50 words.
+
+            Include the established character descriptions when they appear, maintaining consistency but describing them fully each time as if it were the first mention.
+
+            Incorporate the consistent setting elements you established earlier.
+
+            Avoid using proper names, pronouns, or references that depend on previous context. Each description should be completely self-contained and focus on the appearance of scenes, environment, and characters.
+
+            Prioritize key moments and vivid imagery over explanatory text.
+
+            Ensure the description can stand alone as a distinct visual scene.
+
+            Consider the emotional tone or theme of each scene and reflect it in the visual description.
+
+            Return only the array of dictionaries, with no additional text or explanation, and wrap your result inside <result> tags.
+
+            The output should be in the following format:
+
+            Copiar código
+            [
+                {"text": "Scene 1 text in original language", "image": "Detailed image description for scene 1 in English"},
+                {"text": "Scene 2 text in original language", "image": "Detailed image description for scene 2 in English"},
+                ...
+            ]
+            Remember to maintain consistency in character appearances and settings across all images as per the provided context. Ensure that the sequence of images, when viewed together, tells a complete and coherent story that aligns with the original text. Pay attention to the visual flow and transitions between scenes to create a smooth and engaging storyboard.
+        """
         GENERATE_TUMBNAIL = """
             Generate a detailed description for an artistic image that visually represents the given text. The image should creatively incorporate the original text within the scene. Follow these guidelines:
 
@@ -321,8 +326,3 @@ class Styles():
             When creating the image description, add a creative style inspired by the following words elements:
             intricate details, ultrafine detail, vibrant color, 8k resolution masterpiece, cinematic raw realism, UHDR,32K, ultra-detailed, metallic plating
         """
-
-class AgentPrompts(ValueEnum):
-    SHORTS_WRITER = """
-    
-    """
