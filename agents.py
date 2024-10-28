@@ -4,7 +4,7 @@ import json
 import statistics
 
 from generators.LLM import LLM
-from writer import Writer
+from tools.writer import Writer
 
 class Agent(ABC):
     def __init__(self, llm: LLM, memory_path: Path):

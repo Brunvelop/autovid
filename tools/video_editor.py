@@ -15,7 +15,7 @@ from DepthFlow import DepthScene
 from Broken.Externals.Depthmap import DepthAnythingV2
 from DepthFlow.Motion import Presets
 
-import vid_transition
+from tools import vid_transition
 
 
 class VideoEffects:

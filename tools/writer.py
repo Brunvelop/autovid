@@ -1,4 +1,8 @@
-from typing import Dict, Tuple
+import sys, os
+if os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) not in sys.path:
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from typing import Dict
 from pathlib import Path
 
 from prompts import WriterPrompts
@@ -10,8 +14,8 @@ class Writer():
         
     def generate_story(self, expertise: str, theme: str, words_number: int = 100) -> Dict[str, any]:
         output: LLMResponse = self.llm.generate_text(
-            system_prompt=WriterPrompts.System.THEME_WRITER.format(expertise=expertise),
-            prompt=WriterPrompts.User.SHORTS_TEXT_GENERATOR.format(
+            system_prompt=WriterPrompts.System.scriptwriter(expertise=expertise),
+            prompt=WriterPrompts.User.short_text_generator(
                 theme=theme,
                 words_number=words_number
             )
@@ -24,8 +28,8 @@ class Writer():
     
     def improve_story(self, expertise: str, text: str, words_number: int = 100) -> Dict[str, any]:
         output: LLMResponse = self.llm.generate_text(
-            system_prompt=WriterPrompts.System.THEME_WRITER.format(expertise=expertise),
-            prompt=WriterPrompts.User.IMPROVE_CLARITY.format(
+            system_prompt=WriterPrompts.System.scriptwriter(expertise=expertise),
+            prompt=WriterPrompts.User.short_text_improver(
                 text=text,
                 words_number=words_number
             )
@@ -46,9 +50,9 @@ class Writer():
     
     def evaluate_text(self, text: str) -> Dict[str, any]:
         evaluations = {
-            "historical_accuracy": self._evaluate_aspect(text, WriterPrompts.Evaluation.HISTORICAL_ACCURACY, lambda x: int(x.strip())),
-            "storytelling_quality": self._evaluate_aspect(text, WriterPrompts.Evaluation.STORYTELLING_QUALITY, lambda x: int(x.strip())),
-            "emotional_impact": self._evaluate_aspect(text,  WriterPrompts.Evaluation.EMOTIONAL_IMPACT, lambda x: int(x.strip())),
+            "historical_accuracy": self._evaluate_aspect(text, WriterPrompts.Evaluation.evaluate_historical_accuracy, lambda x: int(x.strip())),
+            "storytelling_quality": self._evaluate_aspect(text, WriterPrompts.Evaluation.evaluate_storytelling, lambda x: int(x.strip())),
+            "emotional_impact": self._evaluate_aspect(text,  WriterPrompts.Evaluation.evaluate_emotional_impact, lambda x: int(x.strip())),
             "word_count": len(text.split())
         }
         return evaluations
