@@ -29,6 +29,12 @@ async def index(request: Request):
         "global_status": global_status,
     })
 
+@app.get("/create/serie", response_class=HTMLResponse)
+async def index(request: Request):
+    return templates.TemplateResponse("create_serie.html", {
+        "request": request,
+    })
+
 @app.get("/storyboard/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_storyboard(request: Request, short_category: str, short_num: str):
     VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
