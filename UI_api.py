@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from UI_utils import ProductionStatusManager, VideoStatus
+from UI_utils import ProductionStatusManager, VideoProductionStatus
 from generators.image_generator import ReplicateFluxDev
 from tools.storyboarder import Storyboarder
 from tools.writer import Writer
@@ -57,7 +57,7 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
             "short_category": short_category,
             "short_num": short_num,
             "scenes": scenes,
-            "status": VideoStatus.get(status_path=status_path, writer=writer)
+            "status": VideoProductionStatus.get(status_path=status_path, writer=writer)
         }
     )
     return response
