@@ -4,14 +4,14 @@ import time
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel
 
 from UI_utils import ProductionStatusManager
 from generators.image_generator import ReplicateFluxDev
 from tools.storyboarder import Storyboarder
 from tools.writer import Writer
 from generators.LLM import LLM, Models
-
 from generators.TTS import ElevenLabsTTS, Voices
 from tools.video_editor import VideoEditor
 
@@ -20,6 +20,53 @@ app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory="templates")
 
 CHANNEL_PATH = Path("./data/MITO_TV")
+
+# Global config state
+class Config:
+    def __init__(self):
+        self._llm_model = Models.Anthropic.CLAUDE_3_5_sonnet
+        self.temperature = 0.5
+
+    @property
+    def llm_model(self):
+        return self._llm_model
+
+    @llm_model.setter
+    def llm_model(self, value: str):
+        # Convert string back to enum value
+        if value == str(Models.Anthropic.CLAUDE_3_5_sonnet):
+            self._llm_model = Models.Anthropic.CLAUDE_3_5_sonnet
+        elif value == str(Models.OpenAI.GPT4o):
+            self._llm_model = Models.OpenAI.GPT4o
+        elif value == str(Models.OpenAI.GPT4oMini):
+            self._llm_model = Models.OpenAI.GPT4oMini
+
+    def to_dict(self):
+        return {
+            "llm_model": str(self._llm_model),
+            "temperature": self.temperature,
+            "available_models": [
+                str(Models.Anthropic.CLAUDE_3_5_sonnet),
+                str(Models.OpenAI.GPT4o),
+                str(Models.OpenAI.GPT4oMini),
+            ]
+        }
+
+config = Config()
+
+class ConfigUpdate(BaseModel):
+    llm_model: str
+    temperature: float
+
+@app.get("/api/config")
+async def get_config():
+    return JSONResponse(content=config.to_dict())
+
+@app.post("/api/config")
+async def update_config(config_update: ConfigUpdate):
+    config.llm_model = config_update.llm_model
+    config.temperature = config_update.temperature
+    return JSONResponse(content=config.to_dict())
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -57,7 +104,7 @@ async def show_storyboard(request: Request, short_category: str, short_num: str)
         }
         scenes.append(scene)
 
-    writer = Writer(LLM(Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature': 0.5}))
+    writer = Writer(LLM(config.llm_model, llm_config={'temperature': config.temperature}))
     response = templates.TemplateResponse("storyboard.html", {
             "request": request,
             "short_category": short_category,
@@ -186,7 +233,7 @@ async def generate_text(request: Request, short_category: str, short_num: str):
     text_path = CHANNEL_PATH / short_category / short_num / "text/text.txt"
     
     try:
-        writer = Writer(LLM(Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature': 0.5}))
+        writer = Writer(LLM(config.llm_model, llm_config={'temperature': config.temperature}))
         generated_text = writer.generate_story(content=content, words_number=words_number)
         writer.save_text(text=generated_text, save_path=text_path)
         return HTMLResponse(content=generated_text)
