@@ -1,13 +1,12 @@
-from pathlib import Path
 import time
+from enum import Enum
+from pathlib import Path
+from dataclasses import dataclass
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
-from dataclasses import dataclass, field
-from enum import Enum
 
 from UI_utils import ProductionStatusManager
 from generators.image_generator import ReplicateFluxDev
