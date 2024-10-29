@@ -1,14 +1,22 @@
 {% include 'components/head.html' %}
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen">
     {% include 'components/navbar.html' %}
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">VIDEO PRODUCTION</h1>
+        <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
+                VIDEO PRODUCTION
+            </span>
+        </h1>
         {% include 'components/create_new_serie_button.html' %}
-        
+    </div>
+
         {% if global_status %}
-            {% for serie_name, videos in global_status.series.items() %}
-                {% include 'components/serie_production.html' %}
-            {% endfor %}
+            <div class="mt-12">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Generated Series</h2>
+                {% for serie_name, videos in global_status.series.items() %}
+                    {% include 'components/serie_production.html' %}
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
 </body>
