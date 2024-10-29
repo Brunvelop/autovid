@@ -4,9 +4,11 @@
         <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">VIDEO PRODUCTION</h1>
         {% include 'components/create_new_video_button.html' %}
         
-        {% for serie_name, videos in global_status.series.items() %}
-            {% include 'components/serie_production.html' %}
-        {% endfor %}
+        {% if global_status %}
+            {% for serie_name, videos in global_status.series.items() %}
+                {% include 'components/serie_production.html' %}
+            {% endfor %}
+        {% endif %}
     </div>
 </body>
 </html>

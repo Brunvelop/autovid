@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 
-from UI_utils import ProductionStatusManager, VideoProductionStatus
+from UI_utils import ProductionStatusManager
 from generators.image_generator import ReplicateFluxDev
 from tools.storyboarder import Storyboarder
 from tools.writer import Writer
@@ -19,11 +19,11 @@ app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
 templates = Jinja2Templates(directory="templates")
 
-BASE_SHORTS_PATH = Path("./data/MITO_TV/SHORTS")
+CHANNEL_PATH = Path("./data/MITO_TV")
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    global_status = ProductionStatusManager.get_global_status(shorts_path=BASE_SHORTS_PATH)
+    global_status = ProductionStatusManager.get_global_status(channel_path=CHANNEL_PATH)
     return templates.TemplateResponse("index.html", {
         "request": request,
         "global_status": global_status,
@@ -31,7 +31,7 @@ async def index(request: Request):
 
 @app.get("/storyboard/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_storyboard(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
     images_path = VIDEO_ASSETS_PATH / "images"
     storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
     status_path = VIDEO_ASSETS_PATH / "status.json"
@@ -70,7 +70,7 @@ async def update_image_status(
     image_index: int, 
     is_completed: str,
 ):
-    status_path = BASE_SHORTS_PATH / short_category / short_num / "status.json"
+    status_path = CHANNEL_PATH / short_category / short_num / "status.json"
     
     try:
         ProductionStatusManager.update_image_status(status_path, image_index, is_completed == 'true')
@@ -96,7 +96,7 @@ async def update_storyboard(
     if not new_value:
         raise HTTPException(status_code=400, detail=f"Missing {field} in form data")
     
-    storyboard_path = BASE_SHORTS_PATH / short_category / short_num / "text/storyboard.json"
+    storyboard_path = CHANNEL_PATH / short_category / short_num / "text/storyboard.json"
     
     try:
         Storyboarder.update_storyboard(storyboard_path, [{
@@ -112,7 +112,7 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
     form_data = await request.form()
     image_prompt = form_data._list[0][1]
 
-    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
     image_path = VIDEO_ASSETS_PATH / "images" / f"{index}.png"
 
     # Generate new image using image_generator
@@ -135,7 +135,7 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
 
 @app.get("/text/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_text(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
     text_path = VIDEO_ASSETS_PATH / "text/text.txt"
     
     if not text_path.exists():
@@ -160,7 +160,7 @@ async def update_text(request: Request, short_category: str, short_num: str):
     if not new_text:
         raise HTTPException(status_code=400, detail="Missing text in form data")
     
-    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/text.txt"
+    text_path = CHANNEL_PATH / short_category / short_num / "text/text.txt"
     
     try:
         text_path.write_text(new_text, encoding='utf-8')
@@ -177,7 +177,7 @@ async def generate_text(request: Request, short_category: str, short_num: str):
     if not content:
         raise HTTPException(status_code=400, detail="Missing content in form data")
     
-    text_path = BASE_SHORTS_PATH / short_category / short_num / "text/text.txt"
+    text_path = CHANNEL_PATH / short_category / short_num / "text/text.txt"
     
     try:
         writer = Writer(LLM(Models.Anthropic.CLAUDE_3_5_sonnet, llm_config={'temperature': 0.5}))
@@ -189,7 +189,7 @@ async def generate_text(request: Request, short_category: str, short_num: str):
 
 @app.post("/generate_tts/{short_category}/{short_num}", response_class=HTMLResponse)
 async def generate_tts(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
     storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
     audios_path = VIDEO_ASSETS_PATH / "audios"
 
@@ -215,7 +215,7 @@ async def generate_tts(request: Request, short_category: str, short_num: str):
 
 @app.post("/generate_video/{short_category}/{short_num}", response_class=HTMLResponse)
 async def generate_video(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = BASE_SHORTS_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
     images_path = VIDEO_ASSETS_PATH / "images"
     audios_path = VIDEO_ASSETS_PATH / "audios"
     output_path = VIDEO_ASSETS_PATH / f"{short_num}.mp4"
