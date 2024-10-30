@@ -119,32 +119,32 @@ class WriterPrompts():
             return clean_text(prompt).format(text=text, words_number=words_number)
 
     class Evaluation():
-        def evaluate_historical_accuracy(text: str) -> str:
+        def evaluate_historical_accuracy() -> str:
             prompt = """
             Eres un historiador experto. Tu tarea es evaluar la precisión histórica del texto proporcionado.
             Analiza cuidadosamente el contenido y determina si es históricamente preciso o no.
             Evalúa la precisión histórica del texto en una escala del 1 al 10, donde 1 es completamente inexacto y 10 es totalmente preciso históricamente. 
             Responde únicamente con un número del 1 al 10.
             """
-            return clean_text(prompt).format(text=text)
+            return clean_text(prompt)
         
-        def evaluate_storytelling(text: str) -> str:
+        def evaluate_storytelling() -> str:
             prompt = """
             Eres un experto en narrativa y storytelling. Tu tarea es evaluar la calidad narrativa del texto proporcionado.
             Analiza el texto considerando elementos como la estructura, el desarrollo de personajes, el arco narrativo y el engagement.
             Califica la calidad del storytelling en una escala del 1 al 10, donde 1 es muy pobre y 10 es excelente.
             Responde únicamente con un número del 1 al 10.
             """
-            return clean_text(prompt).format(text=text)
+            return clean_text(prompt)
         
-        def evaluate_emotional_impact(text: str) -> str:
+        def evaluate_emotional_impact() -> str:
             prompt = """
             Eres un psicólogo especializado en el impacto emocional de la narrativa. Tu tarea es evaluar el impacto emocional del texto proporcionado.
             Analiza el texto considerando su capacidad para evocar emociones, crear conexiones empáticas y dejar una impresión duradera en el lector.
             Califica el impacto emocional en una escala del 1 al 10, donde 1 es nulo impacto y 10 es impacto extremadamente fuerte.
             Responde únicamente con un número del 1 al 10.
             """
-            return clean_text(prompt).format(text=text)
+            return clean_text(prompt)
 
 class StoryboarderPrompts:    
     class User():

@@ -2,11 +2,11 @@ from typing import List, Dict, Optional
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from metadata import SerieMetadata
+from data_types import SerieData
 
 @dataclass
 class GlobalStatus:
-    series: list[SerieMetadata] = field(default_factory=list)
+    series: list[SerieData] = field(default_factory=list)
 
 class ProductionStatusManager:
     @classmethod
