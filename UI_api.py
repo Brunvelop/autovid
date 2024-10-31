@@ -15,6 +15,8 @@ from tools.writer import Writer
 from generators.LLM import LLM, Models
 from generators.TTS import ElevenLabsTTS, Voices
 from tools.video_editor import VideoEditor
+from data_types import SerieData, VideoData, VideoYoutubeDetails, VideoProductionStatus
+from serie_productor import ShortsSerieGenerator
 
 app = FastAPI()
 app.mount("/data", StaticFiles(directory="data"), name="data")
@@ -63,6 +65,42 @@ async def index(request: Request):
     return templates.TemplateResponse("create_serie.html", {
         "request": request,
     })
+
+@app.post("/create/serie")
+async def create_serie(request: Request):
+    try:
+        form_data = await request.json()
+        
+        writer = Writer(LLM(model=config.llm_model, llm_config={"temperature": config.temperature}))
+        
+        serie_dir = CHANNEL_PATH / form_data["name"].lower().replace(" ", "_")
+        serie_data = SerieData(
+            json_data_path=str(serie_dir / "data.json"),
+            serie_path=str(serie_dir),
+            num_stories=int(form_data["num_stories"]),
+            expertise=form_data["expertise"],
+            serie_theme=form_data["serie_theme"],
+            used_themes=[]
+        )
+        
+        generator = ShortsSerieGenerator(writer=writer, serie_data=serie_data)
+        result = generator.generate_serie_text()
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "Serie generated successfully",
+            "result": result.model_dump_json(),
+            "serie_path": str(serie_dir)
+        })
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Error generating serie: {str(e)}"
+            }
+        )
 
 @app.get("/storyboard/{short_category}/{short_num}", response_class=HTMLResponse)
 async def show_storyboard(request: Request, short_category: str, short_num: str):

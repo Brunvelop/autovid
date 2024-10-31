@@ -1,6 +1,40 @@
 {% include 'components/head.html' %}
 <body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen">
+    <script>
+        const createSerieData = {
+            formData: {
+                name: '',
+                expertise: '',
+                serie_theme: 'Historias increibles de humanos o humanas relacionadas con la mitología griega',
+                num_stories: 5
+            },
+            loading: false,
+
+            async createSerie() {
+                this.loading = true;
+                try {
+                    const response = await fetch('/create/serie', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.formData)
+                    });
+                    const result = await response.json();
+                    if(response.ok) {
+                        window.location.href = '/'; // Redirect to home or series list
+                    }
+                } catch(error) {
+                    console.error('Error:', error);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    </script>
+
     {% include 'components/navbar.html' %}
+
     <div class="container mx-auto px-4 py-8">
         <!-- Título Principal -->
         <h1 class="text-4xl font-bold mb-8 text-center text-gray-800">
@@ -10,39 +44,44 @@
         </h1>
 
         <!-- Sección de Creación de Series -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6" x-data="createSerieData">
             <h2 class="text-2xl font-semibold mb-4 text-gray-700 border-b pb-2">
                 <i class="fas fa-magic mr-2"></i>Create New Serie
             </h2>
-            <form class="space-y-6">
+            <form class="space-y-6" @submit.prevent="createSerie()">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Series Name</label>
-                        <input type="text" name="name" placeholder="Enter series name"
+                        <input type="text" x-model="formData.name" placeholder="Enter series name"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Expertise Area</label>
-                        <input type="text" name="expertise" placeholder="Mitología griega"
+                        <input type="text" x-model="formData.expertise" placeholder="Mitología griega"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Series Theme</label>
-                        <textarea name="serie_theme" rows="3"
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200">Historias increibles de humanos o humanas relacionadas con la mitología griega</textarea>
+                        <textarea x-model="formData.serie_theme" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200"></textarea>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Number of Stories</label>
-                        <input type="number" name="num_stories" placeholder="5" min="1" max="100"
+                        <input type="number" x-model="formData.num_stories" placeholder="5" min="1" max="100"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-200">
                     </div>
                 </div>
 
-                <button class="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-md hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
-                    Generate Serie
+                <button type="submit" 
+                        class="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-md hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md"
+                        :disabled="loading">
+                    <span x-show="!loading">Generate Serie</span>
+                    <span x-show="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Generating...
+                    </span>
                 </button>
             </form>
         </div>
