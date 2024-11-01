@@ -103,6 +103,23 @@ async def create_serie(request: Request):
             }
         )
 
+@app.post("/create/images/{serie_name}/{video_n}")
+async def create_images(request: Request, serie_name: str, video_n: str):
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
+    video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
+    
+    video_data = VideoData.get(video_data_path)
+    
+    image_generator = ReplicateFluxDev(verbose=True)
+    image_generator.generate_images(
+        prompts=[image_prompt],
+        output_dir=image_path,
+        width=768,
+        height=1344,
+        guidance_scale=3.5,
+        num_inference_steps=28
+    )
+
 @app.get("/storyboard/{serie_name}/{video_n}", response_class=HTMLResponse)
 async def show_storyboard(request: Request, serie_name: str, video_n: str):
     VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
@@ -123,39 +140,18 @@ async def show_storyboard(request: Request, serie_name: str, video_n: str):
 
     response = templates.TemplateResponse("storyboard.html", {
             "request": request,
-            "short_category": serie_name,
-            "short_num": video_n,
-            "scenes": video_data.storyboard,
-            "status": None
+            "serie_name": serie_name,
+            "video_n": video_n,
+            "video_data": video_data,
         }
     )
     return response
 
-@app.post("/storyboard/update_image_status/{short_category}/{short_num}/{image_index}/{is_completed}")
-async def update_image_status(
-    request: Request,
-    short_category: str, 
-    short_num: str, 
-    image_index: int, 
-    is_completed: str,
-):
-    status_path = CHANNEL_PATH / short_category / short_num / "status.json"
-    
-    try:
-        ProductionStatusManager.update_image_status(status_path, image_index, is_completed == 'true')
-        status_symbol = '✔️' if is_completed == 'true' else '❌'
-        return HTMLResponse(content=f'<h2 id="status{image_index}">{status_symbol}</h2>')
-    except Exception as e:
-        return HTMLResponse(
-            content=f'<h2 id="status{image_index}" style="color:red;">Error</h2>',
-            status_code=500
-        )
-
-@app.post("/storyboard/update/{short_category}/{short_num}/{index}/{field}", response_class=HTMLResponse)
+@app.post("/storyboard/update/{serie_name}/{video_n}/{index}/{field}", response_class=HTMLResponse)
 async def update_storyboard(
     request: Request, 
-    short_category: str, 
-    short_num: str, 
+    serie_name: str, 
+    video_n: str, 
     index: int,
     field: str
 ):
@@ -165,7 +161,7 @@ async def update_storyboard(
     if not new_value:
         raise HTTPException(status_code=400, detail=f"Missing {field} in form data")
     
-    storyboard_path = CHANNEL_PATH / short_category / short_num / "text/storyboard.json"
+    storyboard_path = CHANNEL_PATH / serie_name / video_n / "text/storyboard.json"
     
     try:
         Storyboarder.update_storyboard(storyboard_path, [{
@@ -176,12 +172,12 @@ async def update_storyboard(
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
-@app.post("/storyboard/remake_image/{short_category}/{short_num}/{index}", response_class=HTMLResponse)
-async def remake_image(request: Request, short_category: str, short_num: str, index: int):
+@app.post("/storyboard/remake_image/{serie_name}/{video_n}/{index}", response_class=HTMLResponse)
+async def remake_image(request: Request, serie_name: str, video_n: str, index: int):
     form_data = await request.form()
     image_prompt = form_data._list[0][1]
 
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
     image_path = VIDEO_ASSETS_PATH / "images" / f"{index}.png"
 
     # Generate new image using image_generator
@@ -204,32 +200,32 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
 
 @app.get("/text", response_class=HTMLResponse)
 async def show_text(request: Request, json_data_path: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
     text_path = VIDEO_ASSETS_PATH / "text/text.txt"
     
     if not text_path.exists():
-        raise HTTPException(status_code=404, detail=f"Missing text file for {short_category}/{short_num}")
+        raise HTTPException(status_code=404, detail=f"Missing text file for {serie_name}/{video_n}")
 
     text_content = text_path.read_text(encoding='utf-8')
 
     response = templates.TemplateResponse("text.html", {
             "request": request,
-            "short_category": short_category,
-            "short_num": short_num,
+            "serie_name": serie_name,
+            "video_n": video_n,
             "text_content": text_content,
         }
     )
     return response
 
-@app.post("/text/update/{short_category}/{short_num}", response_class=HTMLResponse)
-async def update_text(request: Request, short_category: str, short_num: str):
+@app.post("/text/update/{serie_name}/{video_n}", response_class=HTMLResponse)
+async def update_text(request: Request, serie_name: str, video_n: str):
     form_data = await request.form()
     new_text = form_data.get("text")
     
     if not new_text:
         raise HTTPException(status_code=400, detail="Missing text in form data")
     
-    text_path = CHANNEL_PATH / short_category / short_num / "text/text.txt"
+    text_path = CHANNEL_PATH / serie_name / video_n / "text/text.txt"
     
     try:
         text_path.write_text(new_text, encoding='utf-8')
@@ -237,8 +233,8 @@ async def update_text(request: Request, short_category: str, short_num: str):
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
-@app.post("/text/generate/{short_category}/{short_num}", response_class=HTMLResponse)
-async def generate_text(request: Request, short_category: str, short_num: str):
+@app.post("/text/generate/{serie_name}/{video_n}", response_class=HTMLResponse)
+async def generate_text(request: Request, serie_name: str, video_n: str):
     form_data = await request.form()
     content = form_data.get("content")
     words_number = int(form_data.get("words_number", 100))
@@ -246,7 +242,7 @@ async def generate_text(request: Request, short_category: str, short_num: str):
     if not content:
         raise HTTPException(status_code=400, detail="Missing content in form data")
     
-    text_path = CHANNEL_PATH / short_category / short_num / "text/text.txt"
+    text_path = CHANNEL_PATH / serie_name / video_n / "text/text.txt"
     
     try:
         writer = Writer(LLM(config.llm_model, llm_config={'temperature': config.temperature}))
@@ -256,14 +252,14 @@ async def generate_text(request: Request, short_category: str, short_num: str):
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
-@app.post("/generate_tts/{short_category}/{short_num}", response_class=HTMLResponse)
-async def generate_tts(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
+@app.post("/generate_tts/{serie_name}/{video_n}", response_class=HTMLResponse)
+async def generate_tts(request: Request, serie_name: str, video_n: str):
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
     storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
     audios_path = VIDEO_ASSETS_PATH / "audios"
 
     if not storyboard_path.exists():
-        raise HTTPException(status_code=404, detail=f"Storyboard not found for {short_category}/{short_num}")
+        raise HTTPException(status_code=404, detail=f"Storyboard not found for {serie_name}/{video_n}")
 
     storyboard = Storyboarder.load_storyboard(storyboard_path)
 
@@ -282,15 +278,15 @@ async def generate_tts(request: Request, short_category: str, short_num: str):
     except Exception as e:
         return HTMLResponse(content=f"<p style='color:red;'>Error generating TTS: {str(e)}</p>", status_code=500)
 
-@app.post("/generate_video/{short_category}/{short_num}", response_class=HTMLResponse)
-async def generate_video(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
+@app.post("/generate_video/{serie_name}/{video_n}", response_class=HTMLResponse)
+async def generate_video(request: Request, serie_name: str, video_n: str):
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
     images_path = VIDEO_ASSETS_PATH / "images"
     audios_path = VIDEO_ASSETS_PATH / "audios"
-    output_path = VIDEO_ASSETS_PATH / f"{short_num}.mp4"
+    output_path = VIDEO_ASSETS_PATH / f"{video_n}.mp4"
 
     if not images_path.exists() or not audios_path.exists():
-        raise HTTPException(status_code=404, detail=f"Missing images or audios for {short_category}/{short_num}")
+        raise HTTPException(status_code=404, detail=f"Missing images or audios for {serie_name}/{video_n}")
 
     try:
         VideoEditor.generate_depth_video(

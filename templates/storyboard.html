@@ -1,130 +1,149 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Storyboard {{ short_num }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
-    <style>
-        .loading {
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-    </style>
-</head>
-<body class="bg-slate-900 text-gray-200 font-sans p-4">
-    <h1 class="text-2xl font-bold mb-4">STORYBOARD {{ short_category }} {{ short_num }} {{ '✔️' if status['completed'] else '❌' }}</h1>
-    <div class="mb-4 space-x-4">
-        <a href="{{ url_for('index') }}" class="text-blue-400 hover:underline">Volver al inicio</a>
-        <a href="{{ url_for('show_storyboard', short_category=short_category, short_num=short_num|int - 1) }}" class="text-blue-400 hover:underline">⬅️</a>
-        <a href="{{ url_for('show_storyboard', short_category=short_category, short_num=short_num|int + 1) }}" class="text-blue-400 hover:underline">➡️</a>
+{% include 'components/head.html' %}
+<script>
+    const storyboardData = {
+        scenes: '',
+        status: '',
+        ttsStatus: '',
+        videoStatus: '',
 
-        <button 
-            hx-post="{{ url_for('generate_tts', short_category=short_category, short_num=short_num) }}"
-            hx-trigger="click"
-            hx-target="#tts_status"
-            hx-swap="innerHTML"
-            class="px-4 py-2 bg-green-500 text-white rounded-md"
-        >Generar TTS</button>
+        async createImages() {
+            const response = await fetch("{{ url_for('create_images', serie_name=serie_name, video_n=video_n) }}", {
+                method: 'POST'
+            });
+            this.ttsStatus = await response.text();
+        },
 
-        <button 
-            hx-post="{{ url_for('generate_video', short_category=short_category, short_num=short_num) }}"
-            hx-trigger="click"
-            hx-target="#video_status"
-            hx-swap="innerHTML"
-            class="px-4 py-2 bg-blue-500 text-white rounded-md"
-        >Generar Video</button>
-    </div>
-    <div class="mb-4">
-        <span id="tts_status"></span>
-        <span id="video_status"></span>
-    </div>
-    <div class="flex flex-wrap -mx-2">
-        {% for scene in scenes %}
-        <div class="w-72 m-2 border border-gray-600 p-2" id="scene{{ loop.index0 }}">
-            <div class="flex justify-between items-center mb-2">
-                <h2 id="status{{ loop.index0 }}" class="text-xl">
-                    {{ '✔️' if status['images_completed'][loop.index0] else '❌' }}
-                </h2>
-                <div class="flex space-x-2">
-                    <button 
-                        hx-post="/storyboard/update_image_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/false" 
-                        hx-target="#status{{ loop.index0 }}" 
-                        hx-swap="outerHTML" 
-                        class="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md shadow-sm transition duration-150 ease-in-out"
-                    >
-                        ❌
-                    </button>
-                    <button 
-                        hx-post="/storyboard/update_image_status/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/true" 
-                        hx-target="#status{{ loop.index0 }}" 
-                        hx-swap="outerHTML" 
-                        class="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md shadow-sm transition duration-150 ease-in-out"
-                    >
-                        ✔️
-                    </button>
-                </div>
-            </div>
-            <div id="image{{ loop.index0 }}">
-                <img src="{{ scene.image_url }}" class="w-full">
-            </div>
-            <audio controls class="w-full mt-2">
-                <source src="{{ scene.audio_url }}" type="audio/mpeg">
-                Tu navegador no soporta el elemento de audio.
-            </audio>
-            <div class="mt-2 space-y-2">
-                <div id="narration{{ loop.index0 }}">
-                    <label for="text{{ loop.index }}" class="block font-bold text-sm">Narración:</label>
-                    <textarea 
-                        id="text{{ loop.index }}" 
-                        name="text" 
-                        class="w-full h-24 p-1 text-sm bg-slate-800"
-                        hx-post="/storyboard/update/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/text"
-                        hx-trigger="input changed delay:500ms"
-                        hx-swap="innerHTML"
-                    >{{ scene.text }}</textarea>
-                </div>
-                <div id="image_prompt{{ loop.index0 }}">
-                    <label for="image_prompt_text{{ loop.index0 }}" class="block font-bold text-sm">Prompt imagen:</label>
-                    <textarea 
-                        id="image_prompt_text{{ loop.index0 }}" 
-                        name="image" 
-                        class="w-full h-40 p-1 text-sm bg-slate-800"
-                        hx-post="/storyboard/update/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}/image"
-                        hx-trigger="input changed delay:500ms"
-                        hx-swap="innerHTML"
-                    >{{ scene.image_prompt }}</textarea>
-                    <button 
-                        hx-post="/remake_prompt/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
-                        hx-include="#text{{ loop.index }}" 
-                        hx-target="#scene{{ loop.index0 }}" 
-                        hx-swap="outerHTML" 
-                        class="px-2 py-1 text-sm">✍️</button>
-                    <button 
-                        hx-post="/storyboard/remake_image/{{ short_category }}/{{ short_num }}/{{ loop.index0 }}" 
-                        hx-include="#image_prompt_text{{ loop.index0 }}" 
-                        hx-target="#image{{ loop.index0 }}" 
-                        hx-swap="outerHTML" 
-                        hx-indicator="#spinner{{ loop.index0 }}"
-                        hx-on::before-request="this.classList.add('loading')"
-                        hx-on::after-request="this.classList.remove('loading'); reloadImage({{ loop.index0 }})"
-                        class="px-2 py-1 text-sm">🎨</button>
-                    <div id="spinner{{ loop.index0 }}" class="htmx-indicator">Regenerando imagen...</div>
-                    <div id="error{{ loop.index0 }}" class="text-red-500"></div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    <script>
-        function reloadImage(index) {
-            const imgContainer = document.querySelector(`#image${index}`);
-            const img = imgContainer.querySelector('img');
-            if (img) {
-                const newSrc = img.src.split('?')[0] + '?t=' + new Date().getTime();
-                img.src = newSrc;
+        async generateTTS() {
+            const response = await fetch("{{ url_for('generate_tts', serie_name=serie_name, video_n=video_n) }}", {
+                method: 'POST'
+            });
+            this.ttsStatus = await response.text();
+        },
+
+        async generateVideo() {
+            const response = await fetch("{{ url_for('generate_video', serie_name=serie_name, video_n=video_n) }}", {
+                method: 'POST'
+            });
+            this.videoStatus = await response.text();
+        },
+
+        async updateStatus(sceneIndex, value) {
+            const response = await fetch(`/storyboard/update_image_status/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${value}`, {
+                method: 'POST'
+            });
+            this.status.images_completed[sceneIndex] = value;
+        },
+
+        async updateScene(sceneIndex, field, value) {
+            await fetch(`/storyboard/update/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${field}`, {
+                method: 'POST',
+                body: new URLSearchParams({[field]: value})
+            });
+        },
+
+        async remakePrompt(sceneIndex) {
+            const response = await fetch(`/remake_prompt/{{ serie_name }}/{{ video_n }}/${sceneIndex}`, {
+                method: 'POST',
+                body: new URLSearchParams({text: this.scenes[sceneIndex].text})
+            });
+            const updatedScene = await response.json();
+            this.scenes[sceneIndex] = updatedScene;
+        },
+
+        async remakeImage(sceneIndex) {
+            this.scenes[sceneIndex].loading = true;
+            try {
+                const response = await fetch(`/storyboard/remake_image/{{ serie_name }}/{{ video_n }}/${sceneIndex}`, {
+                    method: 'POST',
+                    body: new URLSearchParams({image_prompt: this.scenes[sceneIndex].image_prompt})
+                });
+                const newImage = await response.json();
+                this.scenes[sceneIndex].image_url = newImage.url;
+            } catch (error) {
+                this.scenes[sceneIndex].error = error.message;
             }
+            this.scenes[sceneIndex].loading = false;
         }
-    </script>
+    }
+</script>
+
+<body class="bg-gray-100 p-4" x-data="storyboardData">
+    {% include 'components/navbar.html' %}
+    <!-- Header -->
+    <div class="w-full mb-4 flex flex-col items-center justify-center relative z-10">
+        <h1 class="text-2xl font-bold">STORYBOARD {{ serie_name }} {{ video_n }}</h1>
+        <!-- Navigation -->
+        <div class="flex gap-2 mt-2">
+            <a href="{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n|int - 1) }}" class="text-blue-500 hover:underline">⬅️</a>
+            <a href="{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n|int + 1) }}" class="text-blue-500 hover:underline">➡️</a>
+            
+            {% if not video_data.production_status.images_generated %}
+            <button @click="generateImages" class="bg-blue-500 text-white px-3 py-1 rounded">
+                Generate Images <!-- ---------------------------------------------------------------------------------------------------------------------------------------- -->
+            </button>
+            {% endif %}
+
+            <button @click="generateTTS"class="bg-blue-500 text-white px-3 py-1 rounded">
+                Generate TTS
+            </button>
+            
+            <button @click="generateVideo" class="bg-blue-500 text-white px-3 py-1 rounded">
+                Generate Video
+            </button>
+        </div>
+    </div>
+    <!-- Scenes Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <template x-for="(scene, index) in scenes" :key="index">
+            <div class="bg-white p-4 rounded shadow">
+                <!-- Status -->
+                <div class="flex justify-between mb-2">
+                    <div class="flex gap-2">
+                        <button @click="updateStatus(index, false)" 
+                                class="bg-red-500 text-white px-2 py-1 rounded text-sm">❌</button>
+                        <button @click="updateStatus(index, true)" 
+                                class="bg-green-500 text-white px-2 py-1 rounded text-sm">✔️</button>
+                    </div>
+                </div>
+
+                <!-- Image -->
+                <div class="mb-2">
+                    <img :src="scene.image_url" class="w-full rounded">
+                </div>
+
+                <!-- Audio -->
+                <audio controls class="w-full mb-2">
+                    <source :src="scene.audio_url" type="audio/mpeg">
+                </audio>
+
+                <!-- Text Inputs -->
+                <div class="mb-2">
+                    <label class="block text-sm mb-1">Narration:</label>
+                    <textarea 
+                        x-model="scene.text"
+                        @input.debounce.500ms="updateScene(index, 'text', $event.target.value)"
+                        class="w-full h-24 p-2 border rounded"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm mb-1">Image Prompt:</label>
+                    <textarea 
+                        x-model="scene.image_prompt"
+                        @input.debounce.500ms="updateScene(index, 'image', $event.target.value)"
+                        class="w-full h-32 p-2 border rounded"></textarea>
+                    
+                    <div class="flex gap-2 mt-2">
+                        <button @click="remakePrompt(index)"
+                                class="bg-blue-500 text-white px-3 py-1 rounded">✍️</button>
+                        <button @click="remakeImage(index)"
+                                class="bg-blue-500 text-white px-3 py-1 rounded">🎨</button>
+                    </div>
+
+                    <div x-show="scene.loading" class="mt-2">Regenerating image...</div>
+                    <div x-show="scene.error" x-text="scene.error" class="text-red-500"></div>
+                </div>
+            </div>
+        </template>
+    </div>
 </body>
 </html>
