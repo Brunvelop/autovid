@@ -1,146 +1,183 @@
 {% include 'components/head.html' %}
 <script>
-    const storyboardData = {
-        scenes: '',
-        status: '',
-        ttsStatus: '',
-        videoStatus: '',
+    function initStoryboardData() {
+        return {
+            scenes: [],
+            status: {},
+            ttsStatus: '',
+            videoStatus: '',
 
-        async createImages() {
-            const response = await fetch("{{ url_for('create_images', serie_name=serie_name, video_n=video_n) }}", {
-                method: 'POST'
-            });
-            this.ttsStatus = await response.text();
-        },
+            init() {
+                const videoData = {{ video_data | safe }};
+                this.scenes = videoData.storyboard.scenes;
+                this.status = videoData.production_status;
+            },
 
-        async generateTTS() {
-            const response = await fetch("{{ url_for('generate_tts', serie_name=serie_name, video_n=video_n) }}", {
-                method: 'POST'
-            });
-            this.ttsStatus = await response.text();
-        },
+            getImageUrl(index) {
+                return `/data/MITO_TV/{{ serie_name.lower().replace(" ", "_") }}/{{ video_n }}/images/${index}.png`;
+            },
 
-        async generateVideo() {
-            const response = await fetch("{{ url_for('generate_video', serie_name=serie_name, video_n=video_n) }}", {
-                method: 'POST'
-            });
-            this.videoStatus = await response.text();
-        },
-
-        async updateStatus(sceneIndex, value) {
-            const response = await fetch(`/storyboard/update_image_status/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${value}`, {
-                method: 'POST'
-            });
-            this.status.images_completed[sceneIndex] = value;
-        },
-
-        async updateScene(sceneIndex, field, value) {
-            await fetch(`/storyboard/update/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${field}`, {
-                method: 'POST',
-                body: new URLSearchParams({[field]: value})
-            });
-        },
-
-        async remakePrompt(sceneIndex) {
-            const response = await fetch(`/remake_prompt/{{ serie_name }}/{{ video_n }}/${sceneIndex}`, {
-                method: 'POST',
-                body: new URLSearchParams({text: this.scenes[sceneIndex].text})
-            });
-            const updatedScene = await response.json();
-            this.scenes[sceneIndex] = updatedScene;
-        },
-
-        async remakeImage(sceneIndex) {
-            this.scenes[sceneIndex].loading = true;
-            try {
-                const response = await fetch(`/storyboard/remake_image/{{ serie_name }}/{{ video_n }}/${sceneIndex}`, {
-                    method: 'POST',
-                    body: new URLSearchParams({image_prompt: this.scenes[sceneIndex].image_prompt})
+            async createImages() {
+                const response = await fetch("{{ url_for('create_images', serie_name=serie_name, video_n=video_n) }}", {
+                    method: 'POST'
                 });
-                const newImage = await response.json();
-                this.scenes[sceneIndex].image_url = newImage.url;
-            } catch (error) {
-                this.scenes[sceneIndex].error = error.message;
+                this.ttsStatus = await response.text();
+            },
+
+            async generateTTS() {
+                const response = await fetch("{{ url_for('generate_tts', serie_name=serie_name, video_n=video_n) }}", {
+                    method: 'POST'
+                });
+                this.ttsStatus = await response.text();
+            },
+
+            async generateVideo() {
+                const response = await fetch("{{ url_for('generate_video', serie_name=serie_name, video_n=video_n) }}", {
+                    method: 'POST'
+                });
+                this.videoStatus = await response.text();
+            },
+
+            async updateStatus(sceneIndex, value) {
+                const response = await fetch(`/storyboard/update_image_status/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${value}`, {
+                    method: 'POST'
+                });
+                this.status.images_completed[sceneIndex] = value;
+            },
+
+            async updateScene(sceneIndex, field, value) {
+                await fetch(`/storyboard/update/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${field}`, {
+                    method: 'POST',
+                    body: new URLSearchParams({[field]: value})
+                });
+            },
+
+            async remakePrompt(sceneIndex) {
+                const response = await fetch(`/remake_prompt/{{ serie_name }}/{{ video_n }}/${sceneIndex}`, {
+                    method: 'POST',
+                    body: new URLSearchParams({text: this.scenes[sceneIndex].text})
+                });
+                const updatedScene = await response.json();
+                this.scenes[sceneIndex] = updatedScene;
+            },
+
+            async remakeImage(sceneIndex) {
+                this.scenes[sceneIndex].loading = true;
+                try {
+                    const response = await fetch(`/storyboard/remake_image/{{ serie_name }}/{{ video_n }}/${sceneIndex}`, {
+                        method: 'POST',
+                        body: new URLSearchParams({image: this.scenes[sceneIndex].image})
+                    });
+                    const newImage = await response.json();
+                    this.scenes[sceneIndex].image_url = newImage.url;
+                } catch (error) {
+                    this.scenes[sceneIndex].error = error.message;
+                }
+                this.scenes[sceneIndex].loading = false;
             }
-            this.scenes[sceneIndex].loading = false;
         }
     }
 </script>
 
-<body class="bg-gray-100 p-4" x-data="storyboardData">
+<body class="bg-gray-100 p-4" x-data="initStoryboardData()" x-init="init()">
     {% include 'components/navbar.html' %}
     <!-- Header -->
-    <div class="w-full mb-4 mt-16 flex flex-col items-center justify-center">
-        <h1 class="text-2xl font-bold">STORYBOARD {{ serie_name }} {{ video_n }}</h1>
-        <!-- Navigation -->
-        <div class="flex gap-2 mt-2">
-            <a href="{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n|int - 1) }}" class="text-blue-500 hover:underline">⬅️</a>
-            <a href="{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n|int + 1) }}" class="text-blue-500 hover:underline">➡️</a>
-            
-            {% if not video_data.production_status.images_generated %}
-            <button @click="generateImages" class="bg-blue-500 text-white px-3 py-1 rounded">
-                Generate Images <!-- ---------------------------------------------------------------------------------------------------------------------------------------- -->
-            </button>
-            {% endif %}
+    <div class="w-full mb-8 mt-16">
+        <div class="bg-white shadow-lg rounded-xl p-6 max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500 text-center">
+                STORYBOARD {{ serie_name }} {{ video_n }}
+            </h1>
+            <!-- Navigation -->
+            <div class="flex justify-center gap-4 mt-6">
+                <a href="{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n|int - 1) }}" 
+                   class="px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full text-sm font-medium text-gray-700 hover:from-purple-200 hover:to-blue-200 transition duration-200">
+                    ⬅️ Previous
+                </a>
+                <a href="{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n|int + 1) }}" 
+                   class="px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full text-sm font-medium text-gray-700 hover:from-purple-200 hover:to-blue-200 transition duration-200">
+                    Next ➡️
+                </a>
+                
+                <template x-if="!status.images_generated">
+                    <button @click="createImages" 
+                            class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                        Generate Images
+                    </button>
+                </template>
 
-            <button @click="generateTTS"class="bg-blue-500 text-white px-3 py-1 rounded">
-                Generate TTS
-            </button>
-            
-            <button @click="generateVideo" class="bg-blue-500 text-white px-3 py-1 rounded">
-                Generate Video
-            </button>
+                <button @click="generateTTS" 
+                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                    Generate TTS
+                </button>
+                
+                <button @click="generateVideo" 
+                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                    Generate Video
+                </button>
+            </div>
         </div>
     </div>
+
     <!-- Scenes Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6 max-w-[95%] mx-auto">
         <template x-for="(scene, index) in scenes" :key="index">
-            <div class="bg-white p-4 rounded shadow">
+            <div class="bg-white shadow-lg rounded-xl p-6 transform transition duration-200 hover:scale-[1.01]">
                 <!-- Status -->
-                <div class="flex justify-between mb-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Scene #<span x-text="index + 1"></span></h3>
                     <div class="flex gap-2">
                         <button @click="updateStatus(index, false)" 
-                                class="bg-red-500 text-white px-2 py-1 rounded text-sm">❌</button>
+                                class="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition duration-200">
+                            ❌
+                        </button>
                         <button @click="updateStatus(index, true)" 
-                                class="bg-green-500 text-white px-2 py-1 rounded text-sm">✔️</button>
+                                class="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition duration-200">
+                            ✔️
+                        </button>
                     </div>
                 </div>
 
                 <!-- Image -->
-                <div class="mb-2">
-                    <img :src="scene.image_url" class="w-full rounded">
+                <div class="mb-4 flex justify-center">
+                    <img :src="getImageUrl(index)" class="w-[200px] object-contain rounded-lg shadow-md">
                 </div>
 
                 <!-- Audio -->
-                <audio controls class="w-full mb-2">
+                <audio controls class="w-full mb-4 rounded bg-gray-50">
                     <source :src="scene.audio_url" type="audio/mpeg">
                 </audio>
 
                 <!-- Text Inputs -->
-                <div class="mb-2">
-                    <label class="block text-sm mb-1">Narration:</label>
-                    <textarea 
-                        x-model="scene.text"
-                        @input.debounce.500ms="updateScene(index, 'text', $event.target.value)"
-                        class="w-full h-24 p-2 border rounded"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm mb-1">Image Prompt:</label>
-                    <textarea 
-                        x-model="scene.image_prompt"
-                        @input.debounce.500ms="updateScene(index, 'image', $event.target.value)"
-                        class="w-full h-32 p-2 border rounded"></textarea>
-                    
-                    <div class="flex gap-2 mt-2">
-                        <button @click="remakePrompt(index)"
-                                class="bg-blue-500 text-white px-3 py-1 rounded">✍️</button>
-                        <button @click="remakeImage(index)"
-                                class="bg-blue-500 text-white px-3 py-1 rounded">🎨</button>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Narration:</label>
+                        <textarea 
+                            x-model="scene.text"
+                            @input.debounce.500ms="updateScene(index, 'text', $event.target.value)"
+                            class="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"></textarea>
                     </div>
 
-                    <div x-show="scene.loading" class="mt-2">Regenerating image...</div>
-                    <div x-show="scene.error" x-text="scene.error" class="text-red-500"></div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Image Prompt:</label>
+                        <textarea 
+                            x-model="scene.image"
+                            @input.debounce.500ms="updateScene(index, 'image', $event.target.value)"
+                            class="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"></textarea>
+                        
+                        <div class="flex gap-2 mt-3">
+                            <button @click="remakePrompt(index)"
+                                    class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                                ✍️ Remake Prompt
+                            </button>
+                            <button @click="remakeImage(index)"
+                                    class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                                🎨 Remake Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="scene.loading" class="text-center text-sm text-gray-600">Regenerating image...</div>
+                    <div x-show="scene.error" x-text="scene.error" class="text-center text-sm text-red-500"></div>
                 </div>
             </div>
         </template>

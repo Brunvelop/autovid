@@ -3,6 +3,7 @@
         showSettings: false,
         config: {
             llm_model: '',
+            image_generator: '',
             temperature: 0,
             available_llm_models: [],
             available_image_generators: []
@@ -21,6 +22,7 @@
                 },
                 body: JSON.stringify({
                     llm_model: this.config.llm_model,
+                    image_generator: this.config.image_generator,
                     temperature: this.config.temperature
                 })
             });

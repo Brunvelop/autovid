@@ -34,6 +34,16 @@ class ImageGenerators():
                 'guidance_scale': 0.0
             }
         }
+    class Replicate(Enum):
+        FLUX1_SCHNELL = {
+            'name': 'black-forest-labs/FLUX.1-schnell',
+            'config': {
+                'height': 1280,
+                'width': 768,
+                'num_inference_steps': 1,
+                'guidance_scale': 0.0
+            }
+        }
 
 class ImageGenerator(ABC):
     def __new__(cls, generator: ImageGenerators, generator_config: dict = None):
@@ -42,11 +52,11 @@ class ImageGenerator(ABC):
                 return super().__new__(FluxSchell)
             if generator == ImageGenerators.Local.SDXL_TURBO:
                 return super().__new__(SDXLTURBO)
+            if generator == ImageGenerators.Replicate.FLUX1_SCHNELL:
+                return super().__new__(ReplicateFluxDev)
             
             if generator == ImageGenerators.SDXL:
                 return super().__new__(SDXLTURBO)
-            if generator == ImageGenerators.REPLICATE:
-                return super().__new__(ReplicateFluxDev)
             if generator == ImageGenerators.INFRA:
                 return super().__new__(InfraFluxDev)
             if generator == ImageGenerators.FAKE:
@@ -57,6 +67,7 @@ class ImageGenerator(ABC):
     def __init__(self, generator: ImageGenerators, generator_config: dict = None):
         self.generator = generator
         self.generator_config = generator_config or {}
+        self.cache_dir = Path("models")
         self.pipe = self._load_pipeline()
 
     @abstractmethod
@@ -144,17 +155,17 @@ class SDXLTURBO(ImageGenerator):
 
     def _load_pipeline(self) -> AutoPipelineForText2Image:
         pipe = AutoPipelineForText2Image.from_pretrained(
-                ImageGenerators.SDXL_TURBO.value,
+                ImageGenerators.Local.SDXL_TURBO.value.get('name'),
                 torch_dtype=torch.float16,
                 variant="fp16",
                 cache_dir=self.cache_dir
             )
         pipe.to("cuda")
-        if self.low_vram:
-            pipe.enable_attention_slicing()
+        # if self.low_vram:
+        #     pipe.enable_attention_slicing()
         return pipe
 
-class ReplicateFluxDev(ImageGenerator):
+class ReplicateFluxDev():
     def __init__(self, verbose: bool = True):
         load_dotenv()
         self.api_token = os.getenv('REPLICATE_API_TOKEN')
@@ -163,7 +174,7 @@ class ReplicateFluxDev(ImageGenerator):
         self.verbose = verbose
 
     def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
-        generation_config = ImageGeneratorConfig.FLUX1_SCHNELL.value.copy()
+        generation_config = ImageGenerators.Replicate.FLUX1_SCHNELL.value.get('config').copy()
         generation_config.update(**kwargs)
 
         if isinstance(output_dir, Path) and output_dir.suffix == ".png":
@@ -189,11 +200,11 @@ class ReplicateFluxDev(ImageGenerator):
                 image_path = output_dir / f"{i}.png"
             self._save_image(image_base64, image_path)
 
-            if self.verbose:
-                print(f"Image saved: {image_path}")
+        #     if self.verbose:
+        #         print(f"Image saved: {image_path}")
         
-        if self.verbose:
-            print(f"All images generated and saved in: {output_dir}")
+        # if self.verbose:
+        #     print(f"All images generated and saved in: {output_dir}")
 
     def _query(self, prompt: str, **kwargs):
         input_data = {
@@ -214,11 +225,20 @@ class ReplicateFluxDev(ImageGenerator):
         )
         return output
 
-    def _save_image(self, image_base64: str, save_path: Path):
+    def _save_image_old(self, image_base64: str, save_path: Path):
         if image_base64.startswith('data:image'):
             image_base64 = image_base64.split(',', 1)[1]
         
         image_data = base64.b64decode(image_base64)
+        
+        with open(save_path, 'wb') as f:
+            f.write(image_data)
+    
+    def _save_image(self, image_url: str, save_path: Path):
+        response = requests.get(image_url)
+        response.raise_for_status() # Raise exception for failed requests
+        
+        image_data = response.content
         
         with open(save_path, 'wb') as f:
             f.write(image_data)

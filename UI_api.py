@@ -27,7 +27,7 @@ CHANNEL_PATH = Path("./data/MITO_TV")
 @dataclass
 class Config:
     llm_model: Models = Models.OpenAI.GPT4oMini
-    image_generator: ImageGenerator = ImageGenerators.Local.SDXL_TURBO
+    image_generator: ImageGenerator = ImageGenerators.Replicate.FLUX1_SCHNELL
     temperature: float = 0.5
     
     def to_dict(self):
@@ -62,6 +62,7 @@ async def update_config(request: Request):
     config_update = await request.json()
     
     config.llm_model = getattr(getattr(Models, provider := config_update["llm_model"].split('.')[0]), config_update["llm_model"].split('.')[1])
+    config.image_generator = getattr(getattr(ImageGenerators, provider := config_update["image_generator"].split('.')[0]), config_update["image_generator"].split('.')[1])
     config.temperature = float(config_update["temperature"])
     return JSONResponse(content=config.to_dict())
 
@@ -117,8 +118,8 @@ async def create_images(request: Request, serie_name: str, video_n: str):
 
     image_generator = ImageGenerator(generator=config.image_generator)
     image_generator.generate_images(
-        prompts=[image_prompt],
-        output_dir=image_path,
+        prompts=[scene.text for scene in video_data.storyboard.scenes],
+        output_dir=VIDEO_ASSETS_PATH / "images",
         width=768,
         height=1344,
         guidance_scale=3.5,
@@ -133,21 +134,11 @@ async def show_storyboard(request: Request, serie_name: str, video_n: str):
     
     video_data = VideoData.get(video_data_path)
 
-    # scenes = []
-    # for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
-    #     scene = {
-    #         'image_url': "/" + (images_path / image.name).as_posix(),
-    #         'text': storyboard[idx].get('text', ''),
-    #         'image_prompt': storyboard[idx].get('image', ''),
-    #         'audio_url': "/" + (VIDEO_ASSETS_PATH / "audios" / f"{image.stem}.mp3").as_posix(),
-    #     }
-    #     scenes.append(scene)
-
     response = templates.TemplateResponse("storyboard.html", {
             "request": request,
             "serie_name": serie_name,
             "video_n": video_n,
-            "video_data": video_data,
+            "video_data": video_data.model_dump_json(),
         }
     )
     return response
@@ -177,6 +168,28 @@ async def update_storyboard(
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
+@app.post("/storyboard/update_image_status/{serie_name}/{video_n}/{index}/{value}", response_class=HTMLResponse)
+async def update_image_status(
+    request: Request, 
+    serie_name: str, 
+    video_n: str, 
+    index: int,
+    value: bool
+):
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
+    video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
+    
+    video_data = VideoData.get(video_data_path)
+    
+    # Ensure the list has enough elements
+    while len(video_data.production_status.images_completed) <= index:
+        video_data.production_status.images_completed.append(False)
+    
+    video_data.production_status.images_completed[index] = value
+    video_data.save()
+    
+    return HTMLResponse(content=f'<p>💾✔️</p>')
+
 @app.post("/storyboard/remake_image/{serie_name}/{video_n}/{index}", response_class=HTMLResponse)
 async def remake_image(request: Request, serie_name: str, video_n: str, index: int):
     form_data = await request.form()
@@ -186,7 +199,7 @@ async def remake_image(request: Request, serie_name: str, video_n: str, index: i
     image_path = VIDEO_ASSETS_PATH / "images" / f"{index}.png"
 
     # Generate new image using image_generator
-    image_generator = ReplicateFluxDev(verbose=True)
+    image_generator = ImageGenerator(generator=config.image_generator)
     image_generator.generate_images(
         prompts=[image_prompt],
         output_dir=image_path,
@@ -203,9 +216,9 @@ async def remake_image(request: Request, serie_name: str, video_n: str, index: i
     # Return updated image HTML with the unique URL, wrapped in a div with the correct ID
     return HTMLResponse(content=f'<div id="image{index}"><img src="{image_url}" class="w-full" onload="this.style.opacity=1"></div>')
 
-@app.get("/text", response_class=HTMLResponse)
-async def show_text(request: Request, json_data_path: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
+@app.get("/text/{serie_name}/{video_n}", response_class=HTMLResponse)
+async def show_text(request: Request, serie_name: str, video_n: str):
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
     text_path = VIDEO_ASSETS_PATH / "text/text.txt"
     
     if not text_path.exists():
