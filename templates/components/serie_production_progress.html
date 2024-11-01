@@ -1,4 +1,4 @@
-<div x-data="{ open: false }" class="mb-8">
+<div x-data="{ open: false }" class="mb-4 mt-4">
     <!-- Serie Header Card -->
     <div @click="open = !open" 
          class="bg-white shadow-lg rounded-xl p-6 cursor-pointer transform transition duration-200 hover:scale-[1.01] relative z-10">
@@ -62,13 +62,13 @@
                 <!-- Status Indicators -->
                 <div class="col-span-3 flex gap-4">
                     {% set status_items = [
-                        ('text_completed', 'Text', 'fa-file-alt'),
-                        ('storyboard_completed', 'Storyboard', 'fa-images'),
-                        ('tts_completed', 'TTS', 'fa-microphone'),
-                        ('ready_to_upload', 'Ready', 'fa-check-circle')
+                        ('text_completed', 'Text', 'fa-file-alt', None),
+                        ('storyboard_completed', 'Storyboard', 'fa-images', 'show_storyboard'),
+                        ('tts_completed', 'TTS', 'fa-microphone', None),
+                        ('ready_to_upload', 'Ready', 'fa-check-circle', None)
                     ] %}
                     
-                    {% for status, label, icon in status_items %}
+                    {% for status, label, icon, route in status_items %}
                         <div class="flex-1 flex flex-col gap-2">
                             <div class="p-3 rounded-lg text-center {{ 'bg-gradient-to-r from-purple-100 to-blue-100' if video.production_status[status] else 'bg-gray-100' }}">
                                 <i class="fas {{ icon }} text-xl {{ 'text-purple-600' if video.production_status[status] else 'text-gray-400' }}"></i>
@@ -76,9 +76,17 @@
                                     {{ label }}
                                 </div>
                             </div>
-                            <button class="text-sm px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
-                                {{ 'Edit' if video.production_status[status] else 'Create' }}
-                            </button>
+                            {% set common_classes = "text-sm px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md text-center" %}
+                            
+                            {% if route and route|string|length > 0 %}
+                                <a href="{{ url_for(route, serie_name=serie_data.name.lower().replace(' ', '_'), video_n=video.video_n) }}" class="{{ common_classes }}">
+                                    {{ 'Edit' if video.production_status[status] else 'Create' }}
+                                </a>
+                            {% else %}
+                                <button class="{{ common_classes }}">
+                                    {{ 'Edit' if video.production_status[status] else 'Create' }}
+                                </button>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
@@ -86,5 +94,4 @@
         </div>
         {% endfor %}
     </div>
-</div>
 </div>
