@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from UI_utils import ProductionStatusManager
-from generators.image_generator import ReplicateFluxDev
+from generators.image_generator import ImageGenerator, ImageGenerators
 from tools.storyboarder import Storyboarder
 from tools.writer import Writer
 from generators.LLM import LLM, Models
@@ -27,15 +27,20 @@ CHANNEL_PATH = Path("./data/MITO_TV")
 @dataclass
 class Config:
     llm_model: Models = Models.OpenAI.GPT4oMini
+    image_generator: ImageGenerator = ImageGenerators.Local.SDXL_TURBO
     temperature: float = 0.5
     
     def to_dict(self):
         return {
             "llm_model": str(self.llm_model),
+            "image_generator": str(self.image_generator),
             "temperature": self.temperature,
-            "available_models": [str(model) for model_class in vars(Models).values() 
+            "available_llm_models": [str(model) for model_class in vars(Models).values() 
                                if isinstance(model_class, type) and issubclass(model_class, Enum)
-                               for model in model_class.__members__.values()]
+                               for model in model_class.__members__.values()],
+            "available_image_generators": [str(model) for model_class in vars(ImageGenerators).values() 
+                    if isinstance(model_class, type) and issubclass(model_class, Enum)
+                    for model in model_class.__members__.values()],
         }
 
 config = Config()
@@ -109,8 +114,8 @@ async def create_images(request: Request, serie_name: str, video_n: str):
     video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
     
     video_data = VideoData.get(video_data_path)
-    
-    image_generator = ReplicateFluxDev(verbose=True)
+
+    image_generator = ImageGenerator(generator=config.image_generator)
     image_generator.generate_images(
         prompts=[image_prompt],
         output_dir=image_path,

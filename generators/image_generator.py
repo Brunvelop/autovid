@@ -5,8 +5,8 @@ import random
 import requests
 from enum import Enum
 from dotenv import load_dotenv
-from typing import Union, List
 from abc import ABC, abstractmethod
+from typing import Union, List, Optional
 
 import torch
 import replicate
@@ -15,42 +15,61 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from diffusers import AutoPipelineForText2Image, FluxPipeline
 
-class ImageGenerators(Enum):
-    FAKE = 'FAKE'
-    SDXL_TURBO = 'stabilityai/sdxl-turbo'
-    SD3 = 'stabilityai/stable-diffusion-3-medium-diffusers'
-    FLUX1_SCHNELL = 'black-forest-labs/FLUX.1-schnell'
-
-class ImageGeneratorConfig(Enum):
-    FLUX1_SCHNELL = {
-        'height': 1280,
-        'width': 768,
-        'num_inference_steps': 1,
-        'guidance_scale': 0.0
-    }
-    SDXL_TURBO = {
-        'num_inference_steps': 5,
-        'guidance_scale': 0.0
-    }
+class ImageGenerators():
+    class Local(Enum):
+        FAKE = 'FAKE'
+        SDXL_TURBO = {
+            'name': 'stabilityai/sdxl-turbo',
+            'config': {
+                'num_inference_steps': 5,
+                'guidance_scale': 0.0,
+            }
+        }
+        FLUX1_SCHNELL = {
+            'name': 'black-forest-labs/FLUX.1-schnell',
+            'config': {
+                'height': 1280,
+                'width': 768,
+                'num_inference_steps': 1,
+                'guidance_scale': 0.0
+            }
+        }
 
 class ImageGenerator(ABC):
-    def __init__(
-        self, 
-        cache_dir: Path = Path('./models'),
-        low_vram: bool = True,
-        verbose: bool = True,
-    ):
-        self.cache_dir = cache_dir
-        self.verbose = verbose
-        self.low_vram = low_vram
+    def __new__(cls, generator: ImageGenerators, generator_config: dict = None):
+        if cls is ImageGenerator:
+            if generator == ImageGenerators.Local.FLUX1_SCHNELL:
+                return super().__new__(FluxSchell)
+            if generator == ImageGenerators.Local.SDXL_TURBO:
+                return super().__new__(SDXLTURBO)
+            
+            if generator == ImageGenerators.SDXL:
+                return super().__new__(SDXLTURBO)
+            if generator == ImageGenerators.REPLICATE:
+                return super().__new__(ReplicateFluxDev)
+            if generator == ImageGenerators.INFRA:
+                return super().__new__(InfraFluxDev)
+            if generator == ImageGenerators.FAKE:
+                return super().__new__(FakeImageGenerator)
+            raise ValueError(f"Unsupported generator: {generator}")
+        return super().__new__(cls)
+
+    def __init__(self, generator: ImageGenerators, generator_config: dict = None):
+        self.generator = generator
+        self.generator_config = generator_config or {}
         self.pipe = self._load_pipeline()
 
     @abstractmethod
-    def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> List[Image.Image]:
+    def generate_images(
+        self,
+        prompts: Union[str, List[str]], 
+        output_dir: Path,
+        **kwargs
+    ) -> Optional[List[Image.Image]]:
         pass
 
     @abstractmethod
-    def _load_pipeline(self) -> AutoPipelineForText2Image:
+    def _load_pipeline(self):
         pass
 
 class FluxSchell(ImageGenerator):
@@ -96,7 +115,7 @@ class FluxSchell(ImageGenerator):
 
 class SDXLTURBO(ImageGenerator):
     def generate_images(self, prompts: Union[str, List[str]], output_dir: Path, **kwargs) -> None:
-        generation_config = ImageGeneratorConfig.SDXL_TURBO.value.copy()
+        generation_config = ImageGenerators.Local.SDXL_TURBO.get('config').value.copy()
         generation_config.update(**kwargs)
 
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -320,42 +339,6 @@ class FakeImageGenerator(ImageGenerator):
         pass
 
 if __name__ == "__main__":
-    # import time
-    # import json
-    # start_time = time.time()
-
-    # # Crear el generador de imágenes una sola vez
-    # image_generator = FluxSchell(
-    #     cache_dir=Path('./models'),
-    #     low_vram=True,
-    #     verbose=True,
-    # )
-
-    # for N in range(11, 101):
-    #     OUTPUT_PATH = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/images')
-    #     STORYBOARD = Path(f'data/MITO_TV/SHORTS/MITOS_GRIEGOS/{N}/text/storyboard.json')
-
-    #     try:
-    #         with open(STORYBOARD, 'r', encoding='utf-8') as f:
-    #             storyboard = json.load(f)
-    #         prompts = [scene["image"] for scene in storyboard]
-            
-    #         image_generator.generate_images(
-    #             prompts=prompts,
-    #             output_dir=OUTPUT_PATH,
-    #             height=1344,
-    #             width=768,
-    #             num_inference_steps=2,
-    #             guidance_scale=0
-    #         )
-
-    #         print(f"Generated images for MITOS_GRIEGOS/{N}")
-    #     except Exception as e:
-    #         print(f"Error processing MITOS_GRIEGOS/{N}: {str(e)}")
-
-    # end_time = time.time()
-    # elapsed_time = end_time - start_time
-    # print(f"\nTotal generation time: {elapsed_time:.2f} s")
 
     import time
 

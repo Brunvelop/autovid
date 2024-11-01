@@ -4,7 +4,8 @@
         config: {
             llm_model: '',
             temperature: 0,
-            available_models: []
+            available_llm_models: [],
+            available_image_generators: []
         },
 
         async init() {
@@ -52,10 +53,8 @@
                 <!-- Model Selection -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                    <select x-model="config.llm_model" 
-                            @change="updateConfig()"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700">
-                        <template x-for="model in config.available_models" :key="model">
+                    <select x-model="config.llm_model" @change="updateConfig()" class="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700">
+                        <template x-for="model in config.available_llm_models" :key="model">
                             <option :value="model" x-text="model"></option>
                         </template>
                     </select>
@@ -77,6 +76,18 @@
                         <span>0</span>
                         <span>1</span>
                     </div>
+                </div>
+
+                <h3 class="font-semibold text-gray-700 mb-3">Image Generator</h3>
+                
+                <!-- Model Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                    <select x-model="config.image_generator" @change="updateConfig()" class="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700">
+                        <template x-for="model in config.available_image_generators" :key="model">
+                            <option :value="model" x-text="model"></option>
+                        </template>
+                    </select>
                 </div>
             </div>
         </div>
