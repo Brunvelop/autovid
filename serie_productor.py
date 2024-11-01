@@ -2,22 +2,28 @@ from abc import ABC
 from tqdm import tqdm
 from pathlib import Path
 
+from generators.LLM import LLM
 from tools.writer import Writer
+from tools.storyboarder import Storyboarder
 from data_types import SerieData, VideoData, VideoYoutubeDetails, VideoProductionStatus
 
 class SerieGenerator(ABC):
-    def __init__(self, writer: Writer, serie_data: SerieData):
-        self.writer = writer
+    def __init__(self, llm: LLM, serie_data: SerieData):
+        self.writer = Writer(llm=llm)
+        self.storyboarder = Storyboarder(llm=llm)
         self.serie_data: SerieData = serie_data
 
-    def generate_serie_text(self) -> list[VideoData]:
+    def generate_serie(self) -> list[VideoData]:
         pass
 
 class ShortsSerieGenerator(SerieGenerator):
-    def generate_serie_text(self) -> SerieData:
+    def generate_serie(self) -> SerieData:
         videos: VideoData = []
         for i in tqdm(range(self.serie_data.num_stories), desc="Generating videos"):
             video = self._generate_video_text()
+            print(f"Generating storyboard for video: {video.youtube_details.title}...")
+            video.storyboard = self.storyboarder.generate_storyboard(text=video.text)
+            video.production_status.storyboard_completed = True
             videos.append(video)
 
         print("\nSorting stories by score...")

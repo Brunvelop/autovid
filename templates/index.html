@@ -11,8 +11,10 @@
     </div>
 
         {% if series_data %}
-            <div class="mt-12">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Generated Series</h2>
+            <div class="mt-12 mx-8">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700 border-b pb-2">
+                    <i class="fas fa-list-alt mr-2"></i>Series
+                </h2>
                 {% for serie_data in series_data %}
                     {% include 'components/serie_production_progress.html' %}
                 {% endfor %}

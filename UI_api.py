@@ -71,7 +71,7 @@ async def create_serie(request: Request):
     try:
         form_data = await request.json()
         
-        writer = Writer(LLM(model=config.llm_model, llm_config={"temperature": config.temperature}))
+        llm = LLM(model=config.llm_model, llm_config={"temperature": config.temperature})
         
         serie_dir = CHANNEL_PATH / form_data["name"].lower().replace(" ", "_")
         serie_data = SerieData(
@@ -84,8 +84,8 @@ async def create_serie(request: Request):
             num_stories=int(form_data["num_stories"]),
         )
         
-        generator = ShortsSerieGenerator(writer=writer, serie_data=serie_data)
-        result = generator.generate_serie_text()
+        generator = ShortsSerieGenerator(llm=llm, serie_data=serie_data)
+        result = generator.generate_serie()
         
         return JSONResponse(content={
             "success": True,
@@ -105,33 +105,28 @@ async def create_serie(request: Request):
 
 @app.get("/storyboard/{serie_name}/{video_n}", response_class=HTMLResponse)
 async def show_storyboard(request: Request, serie_name: str, video_n: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
     images_path = VIDEO_ASSETS_PATH / "images"
-    storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
-    status_path = VIDEO_ASSETS_PATH / "status.json"
+    video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
     
-    if not images_path.exists() or not storyboard_path.exists() or not status_path.exists():
-        raise HTTPException(status_code=404, detail=f"Missing assets for {serie_name}/{video_n}")
+    video_data = VideoData.get(video_data_path)
 
-    storyboard = Storyboarder.load_storyboard(storyboard_path)
+    # scenes = []
+    # for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
+    #     scene = {
+    #         'image_url': "/" + (images_path / image.name).as_posix(),
+    #         'text': storyboard[idx].get('text', ''),
+    #         'image_prompt': storyboard[idx].get('image', ''),
+    #         'audio_url': "/" + (VIDEO_ASSETS_PATH / "audios" / f"{image.stem}.mp3").as_posix(),
+    #     }
+    #     scenes.append(scene)
 
-    scenes = []
-    for idx, image in enumerate(sorted(images_path.iterdir(), key=lambda x: int(x.stem))):
-        scene = {
-            'image_url': "/" + (images_path / image.name).as_posix(),
-            'text': storyboard[idx].get('text', ''),
-            'image_prompt': storyboard[idx].get('image', ''),
-            'audio_url': "/" + (VIDEO_ASSETS_PATH / "audios" / f"{image.stem}.mp3").as_posix(),
-        }
-        scenes.append(scene)
-
-    writer = Writer(LLM(config.llm_model, llm_config={'temperature': config.temperature}))
     response = templates.TemplateResponse("storyboard.html", {
             "request": request,
-            "short_category": short_category,
-            "short_num": short_num,
-            "scenes": scenes,
-            "status": VideoProductionStatus.get(status_path=status_path, writer=writer)
+            "short_category": serie_name,
+            "short_num": video_n,
+            "scenes": video_data.storyboard,
+            "status": None
         }
     )
     return response
