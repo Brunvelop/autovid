@@ -190,31 +190,50 @@ async def update_image_status(
     
     return HTMLResponse(content=f'<p>💾✔️</p>')
 
-@app.post("/storyboard/remake_image/{serie_name}/{video_n}/{index}", response_class=HTMLResponse)
+@app.post("/storyboard/remake_image/{serie_name}/{video_n}/{index}", response_class=JSONResponse)
 async def remake_image(request: Request, serie_name: str, video_n: str, index: int):
-    form_data = await request.form()
-    image_prompt = form_data._list[0][1]
+    try:
+        form_data = await request.form()
+        image_prompt = form_data.get('image')  # Changed from _list[0][1] to get('image')
 
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
-    image_path = VIDEO_ASSETS_PATH / "images" / f"{index}.png"
+        VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
+        images_dir = VIDEO_ASSETS_PATH / "images"
+        images_dir.mkdir(parents=True, exist_ok=True)
+        
+        image_path = images_dir / f"{index}.png"
 
-    # Generate new image using image_generator
-    image_generator = ImageGenerator(generator=config.image_generator)
-    image_generator.generate_images(
-        prompts=[image_prompt],
-        output_dir=image_path,
-        width=768,
-        height=1344,
-        guidance_scale=3.5,
-        num_inference_steps=28
-    )
+        # Generate new image using image_generator
+        image_generator = ImageGenerator(generator=config.image_generator)
+        image_generator.generate_images(
+            prompts=[image_prompt],
+            output_dir=image_path,
+            width=768,
+            height=1344,
+            guidance_scale=3.5,
+            num_inference_steps=28
+        )
 
-    # Use a timestamp for the cache-buster
-    timestamp = int(time.time() * 1000)  # Use milliseconds for more uniqueness
-    image_url = f"/{image_path.as_posix()}?t={timestamp}"
+        # Update storyboard data
+        video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
+        video_data = VideoData.get(video_data_path)
+        
+        # Add timestamp to force browser to reload image
+        timestamp = int(time.time() * 1000)
+        image_url = f"/data/MITO_TV/{serie_name.lower().replace(' ', '_')}/{video_n}/images/{index}.png?t={timestamp}"
 
-    # Return updated image HTML with the unique URL, wrapped in a div with the correct ID
-    return HTMLResponse(content=f'<div id="image{index}"><img src="{image_url}" class="w-full" onload="this.style.opacity=1"></div>')
+        return JSONResponse(content={
+            "success": True,
+            "url": image_url
+        })
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e)
+            }
+        )
 
 @app.get("/text/{serie_name}/{video_n}", response_class=HTMLResponse)
 async def show_text(request: Request, serie_name: str, video_n: str):

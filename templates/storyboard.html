@@ -11,10 +11,14 @@
                 const videoData = {{ video_data | safe }};
                 this.scenes = videoData.storyboard.scenes;
                 this.status = videoData.production_status;
+                // Initialize timestamp for each scene
+                this.scenes.forEach(scene => scene.timestamp = Date.now());
             },
 
             getImageUrl(index) {
-                return `/data/MITO_TV/{{ serie_name.lower().replace(" ", "_") }}/{{ video_n }}/images/${index}.png`;
+                // Add timestamp parameter to force browser reload
+                const timestamp = this.scenes[index]?.timestamp || Date.now();
+                return `/data/MITO_TV/{{ serie_name.lower().replace(" ", "_") }}/{{ video_n }}/images/${index}.png?t=${timestamp}`;
             },
 
             async createImages() {
@@ -70,6 +74,8 @@
                     });
                     const newImage = await response.json();
                     this.scenes[sceneIndex].image_url = newImage.url;
+                    // Update timestamp to force image reload
+                    this.scenes[sceneIndex].timestamp = Date.now();
                 } catch (error) {
                     this.scenes[sceneIndex].error = error.message;
                 }
@@ -139,7 +145,7 @@
 
                 <!-- Image -->
                 <div class="mb-4 flex justify-center">
-                    <img :src="getImageUrl(index)" class="w-[200px] object-contain rounded-lg shadow-md">
+                    <img :src="getImageUrl(index)" class="object-contain rounded-lg shadow-md">
                 </div>
 
                 <!-- Audio -->
