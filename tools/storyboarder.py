@@ -10,37 +10,7 @@ from dataclasses import dataclass
 
 from prompts import StoryboarderPrompts, Styles
 from generators.LLM import LLM
-
-@dataclass
-class Scene:
-    text: str 
-    image: str
-
-@dataclass 
-class Storyboard:
-    scenes: List[Scene]
-
-    @classmethod
-    def load(cls, filename: Path) -> 'Storyboard':
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            scenes = [Scene(text=scene['text'], image=scene['image']) for scene in data]
-            return cls(scenes=scenes)
-    
-    def save(self, filename: Path) -> None:
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        data = [{"text": scene.text, "image": scene.image} for scene in self.scenes]
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-    @classmethod
-    def update(cls, filename: Path, updates: 'Storyboard') -> None:
-        storyboard = cls.load(filename)
-        for i, update_scene in enumerate(updates.scenes):
-            if i < len(storyboard.scenes):
-                storyboard.scenes[i].text = update_scene.text  
-                storyboard.scenes[i].image = update_scene.image
-        storyboard.save(filename)
+from data_types import Scene, Storyboard
 
 class Storyboarder():
     def __init__(self, llm: LLM) -> None:

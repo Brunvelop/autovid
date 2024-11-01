@@ -24,7 +24,8 @@ class ShortsSerieGenerator(SerieGenerator):
         videos.sort(key=lambda x: x.production_status.text_evaluation['average_score'], reverse=True)
         
         for i, video in enumerate(videos):
-            video.json_data_path = Path(f"{self.serie_data.serie_path}/{i}/video_data.json")
+            video.json_data_path = Path(f"{self.serie_data.serie_path}/{i+1}/video_data.json")
+            video.video_n = i+1
         
         self.serie_data.videos = videos
         self.serie_data.save()
@@ -59,6 +60,7 @@ class ShortsSerieGenerator(SerieGenerator):
             json_data_path = None,
             video_path = None,
             text = improved_response['text'],
+            video_n=None,
             youtube_details = VideoYoutubeDetails(
                 title = theme_response['text'],
                 description = improved_response['text'],

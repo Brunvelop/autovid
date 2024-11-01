@@ -26,7 +26,7 @@ CHANNEL_PATH = Path("./data/MITO_TV")
 
 @dataclass
 class Config:
-    llm_model: Models = Models.Anthropic.CLAUDE_3_5_sonnet
+    llm_model: Models = Models.OpenAI.GPT4oMini
     temperature: float = 0.5
     
     def to_dict(self):
@@ -42,10 +42,10 @@ config = Config()
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    global_status = ProductionStatusManager.get_global_status(channel_path=CHANNEL_PATH)
+    series_data = ProductionStatusManager.get_series_data(channel_path=CHANNEL_PATH)
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "global_status": global_status,
+        "series_data": series_data,
     })
 
 @app.get("/config")
@@ -77,10 +77,11 @@ async def create_serie(request: Request):
         serie_data = SerieData(
             json_data_path=str(serie_dir / "data.json"),
             serie_path=str(serie_dir),
-            num_stories=int(form_data["num_stories"]),
-            expertise=form_data["expertise"],
+            name=form_data["name"],
             serie_theme=form_data["serie_theme"],
-            used_themes=[]
+            used_themes=[],
+            expertise=form_data["expertise"],
+            num_stories=int(form_data["num_stories"]),
         )
         
         generator = ShortsSerieGenerator(writer=writer, serie_data=serie_data)
@@ -102,15 +103,15 @@ async def create_serie(request: Request):
             }
         )
 
-@app.get("/storyboard/{short_category}/{short_num}", response_class=HTMLResponse)
-async def show_storyboard(request: Request, short_category: str, short_num: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
+@app.get("/storyboard/{serie_name}/{video_n}", response_class=HTMLResponse)
+async def show_storyboard(request: Request, serie_name: str, video_n: str):
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
     images_path = VIDEO_ASSETS_PATH / "images"
     storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
     status_path = VIDEO_ASSETS_PATH / "status.json"
     
     if not images_path.exists() or not storyboard_path.exists() or not status_path.exists():
-        raise HTTPException(status_code=404, detail=f"Missing assets for {short_category}/{short_num}")
+        raise HTTPException(status_code=404, detail=f"Missing assets for {serie_name}/{video_n}")
 
     storyboard = Storyboarder.load_storyboard(storyboard_path)
 
@@ -206,8 +207,8 @@ async def remake_image(request: Request, short_category: str, short_num: str, in
     # Return updated image HTML with the unique URL, wrapped in a div with the correct ID
     return HTMLResponse(content=f'<div id="image{index}"><img src="{image_url}" class="w-full" onload="this.style.opacity=1"></div>')
 
-@app.get("/text/{short_category}/{short_num}", response_class=HTMLResponse)
-async def show_text(request: Request, short_category: str, short_num: str):
+@app.get("/text", response_class=HTMLResponse)
+async def show_text(request: Request, json_data_path: str):
     VIDEO_ASSETS_PATH = CHANNEL_PATH / short_category / short_num
     text_path = VIDEO_ASSETS_PATH / "text/text.txt"
     

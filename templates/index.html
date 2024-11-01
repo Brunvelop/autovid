@@ -10,11 +10,11 @@
         {% include 'components/create_new_serie_button.html' %}
     </div>
 
-        {% if global_status %}
+        {% if series_data %}
             <div class="mt-12">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">Generated Series</h2>
-                {% for serie_name, videos in global_status.series.items() %}
-                    {% include 'components/serie_production.html' %}
+                {% for serie_data in series_data %}
+                    {% include 'components/serie_production_progress.html' %}
                 {% endfor %}
             </div>
         {% endif %}
