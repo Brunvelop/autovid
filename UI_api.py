@@ -143,7 +143,7 @@ async def show_storyboard(request: Request, serie_name: str, video_n: str):
     )
     return response
 
-@app.post("/storyboard/update/{serie_name}/{video_n}/{index}/{field}", response_class=HTMLResponse)
+@app.post("/storyboard/update/{serie_name}/{video_n}/{index}/{field}")
 async def update_storyboard(
     request: Request, 
     serie_name: str, 
@@ -157,16 +157,30 @@ async def update_storyboard(
     if not new_value:
         raise HTTPException(status_code=400, detail=f"Missing {field} in form data")
     
-    storyboard_path = CHANNEL_PATH / serie_name / video_n / "text/storyboard.json"
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
+    video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
     
     try:
-        Storyboarder.update_storyboard(storyboard_path, [{
-            'index': index,
-            field: new_value
-        }])
-        return HTMLResponse(content=f'<p>💾✔️</p>')
+        video_data = VideoData.get(video_data_path)
+        
+        # Update the specified field in the scene
+        setattr(video_data.storyboard.scenes[index], field, new_value)
+        
+        # Save the updated video data
+        video_data.save()
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "Scene updated successfully"
+        })
     except Exception as e:
-        return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": str(e)
+            }
+        )
 
 @app.post("/storyboard/update_image_status/{serie_name}/{video_n}/{index}/{value}", response_class=HTMLResponse)
 async def update_image_status(
@@ -289,41 +303,57 @@ async def generate_text(request: Request, serie_name: str, video_n: str):
     except Exception as e:
         return HTMLResponse(content=f'<p style="color:red;">Error: {str(e)}</p>', status_code=500)
 
-@app.post("/generate_tts/{serie_name}/{video_n}", response_class=HTMLResponse)
+@app.post("/generate_tts/{serie_name}/{video_n}")
 async def generate_tts(request: Request, serie_name: str, video_n: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
-    storyboard_path = VIDEO_ASSETS_PATH / "text/storyboard.json"
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
+    video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
     audios_path = VIDEO_ASSETS_PATH / "audios"
-
-    if not storyboard_path.exists():
-        raise HTTPException(status_code=404, detail=f"Storyboard not found for {serie_name}/{video_n}")
-
-    storyboard = Storyboarder.load_storyboard(storyboard_path)
+    audios_path.mkdir(parents=True, exist_ok=True)
 
     try:
-        for idx, scene in enumerate(storyboard):
-            text = scene.get('text', '')
+        # Load video data
+        video_data = VideoData.get(video_data_path)
+        
+        # Generate TTS for each scene
+        for idx, scene in enumerate(video_data.storyboard.scenes):
+            text = scene.text
             output_file = audios_path / f"{idx}.mp3"
-            output_file.parent.mkdir(parents=True, exist_ok=True)
 
-            ElevenLabsTTS.generate_speech(
-                text=text,
-                output_file=output_file,
-                voice=Voices.ElevenLabs.DAN_DAN
-            )
-        return HTMLResponse(content="<p>✅ TTS generation completed</p>")
+            try:
+                ElevenLabsTTS.generate_speech(
+                    text=text,
+                    output_file=output_file,
+                    voice=Voices.ElevenLabs.DAN_DAN
+                )
+            except Exception as e:
+                return JSONResponse(
+                    status_code=500,
+                    content={"message": f"Error generating TTS for scene {idx}: {str(e)}"}
+                )
+
+        # Update production status
+        video_data.production_status.tts_completed = True
+        video_data.save()
+
+        return JSONResponse(content={"message": "✅ TTS generation completed successfully"})
     except Exception as e:
-        return HTMLResponse(content=f"<p style='color:red;'>Error generating TTS: {str(e)}</p>", status_code=500)
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Error generating TTS: {str(e)}"}
+        )
 
-@app.post("/generate_video/{serie_name}/{video_n}", response_class=HTMLResponse)
+@app.post("/generate_video/{serie_name}/{video_n}")
 async def generate_video(request: Request, serie_name: str, video_n: str):
-    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name / video_n
+    VIDEO_ASSETS_PATH = CHANNEL_PATH / serie_name.lower().replace(" ", "_") / video_n
     images_path = VIDEO_ASSETS_PATH / "images"
     audios_path = VIDEO_ASSETS_PATH / "audios"
     output_path = VIDEO_ASSETS_PATH / f"{video_n}.mp4"
 
     if not images_path.exists() or not audios_path.exists():
-        raise HTTPException(status_code=404, detail=f"Missing images or audios for {serie_name}/{video_n}")
+        return JSONResponse(
+            status_code=404,
+            content={"message": f"Missing images or audios for {serie_name}/{video_n}"}
+        )
 
     try:
         VideoEditor.generate_depth_video(
@@ -332,7 +362,20 @@ async def generate_video(request: Request, serie_name: str, video_n: str):
             output_path=output_path,
             background_music_path=Path("C:/Users/bruno/Desktop/autovid/music/mito_tv_loop_01.mp3")
         )
-        video_url = "/" + output_path.as_posix()
-        return HTMLResponse(content=f"<p>✅ Video generation completed. <a href='{video_url}' target='_blank'>Watch Video</a></p>")
+        
+        # Update video data
+        video_data_path = VIDEO_ASSETS_PATH / "video_data.json"
+        video_data = VideoData.get(video_data_path)
+        video_data.production_status.ready_to_upload = True
+        video_data.save()
+        
+        video_url = f"/data/MITO_TV/{serie_name.lower().replace(' ', '_')}/{video_n}/{video_n}.mp4"
+        return JSONResponse(content={
+            "message": "✅ Video generation completed successfully",
+            "video_url": video_url
+        })
     except Exception as e:
-        return HTMLResponse(content=f"<p style='color:red;'>Error generating video: {str(e)}</p>", status_code=500)
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Error generating video: {str(e)}"}
+        )

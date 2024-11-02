@@ -1,4 +1,5 @@
 {% include 'components/head.html' %}
+
 <script>
     function initStoryboardData() {
         return {
@@ -6,19 +7,50 @@
             status: {},
             ttsStatus: '',
             videoStatus: '',
+            isGeneratingTTS: false,
+            isGeneratingVideo: false,
+            videoUrl: null,
 
             init() {
                 const videoData = {{ video_data | safe }};
                 this.scenes = videoData.storyboard.scenes;
                 this.status = videoData.production_status;
                 // Initialize timestamp for each scene
-                this.scenes.forEach(scene => scene.timestamp = Date.now());
+                this.scenes.forEach(scene => {
+                    scene.timestamp = Date.now();
+                    scene.audioTimestamp = Date.now();
+                });
+            },
+
+            async refreshVideoData() {
+                const response = await fetch("{{ url_for('show_storyboard', serie_name=serie_name, video_n=video_n) }}");
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const scriptContent = doc.querySelector('script').textContent;
+                const videoDataMatch = scriptContent.match(/videoData = ({[^;]+})/);
+                if (videoDataMatch) {
+                    const videoData = JSON.parse(videoDataMatch[1]);
+                    this.scenes = videoData.storyboard.scenes;
+                    this.status = videoData.production_status;
+                    // Update timestamps to force reload
+                    this.scenes.forEach(scene => {
+                        scene.timestamp = Date.now();
+                        scene.audioTimestamp = Date.now();
+                    });
+                }
             },
 
             getImageUrl(index) {
                 // Add timestamp parameter to force browser reload
                 const timestamp = this.scenes[index]?.timestamp || Date.now();
                 return `/data/MITO_TV/{{ serie_name.lower().replace(" ", "_") }}/{{ video_n }}/images/${index}.png?t=${timestamp}`;
+            },
+
+            getAudioUrl(index) {
+                // Add timestamp parameter to force browser reload
+                const timestamp = this.scenes[index]?.audioTimestamp || Date.now();
+                return `/data/MITO_TV/{{ serie_name.lower().replace(" ", "_") }}/{{ video_n }}/audios/${index}.mp3?t=${timestamp}`;
             },
 
             async createImages() {
@@ -29,17 +61,46 @@
             },
 
             async generateTTS() {
-                const response = await fetch("{{ url_for('generate_tts', serie_name=serie_name, video_n=video_n) }}", {
-                    method: 'POST'
-                });
-                this.ttsStatus = await response.text();
+                this.isGeneratingTTS = true;
+                this.ttsStatus = 'Generating TTS...';
+                try {
+                    const response = await fetch("{{ url_for('generate_tts', serie_name=serie_name, video_n=video_n) }}", {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    this.ttsStatus = data.message;
+
+                    if (response.ok) {
+                        // Refresh video data to get updated audio URLs and status
+                        await this.refreshVideoData();
+                    }
+                } catch (error) {
+                    this.ttsStatus = `Error: ${error.message}`;
+                } finally {
+                    this.isGeneratingTTS = false;
+                }
             },
 
             async generateVideo() {
-                const response = await fetch("{{ url_for('generate_video', serie_name=serie_name, video_n=video_n) }}", {
-                    method: 'POST'
-                });
-                this.videoStatus = await response.text();
+                this.isGeneratingVideo = true;
+                this.videoStatus = 'Generating video...';
+                try {
+                    const response = await fetch("{{ url_for('generate_video', serie_name=serie_name, video_n=video_n) }}", {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    this.videoStatus = data.message;
+
+                    if (response.ok) {
+                        this.videoUrl = data.video_url;
+                        // Refresh video data to get updated status
+                        await this.refreshVideoData();
+                    }
+                } catch (error) {
+                    this.videoStatus = `Error: ${error.message}`;
+                } finally {
+                    this.isGeneratingVideo = false;
+                }
             },
 
             async updateStatus(sceneIndex, value) {
@@ -50,10 +111,14 @@
             },
 
             async updateScene(sceneIndex, field, value) {
-                await fetch(`/storyboard/update/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${field}`, {
+                const response = await fetch(`/storyboard/update/{{ serie_name }}/{{ video_n }}/${sceneIndex}/${field}`, {
                     method: 'POST',
                     body: new URLSearchParams({[field]: value})
                 });
+                const data = await response.json();
+                if (!data.success) {
+                    console.error('Error updating scene:', data.message);
+                }
             },
 
             async remakePrompt(sceneIndex) {
@@ -72,10 +137,13 @@
                         method: 'POST',
                         body: new URLSearchParams({image: this.scenes[sceneIndex].image})
                     });
-                    const newImage = await response.json();
-                    this.scenes[sceneIndex].image_url = newImage.url;
-                    // Update timestamp to force image reload
-                    this.scenes[sceneIndex].timestamp = Date.now();
+                    const data = await response.json();
+                    if (data.success) {
+                        // Update timestamp to force image reload
+                        this.scenes[sceneIndex].timestamp = Date.now();
+                    } else {
+                        this.scenes[sceneIndex].error = data.error;
+                    }
                 } catch (error) {
                     this.scenes[sceneIndex].error = error.message;
                 }
@@ -112,14 +180,27 @@
                 </template>
 
                 <button @click="generateTTS" 
-                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                        :disabled="isGeneratingTTS"
+                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                     Generate TTS
                 </button>
                 
                 <button @click="generateVideo" 
-                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                        :disabled="isGeneratingVideo"
+                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
                     Generate Video
                 </button>
+            </div>
+
+            <!-- Status Messages -->
+            <div class="mt-2 text-center space-y-2">
+                <div x-show="isGeneratingTTS" class="text-sm text-gray-600" x-text="ttsStatus"></div>
+                <div x-show="isGeneratingVideo" class="text-sm text-gray-600" x-text="videoStatus"></div>
+                <template x-if="videoUrl && !isGeneratingVideo">
+                    <div class="text-sm">
+                        <a :href="videoUrl" target="_blank" class="text-blue-500 hover:text-blue-700">Watch Video</a>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
@@ -150,7 +231,7 @@
 
                 <!-- Audio -->
                 <audio controls class="w-full mb-4 rounded bg-gray-50">
-                    <source :src="scene.audio_url" type="audio/mpeg">
+                    <source :src="getAudioUrl(index)" type="audio/mpeg">
                 </audio>
 
                 <!-- Text Inputs -->
