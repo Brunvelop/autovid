@@ -1,3 +1,7 @@
+import sys, os
+if os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) not in sys.path:
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import os
 import json
 from pathlib import Path
@@ -13,6 +17,8 @@ from google.oauth2.credentials import Credentials
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
+
+from data_types import VideoData
 
 load_dotenv()
 class YouTubeScheduler:
@@ -46,25 +52,32 @@ class YouTubeScheduler:
 
         return build('youtube', 'v3', credentials=creds)
 
+    def schedule_video(self, video_data: VideoData, category: str = '22',
+                      privacy_status: str = 'private',
+                      publish_time: Optional[datetime] = None) -> str:
+        """Schedule a video upload using VideoData structure"""
+        if not video_data.video_path or not video_data.video_path.exists():
+            raise ValueError("Video path not found")
+            
+        if not video_data.youtube_details:
+            raise ValueError("YouTube details not provided")
 
-    def schedule_video(self, video_path: Path, title: str, description: str,
-                       tags: List[str], category: str = '22',
-                       privacy_status: str = 'private',
-                       publish_time: Optional[datetime] = None) -> str:
         body = {
             'snippet': {
-                'title': title,
-                'description': description,
-                'tags': tags,
+                'title': video_data.youtube_details.title or '',
+                'description': video_data.youtube_details.description or '',
+                'tags': video_data.youtube_details.tags or [],
                 'categoryId': category
             },
             'status': {
                 'privacyStatus': privacy_status,
-                'publishAt': publish_time.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             }
         }
 
-        media = MediaFileUpload(video_path, resumable=True)
+        if publish_time:
+            body['status']['publishAt'] = publish_time.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+        media = MediaFileUpload(str(video_data.video_path), resumable=True)
 
         try:
             request = self.youtube.videos().insert(
@@ -73,7 +86,17 @@ class YouTubeScheduler:
                 media_body=media
             )
             response = self._resumable_upload(request)
-            return response['id']
+            
+            # Update VideoData with upload information
+            if response and 'id' in response:
+                video_data.youtube_details.uploaded = True
+                video_data.youtube_details.url = f"https://youtu.be/{response['id']}"
+                if publish_time:
+                    video_data.youtube_details.realse_date = publish_time.isoformat()
+                video_data.save()
+                
+            return response['id'] if response else None
+            
         except HttpError as e:
             print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
             return None
@@ -108,23 +131,20 @@ class YouTubeScheduler:
 
 
 if __name__ == "__main__":
-    class Categories:
-        nordicos = 'MITOS_NORDICOS'
-        egipcios = 'MITOS_EGIPCIOS'
+    # Example usage with new VideoData structure
+    video_number = "5"
+    base_path = Path(r"C:\Users\bruno\Desktop\autovid\data\MITO_TV\historias_de_titanes_de_la_mitología_griega_2")
+    json_path = base_path / video_number / "video_data.json"
+    
+    video_data = VideoData.get(json_path)
+    video_data.video_path = json_path.parent / f"{video_number}.mp4"
 
+    
     scheduler = YouTubeScheduler()
-
-    CATEGORY = 'MITOS_EGIPCIOS'
-    VIDEO_N = 47
-    VIDEO_PATH = Path(f'data/MITO_TV/SHORTS/{CATEGORY}/{VIDEO_N}')
-
     video_id = scheduler.schedule_video(
-        video_path=VIDEO_PATH / f'{VIDEO_N}.mp4',
-        title=json.load(open(VIDEO_PATH / 'text/storyboard.json', 'r', encoding='utf-8'))[0].get('text', ''),
-        description=open(VIDEO_PATH / 'text/text.txt', 'r', encoding='utf-8').read(),
-        tags=[],
+        video_data=video_data,
         privacy_status='private',
-        publish_time = datetime(2024, 11, 1, 15, 0, 0, tzinfo=ZoneInfo("Europe/Madrid"))
+        publish_time=datetime(2024, 11, 7, 15, 0, 0, tzinfo=ZoneInfo("Europe/Madrid"))
     )
     
     if video_id:
