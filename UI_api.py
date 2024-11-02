@@ -118,7 +118,7 @@ async def create_images(request: Request, serie_name: str, video_n: str):
 
     image_generator = ImageGenerator(generator=config.image_generator)
     image_generator.generate_images(
-        prompts=[scene.text for scene in video_data.storyboard.scenes],
+        prompts=[scene.image for scene in video_data.storyboard.scenes],
         output_dir=VIDEO_ASSETS_PATH / "images",
         width=768,
         height=1344,

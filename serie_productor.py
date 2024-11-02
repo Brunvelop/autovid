@@ -50,7 +50,7 @@ class ShortsSerieGenerator(SerieGenerator):
         print(f"Theme generated: {theme_response['text']}")
 
         print("Generating initial story...")
-        story_response = self.writer.generate_story(self.serie_data.expertise, self.serie_data.serie_theme)
+        story_response = self.writer.generate_story(self.serie_data.expertise, theme_response['text'])
         total_cost += story_response['cost']
         print("Initial story generated")
 

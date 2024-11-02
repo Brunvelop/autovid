@@ -172,12 +172,12 @@
                     Next ➡️
                 </a>
                 
-                <template x-if="!status.images_generated">
-                    <button @click="createImages" 
-                            class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
-                        Generate Images
-                    </button>
-                </template>
+
+                <button @click="createImages" 
+                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full text-sm font-medium hover:from-purple-700 hover:to-blue-600 transition duration-200 shadow-md">
+                    Generate Images
+                </button>
+
 
                 <button @click="generateTTS" 
                         :disabled="isGeneratingTTS"
